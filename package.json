@@ -1,0 +1,18 @@
+{
+  "name": "trustfix",
+  "private": true,
+  "packageManager": "pnpm@10.11.0",
+  "scripts": {
+    "dev": "pnpm --filter @trustfix/web dev",
+    "build": "pnpm --filter @trustfix/web build",
+    "lint": "pnpm --filter @trustfix/web lint",
+    "typecheck": "pnpm --filter @trustfix/web typecheck",
+    "test": "pnpm --filter @trustfix/web test && pnpm api:test",
+    "api:dev": "python -m uvicorn app.main:app --reload --app-dir apps/api",
+    "api:test": ".venv\\Scripts\\python.exe -m pytest apps/api/tests -q",
+    "quality": "pnpm lint && pnpm typecheck && pnpm test && pnpm build",
+    "demo:setup": "powershell -ExecutionPolicy Bypass -File scripts/demo/setup_demo_environment.ps1",
+    "demo:reset": "powershell -ExecutionPolicy Bypass -File scripts/demo/reset_demo_environment.ps1",
+    "demo:destroy": "powershell -ExecutionPolicy Bypass -File scripts/demo/destroy_demo_environment.ps1"
+  }
+}

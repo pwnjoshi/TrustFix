@@ -1,0 +1,12 @@
+.git/
+.venv/
+node_modules/
+**/node_modules/
+**/.next/
+artifacts/
+playwright-report/
+test-results/
+*.tsbuildinfo
+.env
+.env.local
+

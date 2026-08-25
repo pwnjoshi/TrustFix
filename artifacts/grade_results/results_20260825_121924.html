@@ -1,0 +1,568 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Evaluation Report</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"></script>
+    <style>
+        body { font-family: 'Roboto', 'Helvetica', sans-serif; margin: 2em; background-color: #f8f9fa; color: #202124; }
+        .container { max-width: 1200px; margin: 20px auto; padding: 20px; background-color: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.12); }
+        h1, h2, h3 { color: #3c4043; }
+        h1 { border-bottom: 2px solid #4285F4; padding-bottom: 8px; }
+        h2 { border-bottom: 1px solid #dadce0; padding-bottom: 8px; }
+        table { border-collapse: collapse; width: 100%; margin: 1em 0; }
+        th, td { border: 1px solid #dadce0; padding: 12px; text-align: left; vertical-align: top; }
+        th { background-color: #f2f2f2; font-weight: 500; }
+        details { border: 1px solid #dadce0; border-radius: 8px; padding: 16px; margin-bottom: 16px; background: #fff; }
+        summary { font-weight: 500; font-size: 1.1em; cursor: pointer; }
+        .prompt-container { background-color: #e8f0fe; padding: 16px; margin: 12px 0; border-radius: 8px; white-space: pre-wrap; word-wrap: break-word; overflow-wrap: break-word; }
+        .reference-container { background-color: #fff; border: 1px solid #dadce0; padding: 16px; margin: 12px 0; border-radius: 8px; white-space: pre-wrap; word-wrap: break-word; overflow-wrap: break-word; }
+        .agent-info-container { background-color: #f1f3f4; padding: 16px; margin: 12px 0; border-radius: 8px; word-wrap: break-word; overflow-wrap: break-word; font-size: 14px; }
+        .agent-info-grid { display: grid; grid-template-columns: 120px 1fr; gap: 8px; margin-bottom: 12px; }
+        .agent-info-grid dt { font-weight: 500; color: #3c4043; }
+        .agent-info-grid dd { margin: 0; white-space: pre-wrap; word-wrap: break-word; }
+        .intermediate-events-container { background-color: #f1f3f4; padding: 16px; margin: 12px 0; border-radius: 8px; word-wrap: break-word; overflow-wrap: break-word; max-height: 400px; overflow-y: auto; overflow-x: auto; }
+        .response-container { background-color: #f9f9f9; padding: 12px; margin-top: 8px; border-radius: 8px; border: 1px solid #eee; white-space: pre-wrap; word-wrap: break-word; overflow-wrap: break-word; }
+        .explanation { color: #5f6368; font-style: italic; font-size: 0.9em; padding-top: 6px; }
+        .raw-json-details summary { font-size: 0.9em; cursor: pointer; color: #5f6368;}
+        .raw-json-container { white-space: pre-wrap; word-wrap: break-word; max-height: 300px; overflow-y: auto; background-color: #f1f1f1; padding: 10px; border-radius: 4px; margin-top: 8px; }
+
+        .rubric-bubble-container { display: flex; flex-wrap: wrap; gap: 8px; }
+        .rubric-details { border: none; padding: 0; margin: 0; }
+        .rubric-bubble { display: inline-flex; align-items: center; background-color: #e8f0fe; color: #1967d2; border-radius: 16px; padding: 8px 12px; font-size: 0.9em; cursor: pointer; list-style: none; }
+        .rubric-bubble::-webkit-details-marker { display: none; }
+        .rubric-bubble::before { content: '►'; margin-right: 8px; font-size: 0.8em; transition: transform 0.2s; }
+        .rubric-details[open] > .rubric-bubble::before { transform: rotate(90deg); }
+        .pass { color: green; font-weight: bold; }
+        .fail { color: red; font-weight: bold; }
+
+        .case-content-wrapper { display: flex; gap: 1rem; }
+        .case-content-main { flex: 1; }
+        .case-content-sidebar { flex: 1; min-width: 0; }
+
+        /* Tool Declarations */
+        .tool-declarations-container { background-color: #f1f1f1; padding: 10px; border-radius: 4px; margin-top: 8px; max-height: 300px; overflow-y: auto; }
+        .tool-declaration { margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid #ddd; }
+        .tool-declaration:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+
+        /* Agent Topology UI */
+        .system-topology-details { background: #fff; border: 1px solid #dadce0; border-radius: 8px; padding: 16px; margin-top: 16px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+        .system-topology-details > summary { font-size: 1.1em; font-weight: 500; cursor: pointer; outline: none; margin-bottom: 12px; list-style: none; display: flex; align-items: center; color: #3c4043; }
+        .system-topology-details > summary::-webkit-details-marker { display: none; }
+        .system-topology-details > summary::before { content: '▼'; font-size: 0.8em; margin-right: 8px; transition: transform 0.2s; }
+        .system-topology-details:not([open]) > summary::before { transform: rotate(-90deg); }
+
+        .topology-container { background: #f8f9fa; border-radius: 8px; padding: 16px; margin-top: 8px; border: 1px solid #dadce0; overflow-x: auto; }
+        .agent-node { background: #fff; border: 1px solid #dadce0; border-radius: 8px; margin-bottom: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.04); min-width: 300px; max-width: 600px; }
+        .agent-node-header { padding: 10px 16px; border-bottom: 1px solid #eee; display: flex; align-items: center; gap: 8px; background: #f1f3f4; border-top-left-radius: 8px; border-top-right-radius: 8px; }
+        .agent-name { font-weight: 600; color: #1a73e8; }
+        .agent-type { font-size: 11px; background: #e8eaed; padding: 2px 8px; border-radius: 12px; color: #5f6368; font-family: monospace; }
+        .agent-node-body { padding: 12px 16px; font-size: 13px; color: #3c4043; }
+        .agent-desc { margin-bottom: 8px; }
+        .agent-inst details, .agent-tools details { margin-bottom: 8px; padding: 8px; }
+        .agent-inst summary, .agent-tools summary { cursor: pointer; font-weight: 500; color: #5f6368; font-size: 12px; outline: none; margin-bottom: 0; }
+        .inst-content, .tools-content { margin-top: 8px; padding: 8px; background: #f8f9fa; border-radius: 4px; border: 1px solid #eee; white-space: pre-wrap; word-wrap: break-word; font-family: monospace; font-size: 12px; max-height: 200px; overflow-y: auto; }
+        .sub-agents-container { margin-top: 16px; padding-left: 24px; border-left: 2px solid #dadce0; position: relative; }
+        .sub-agents-container::before { content: ''; position: absolute; top: -16px; left: -2px; width: 2px; height: 16px; background: #dadce0; }
+
+        /* Multi-turn Agent Trace UI */
+        .conversation-trace-details { background: #fff; border: 1px solid #dadce0; border-radius: 8px; padding: 16px; margin-top: 0; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+        .conversation-trace-details > summary { font-size: 1.1em; font-weight: 500; cursor: pointer; outline: none; margin-bottom: 8px; list-style: none; display: flex; align-items: center; color: #3c4043; }
+        .conversation-trace-details > summary::-webkit-details-marker { display: none; }
+        .conversation-trace-details > summary::before { content: '▼'; font-size: 0.8em; margin-right: 8px; transition: transform 0.2s; }
+        .conversation-trace-details:not([open]) > summary::before { transform: rotate(-90deg); }
+
+        .agent-timeline { position: relative; padding-left: 32px; margin-top: 16px; font-family: 'Roboto', sans-serif; }
+        .agent-timeline::before { content: ''; position: absolute; top: 0; bottom: 0; left: 11px; width: 2px; background: #e8eaed; }
+
+        .turn-details { margin-bottom: 16px; padding: 0; border: none; }
+        .turn-summary { list-style: none; outline: none; cursor: pointer; display: block; margin-left: -32px; padding-left: 32px; }
+        .turn-summary::-webkit-details-marker { display: none; }
+        .turn-header { margin: 16px 0 16px -32px; position: relative; z-index: 1; display: inline-flex; align-items: center; }
+
+        .turn-badge { display: inline-flex; align-items: center; background: #f8f9fa; color: #5f6368; padding: 4px 12px; border-radius: 16px; font-size: 11px; font-weight: 600; border: 1px solid #dadce0; letter-spacing: 0.5px; }
+        .turn-divider { color: #dadce0; margin: 0 6px; font-weight: normal; }
+        .turn-badge::before { content: '▼'; margin-right: 6px; font-size: 0.8em; display: inline-block; transition: transform 0.2s; }
+        .turn-details:not([open]) .turn-badge::before { transform: rotate(-90deg); }
+
+        .timeline-item { position: relative; margin-bottom: 16px; }
+        .timeline-icon { position: absolute; left: -32px; top: 0; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: #e8f0fe; border: 2px solid #fff; color: #1a73e8; z-index: 1; box-sizing: border-box; margin-left: 0; }
+        .timeline-icon.user { background: #f3e8fd; color: #9334e6; }
+        .timeline-icon.tool { background: #e6f4ea; color: #1e8e3e; }
+        .timeline-content { background: #fff; border: 1px solid #dadce0; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.04); overflow: hidden; }
+        .event-header { padding: 12px 16px 8px; font-size: 12px; font-weight: 600; display: flex; align-items: baseline; gap: 8px; }
+        .event-author { color: #1a73e8; letter-spacing: 0.5px; text-transform: uppercase; }
+        .event-author.user { color: #9334e6; }
+        .event-author.tool { color: #1e8e3e; }
+        .event-role { color: #80868b; font-weight: normal; font-size: 11px; font-family: monospace;}
+        .event-body { padding: 0 16px 12px; font-size: 14px; color: #202124; line-height: 1.5; }
+        .dark-code-block { background: #0e111a; color: #d4d4d4; padding: 12px; border-radius: 6px; font-family: 'Consolas', 'Courier New', monospace; font-size: 13px; margin: 8px 0 0 0; overflow-x: auto; border: 1px solid #3c4043; }
+        .function-call-title { color: #e37400; font-weight: 600; font-size: 12px; margin-top: 8px; display: flex; align-items: center; gap: 4px; }
+        .function-response-title { color: #0f9d58; font-weight: 600; font-size: 12px; margin-top: 8px; display: flex; align-items: center; gap: 4px; }
+        .agent-trace-container { max-height: 600px; overflow-x: auto; overflow-y: auto; padding-right: 8px; border: 1px solid #eee; padding: 12px; border-radius: 8px; background: #fafafa; }
+
+        /* Collapsible Metrics */
+        .metric-details { background: #fff; border: 1px solid #dadce0; border-radius: 8px; margin-bottom: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.04); overflow: hidden; }
+        .metric-summary { list-style: none; cursor: pointer; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; background: #f8f9fa; margin: 0; outline: none; }
+        .metric-summary::-webkit-details-marker { display: none; }
+        .metric-details[open] .metric-summary { border-bottom: 1px solid #dadce0; }
+        .metric-name-wrapper { display: flex; align-items: center; font-weight: 600; color: #3c4043; font-size: 14px; }
+        .metric-name-wrapper::before { content: '►'; font-size: 0.8em; margin-right: 8px; transition: transform 0.2s; color: #5f6368; }
+        .metric-details[open] .metric-name-wrapper::before { transform: rotate(90deg); }
+        .metric-score { font-weight: bold; font-size: 16px; color: #1a73e8; }
+        .metric-body { padding: 16px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Evaluation Report</h1>
+        <div id="summary-section"></div>
+        <div id="details-section"></div>
+    </div>
+    <script>
+        var vizData_vertex_eval_sdk = JSON.parse(new TextDecoder().decode(Uint8Array.from(atob("eyJldmFsX2Nhc2VfcmVzdWx0cyI6IFt7ImV2YWxfY2FzZV9pbmRleCI6IDAsICJyZXNwb25zZV9jYW5kaWRhdGVfcmVzdWx0cyI6IFt7InJlc3BvbnNlX2luZGV4IjogMCwgIm1ldHJpY19yZXN1bHRzIjogeyJjdXN0b21fcmVzcG9uc2VfcXVhbGl0eSI6IHsibWV0cmljX25hbWUiOiAiY3VzdG9tX3Jlc3BvbnNlX3F1YWxpdHkiLCAic2NvcmUiOiA1LjAsICJleHBsYW5hdGlvbiI6ICJUaGUgYWdlbnQgYWNjdXJhdGVseSBtYXBwZWQgdGhlIHNlY3VyaXR5IHF1ZXN0aW9ubmFpcmUgcmVxdWlyZW1lbnQgdG8gdGhlIGFwcHJvcHJpYXRlIHN1cHBvcnRlZCBjb250cm9sIChHQ1BfU1RPUkFHRV9QVUJMSUNfQUNDRVNTKSBpbiBhY2NvcmRhbmNlIHdpdGggaXRzIHN5c3RlbSBpbnN0cnVjdGlvbnMsIG1haW50YWluaW5nIGNvbmNpc2VuZXNzIHdpdGhvdXQgZmFicmljYXRpbmcgZXZpZGVuY2Ugb3IgZXhwb3NpbmcgY2hhaW4tb2YtdGhvdWdodC4iLCAicnVicmljX3ZlcmRpY3RzIjogbnVsbCwgInJhd19vdXRwdXQiOiBudWxsLCAiZXJyb3JfbWVzc2FnZSI6IG51bGx9fX1dfSwgeyJldmFsX2Nhc2VfaW5kZXgiOiAxLCAicmVzcG9uc2VfY2FuZGlkYXRlX3Jlc3VsdHMiOiBbeyJyZXNwb25zZV9pbmRleCI6IDAsICJtZXRyaWNfcmVzdWx0cyI6IHsiY3VzdG9tX3Jlc3BvbnNlX3F1YWxpdHkiOiB7Im1ldHJpY19uYW1lIjogImN1c3RvbV9yZXNwb25zZV9xdWFsaXR5IiwgInNjb3JlIjogNS4wLCAiZXhwbGFuYXRpb24iOiAiVGhlIG1vZGVsIGZvbGxvd2VkIGFsbCBpbnN0cnVjdGlvbnMgYWNjdXJhdGVseS4gSXQgY2hlY2tlZCB0aGUgYXZhaWxhYmxlIGRldGVybWluaXN0aWMgY29udHJvbHMsIHJlY29nbml6ZWQgdGhhdCBlbXBsb3llZSBwaGlzaGluZyB0cmFpbmluZyBpcyBub3QgdmVyaWZpYWJsZSB2aWEgdGhlIGF2YWlsYWJsZSBHQ1AgY29udHJvbHMsIGFuZCByZXR1cm5lZCB0aGUgZXhhY3QgcmVxdWlyZWQgJ1VOU1VQUE9SVEVEJyByZXNwb25zZSBmb3JtYXQgd2l0aCBhIGNsZWFyLCBjb25jaXNlIGV4cGxhbmF0aW9uLiIsICJydWJyaWNfdmVyZGljdHMiOiBudWxsLCAicmF3X291dHB1dCI6IG51bGwsICJlcnJvcl9tZXNzYWdlIjogbnVsbH19fV19XSwgInN1bW1hcnlfbWV0cmljcyI6IFt7Im1ldHJpY19uYW1lIjogImN1c3RvbV9yZXNwb25zZV9xdWFsaXR5IiwgIm51bV9jYXNlc190b3RhbCI6IDIsICJudW1fY2FzZXNfdmFsaWQiOiAyLCAibnVtX2Nhc2VzX2Vycm9yIjogMCwgIm1lYW5fc2NvcmUiOiA1LjAsICJzdGRldl9zY29yZSI6IDAuMCwgInBhc3NfcmF0ZSI6IG51bGx9XSwgIndpbl9yYXRlcyI6IG51bGwsICJldmFsdWF0aW9uX2RhdGFzZXQiOiBbeyJiaWdxdWVyeV9zb3VyY2UiOiBudWxsLCAiZ2NzX3NvdXJjZSI6IG51bGwsICJldmFsX2Nhc2VzIjogW3sicHJvbXB0IjogeyJwYXJ0cyI6IFt7Im1lZGlhX3Jlc29sdXRpb24iOiBudWxsLCAiY29kZV9leGVjdXRpb25fcmVzdWx0IjogbnVsbCwgImV4ZWN1dGFibGVfY29kZSI6IG51bGwsICJmaWxlX2RhdGEiOiBudWxsLCAiZnVuY3Rpb25fY2FsbCI6IG51bGwsICJmdW5jdGlvbl9yZXNwb25zZSI6IG51bGwsICJpbmxpbmVfZGF0YSI6IG51bGwsICJ0ZXh0IjogIklzIHNlbnNpdGl2ZSBjdXN0b21lciBzdG9yYWdlIGluYWNjZXNzaWJsZSBmcm9tIHRoZSBwdWJsaWMgaW50ZXJuZXQ/IiwgInRob3VnaHQiOiBudWxsLCAidGhvdWdodF9zaWduYXR1cmUiOiBudWxsLCAidmlkZW9fbWV0YWRhdGEiOiBudWxsLCAidG9vbF9jYWxsIjogbnVsbCwgInRvb2xfcmVzcG9uc2UiOiBudWxsLCAicGFydF9tZXRhZGF0YSI6IG51bGwsICJhdWRpb190cmFuc2NyaXB0aW9uIjogbnVsbH1dLCAicm9sZSI6ICJ1c2VyIn0sICJyZXNwb25zZXMiOiBbeyJyZXNwb25zZSI6IHsicGFydHMiOiBbeyJtZWRpYV9yZXNvbHV0aW9uIjogbnVsbCwgImNvZGVfZXhlY3V0aW9uX3Jlc3VsdCI6IG51bGwsICJleGVjdXRhYmxlX2NvZGUiOiBudWxsLCAiZmlsZV9kYXRhIjogbnVsbCwgImZ1bmN0aW9uX2NhbGwiOiBudWxsLCAiZnVuY3Rpb25fcmVzcG9uc2UiOiBudWxsLCAiaW5saW5lX2RhdGEiOiBudWxsLCAidGV4dCI6ICJHQ1BfU1RPUkFHRV9QVUJMSUNfQUNDRVNTOiBQdWJsaWMgYnVja2V0IElBTSBhbmQgYW5vbnltb3VzIGFjY2VzcyIsICJ0aG91Z2h0IjogbnVsbCwgInRob3VnaHRfc2lnbmF0dXJlIjogbnVsbCwgInZpZGVvX21ldGFkYXRhIjogbnVsbCwgInRvb2xfY2FsbCI6IG51bGwsICJ0b29sX3Jlc3BvbnNlIjogbnVsbCwgInBhcnRfbWV0YWRhdGEiOiBudWxsLCAiYXVkaW9fdHJhbnNjcmlwdGlvbiI6IG51bGx9XSwgInJvbGUiOiAibW9kZWwifX1dLCAicmVmZXJlbmNlIjogbnVsbCwgInN5c3RlbV9pbnN0cnVjdGlvbiI6IG51bGwsICJjb252ZXJzYXRpb25faGlzdG9yeSI6IG51bGwsICJydWJyaWNfZ3JvdXBzIjogbnVsbCwgImV2YWxfY2FzZV9pZCI6ICJzdG9yYWdlX3B1YmxpY19hY2Nlc3NfbWFwcGluZyIsICJpbnRlcm1lZGlhdGVfZXZlbnRzIjogbnVsbCwgImFnZW50X2luZm8iOiBudWxsLCAiYWdlbnRfZGF0YSI6IHsiYWdlbnRzIjogeyJ0cnVzdGZpeF9yZXZpZXdfb3JjaGVzdHJhdG9yIjogeyJhZ2VudF9pZCI6ICJ0cnVzdGZpeF9yZXZpZXdfb3JjaGVzdHJhdG9yIiwgImFnZW50X3R5cGUiOiAiTGxtQWdlbnQiLCAiZGVzY3JpcHRpb24iOiAiTWFwcyBzZWN1cml0eSByZXF1aXJlbWVudHMgdG8gc3VwcG9ydGVkIGRldGVybWluaXN0aWMgVHJ1c3RGaXggY29udHJvbHMuIiwgImluc3RydWN0aW9uIjogIllvdSBpbnRlcnByZXQgc2VjdXJpdHkgcXVlc3Rpb25uYWlyZSByZXF1aXJlbWVudHMuIFNlbGVjdCBhIGNvbnRyb2wgb25seSBmcm9tIHN1cHBvcnRlZF9jb250cm9scy4gTmV2ZXIgY2xhaW0gdGhhdCBhIHJlcXVpcmVtZW50IHBhc3NlcyBhbmQgbmV2ZXIgbWFudWZhY3R1cmUgZXZpZGVuY2UuIElmIG5vIHN1cHBvcnRlZCBjb250cm9sIGNhbiB2ZXJpZnkgdGhlIHJlcXVpcmVtZW50LCByZXR1cm4gVU5TVVBQT1JURUQgYW5kIGV4cGxhaW4gdGhhdCBUcnVzdEZpeCBjYW5ub3QgdmVyaWZ5IGl0IGZyb20gdGhlIGNvbm5lY3RlZCBHb29nbGUgQ2xvdWQgZW52aXJvbm1lbnQuIEtlZXAgZGVjaXNpb24gc3VtbWFyaWVzIGNvbmNpc2U7IG5ldmVyIGV4cG9zZSBjaGFpbi1vZi10aG91Z2h0LiIsICJ0b29scyI6IFt7InJldHJpZXZhbCI6IG51bGwsICJjb21wdXRlcl91c2UiOiBudWxsLCAiZmlsZV9zZWFyY2giOiBudWxsLCAiZ29vZ2xlX3NlYXJjaCI6IG51bGwsICJnb29nbGVfbWFwcyI6IG51bGwsICJjb2RlX2V4ZWN1dGlvbiI6IG51bGwsICJlbnRlcnByaXNlX3dlYl9zZWFyY2giOiBudWxsLCAiZnVuY3Rpb25fZGVjbGFyYXRpb25zIjogW3siZGVzY3JpcHRpb24iOiAiUmV0dXJuIG9ubHkgdGhlIGRldGVybWluaXN0aWMgY29udHJvbHMgYXZhaWxhYmxlIHRvIHRoZSBvcmNoZXN0cmF0b3IuIiwgIm5hbWUiOiAic3VwcG9ydGVkX2NvbnRyb2xzIiwgInBhcmFtZXRlcnMiOiBudWxsLCAicGFyYW1ldGVyc19qc29uX3NjaGVtYSI6IG51bGwsICJyZXNwb25zZSI6IG51bGwsICJyZXNwb25zZV9qc29uX3NjaGVtYSI6IHsiYWRkaXRpb25hbFByb3BlcnRpZXMiOiB7InR5cGUiOiAic3RyaW5nIn0sICJ0eXBlIjogIm9iamVjdCJ9LCAiYmVoYXZpb3IiOiBudWxsfV0sICJnb29nbGVfc2VhcmNoX3JldHJpZXZhbCI6IG51bGwsICJwYXJhbGxlbF9haV9zZWFyY2giOiBudWxsLCAidXJsX2NvbnRleHQiOiBudWxsLCAibWNwX3NlcnZlcnMiOiBudWxsLCAiZXhhX2FpX3NlYXJjaCI6IG51bGx9XSwgInN1Yl9hZ2VudHMiOiBbXX19LCAidHVybnMiOiBbeyJ0dXJuX2luZGV4IjogMCwgInR1cm5faWQiOiAidHVybl8wIiwgImV2ZW50cyI6IFt7ImF1dGhvciI6ICJ0cnVzdGZpeF9yZXZpZXdfb3JjaGVzdHJhdG9yIiwgImNvbnRlbnQiOiB7InBhcnRzIjogW3sibWVkaWFfcmVzb2x1dGlvbiI6IG51bGwsICJjb2RlX2V4ZWN1dGlvbl9yZXN1bHQiOiBudWxsLCAiZXhlY3V0YWJsZV9jb2RlIjogbnVsbCwgImZpbGVfZGF0YSI6IG51bGwsICJmdW5jdGlvbl9jYWxsIjogeyJpZCI6ICJhZGstOGFiZGZiMDgtNTk3MC00NDZmLTgxYWMtNTU3MjlhZjE4ZTY4IiwgImFyZ3MiOiB7fSwgIm5hbWUiOiAic3VwcG9ydGVkX2NvbnRyb2xzIiwgInBhcnRpYWxfYXJncyI6IG51bGwsICJ3aWxsX2NvbnRpbnVlIjogbnVsbH0sICJmdW5jdGlvbl9yZXNwb25zZSI6IG51bGwsICJpbmxpbmVfZGF0YSI6IG51bGwsICJ0ZXh0IjogbnVsbCwgInRob3VnaHQiOiBudWxsLCAidGhvdWdodF9zaWduYXR1cmUiOiBudWxsLCAidmlkZW9fbWV0YWRhdGEiOiBudWxsLCAidG9vbF9jYWxsIjogbnVsbCwgInRvb2xfcmVzcG9uc2UiOiBudWxsLCAicGFydF9tZXRhZGF0YSI6IG51bGwsICJhdWRpb190cmFuc2NyaXB0aW9uIjogbnVsbH1dLCAicm9sZSI6ICJtb2RlbCJ9LCAiZXZlbnRfdGltZSI6ICIyMDI2LTA4LTI1VDA2OjQ5OjExLjUwNzY5OFoiLCAic3RhdGVfZGVsdGEiOiBudWxsLCAiYWN0aXZlX3Rvb2xzIjogbnVsbH0sIHsiYXV0aG9yIjogInRydXN0Zml4X3Jldmlld19vcmNoZXN0cmF0b3IiLCAiY29udGVudCI6IHsicGFydHMiOiBbeyJtZWRpYV9yZXNvbHV0aW9uIjogbnVsbCwgImNvZGVfZXhlY3V0aW9uX3Jlc3VsdCI6IG51bGwsICJleGVjdXRhYmxlX2NvZGUiOiBudWxsLCAiZmlsZV9kYXRhIjogbnVsbCwgImZ1bmN0aW9uX2NhbGwiOiBudWxsLCAiZnVuY3Rpb25fcmVzcG9uc2UiOiB7IndpbGxfY29udGludWUiOiBudWxsLCAic2NoZWR1bGluZyI6IG51bGwsICJwYXJ0cyI6IG51bGwsICJpZCI6ICJhZGstOGFiZGZiMDgtNTk3MC00NDZmLTgxYWMtNTU3MjlhZjE4ZTY4IiwgIm5hbWUiOiAic3VwcG9ydGVkX2NvbnRyb2xzIiwgInJlc3BvbnNlIjogeyJHQ1BfU1RPUkFHRV9QVUJMSUNfQUNDRVNTIjogIlB1YmxpYyBidWNrZXQgSUFNIGFuZCBhbm9ueW1vdXMgYWNjZXNzIiwgIkdDUF9SVU5fUFVCTElDX0lOVk9LRVIiOiAiQ2xvdWQgUnVuIHB1YmxpYyBpbnZva2VyIElBTSIsICJHQ1BfRklSRVdBTExfQURNSU5fRVhQT1NVUkUiOiAiSW50ZXJuZXQtZXhwb3NlZCBhZG1pbmlzdHJhdGl2ZSBwb3J0cyJ9fSwgImlubGluZV9kYXRhIjogbnVsbCwgInRleHQiOiBudWxsLCAidGhvdWdodCI6IG51bGwsICJ0aG91Z2h0X3NpZ25hdHVyZSI6IG51bGwsICJ2aWRlb19tZXRhZGF0YSI6IG51bGwsICJ0b29sX2NhbGwiOiBudWxsLCAidG9vbF9yZXNwb25zZSI6IG51bGwsICJwYXJ0X21ldGFkYXRhIjogbnVsbCwgImF1ZGlvX3RyYW5zY3JpcHRpb24iOiBudWxsfV0sICJyb2xlIjogInVzZXIifSwgImV2ZW50X3RpbWUiOiAiMjAyNi0wOC0yNVQwNjo0OToxNS4yMzAzNjdaIiwgInN0YXRlX2RlbHRhIjogbnVsbCwgImFjdGl2ZV90b29scyI6IG51bGx9LCB7ImF1dGhvciI6ICJ0cnVzdGZpeF9yZXZpZXdfb3JjaGVzdHJhdG9yIiwgImNvbnRlbnQiOiB7InBhcnRzIjogW3sibWVkaWFfcmVzb2x1dGlvbiI6IG51bGwsICJjb2RlX2V4ZWN1dGlvbl9yZXN1bHQiOiBudWxsLCAiZXhlY3V0YWJsZV9jb2RlIjogbnVsbCwgImZpbGVfZGF0YSI6IG51bGwsICJmdW5jdGlvbl9jYWxsIjogbnVsbCwgImZ1bmN0aW9uX3Jlc3BvbnNlIjogbnVsbCwgImlubGluZV9kYXRhIjogbnVsbCwgInRleHQiOiAiR0NQX1NUT1JBR0VfUFVCTElDX0FDQ0VTUzogUHVibGljIGJ1Y2tldCBJQU0gYW5kIGFub255bW91cyBhY2Nlc3MiLCAidGhvdWdodCI6IG51bGwsICJ0aG91Z2h0X3NpZ25hdHVyZSI6IG51bGwsICJ2aWRlb19tZXRhZGF0YSI6IG51bGwsICJ0b29sX2NhbGwiOiBudWxsLCAidG9vbF9yZXNwb25zZSI6IG51bGwsICJwYXJ0X21ldGFkYXRhIjogbnVsbCwgImF1ZGlvX3RyYW5zY3JpcHRpb24iOiBudWxsfV0sICJyb2xlIjogIm1vZGVsIn0sICJldmVudF90aW1lIjogIjIwMjYtMDgtMjVUMDY6NDk6MTUuMjM4MTEyWiIsICJzdGF0ZV9kZWx0YSI6IG51bGwsICJhY3RpdmVfdG9vbHMiOiBudWxsfV19XX0sICJ1c2VyX3NjZW5hcmlvIjogbnVsbCwgImludGVyYWN0aW9uc19kYXRhX3NvdXJjZSI6IG51bGx9LCB7InByb21wdCI6IHsicGFydHMiOiBbeyJtZWRpYV9yZXNvbHV0aW9uIjogbnVsbCwgImNvZGVfZXhlY3V0aW9uX3Jlc3VsdCI6IG51bGwsICJleGVjdXRhYmxlX2NvZGUiOiBudWxsLCAiZmlsZV9kYXRhIjogbnVsbCwgImZ1bmN0aW9uX2NhbGwiOiBudWxsLCAiZnVuY3Rpb25fcmVzcG9uc2UiOiBudWxsLCAiaW5saW5lX2RhdGEiOiBudWxsLCAidGV4dCI6ICJEbyBhbGwgZW1wbG95ZWVzIGNvbXBsZXRlIGFubnVhbCBwaGlzaGluZyB0cmFpbmluZz8iLCAidGhvdWdodCI6IG51bGwsICJ0aG91Z2h0X3NpZ25hdHVyZSI6IG51bGwsICJ2aWRlb19tZXRhZGF0YSI6IG51bGwsICJ0b29sX2NhbGwiOiBudWxsLCAidG9vbF9yZXNwb25zZSI6IG51bGwsICJwYXJ0X21ldGFkYXRhIjogbnVsbCwgImF1ZGlvX3RyYW5zY3JpcHRpb24iOiBudWxsfV0sICJyb2xlIjogInVzZXIifSwgInJlc3BvbnNlcyI6IFt7InJlc3BvbnNlIjogeyJwYXJ0cyI6IFt7Im1lZGlhX3Jlc29sdXRpb24iOiBudWxsLCAiY29kZV9leGVjdXRpb25fcmVzdWx0IjogbnVsbCwgImV4ZWN1dGFibGVfY29kZSI6IG51bGwsICJmaWxlX2RhdGEiOiBudWxsLCAiZnVuY3Rpb25fY2FsbCI6IG51bGwsICJmdW5jdGlvbl9yZXNwb25zZSI6IG51bGwsICJpbmxpbmVfZGF0YSI6IG51bGwsICJ0ZXh0IjogIlVOU1VQUE9SVEVELiBUcnVzdEZpeCBjYW5ub3QgdmVyaWZ5IGlmIGFsbCBlbXBsb3llZXMgY29tcGxldGUgYW5udWFsIHBoaXNoaW5nIHRyYWluaW5nIGZyb20gdGhlIGNvbm5lY3RlZCBHb29nbGUgQ2xvdWQgZW52aXJvbm1lbnQsIGFzIHRoZSBhdmFpbGFibGUgY29udHJvbHMgYXJlIGZvY3VzZWQgb24gR0NQIHJlc291cmNlIGNvbmZpZ3VyYXRpb25zIChmaXJld2FsbCBleHBvc3VyZSwgQ2xvdWQgUnVuIElBTSwgYW5kIFN0b3JhZ2UgYnVja2V0IGFjY2VzcykuIiwgInRob3VnaHQiOiBudWxsLCAidGhvdWdodF9zaWduYXR1cmUiOiBudWxsLCAidmlkZW9fbWV0YWRhdGEiOiBudWxsLCAidG9vbF9jYWxsIjogbnVsbCwgInRvb2xfcmVzcG9uc2UiOiBudWxsLCAicGFydF9tZXRhZGF0YSI6IG51bGwsICJhdWRpb190cmFuc2NyaXB0aW9uIjogbnVsbH1dLCAicm9sZSI6ICJtb2RlbCJ9fV0sICJyZWZlcmVuY2UiOiBudWxsLCAic3lzdGVtX2luc3RydWN0aW9uIjogbnVsbCwgImNvbnZlcnNhdGlvbl9oaXN0b3J5IjogbnVsbCwgInJ1YnJpY19ncm91cHMiOiBudWxsLCAiZXZhbF9jYXNlX2lkIjogInVuc3VwcG9ydGVkX3BoaXNoaW5nX3RyYWluaW5nIiwgImludGVybWVkaWF0ZV9ldmVudHMiOiBudWxsLCAiYWdlbnRfaW5mbyI6IG51bGwsICJhZ2VudF9kYXRhIjogeyJhZ2VudHMiOiB7InRydXN0Zml4X3Jldmlld19vcmNoZXN0cmF0b3IiOiB7ImFnZW50X2lkIjogInRydXN0Zml4X3Jldmlld19vcmNoZXN0cmF0b3IiLCAiYWdlbnRfdHlwZSI6ICJMbG1BZ2VudCIsICJkZXNjcmlwdGlvbiI6ICJNYXBzIHNlY3VyaXR5IHJlcXVpcmVtZW50cyB0byBzdXBwb3J0ZWQgZGV0ZXJtaW5pc3RpYyBUcnVzdEZpeCBjb250cm9scy4iLCAiaW5zdHJ1Y3Rpb24iOiAiWW91IGludGVycHJldCBzZWN1cml0eSBxdWVzdGlvbm5haXJlIHJlcXVpcmVtZW50cy4gU2VsZWN0IGEgY29udHJvbCBvbmx5IGZyb20gc3VwcG9ydGVkX2NvbnRyb2xzLiBOZXZlciBjbGFpbSB0aGF0IGEgcmVxdWlyZW1lbnQgcGFzc2VzIGFuZCBuZXZlciBtYW51ZmFjdHVyZSBldmlkZW5jZS4gSWYgbm8gc3VwcG9ydGVkIGNvbnRyb2wgY2FuIHZlcmlmeSB0aGUgcmVxdWlyZW1lbnQsIHJldHVybiBVTlNVUFBPUlRFRCBhbmQgZXhwbGFpbiB0aGF0IFRydXN0Rml4IGNhbm5vdCB2ZXJpZnkgaXQgZnJvbSB0aGUgY29ubmVjdGVkIEdvb2dsZSBDbG91ZCBlbnZpcm9ubWVudC4gS2VlcCBkZWNpc2lvbiBzdW1tYXJpZXMgY29uY2lzZTsgbmV2ZXIgZXhwb3NlIGNoYWluLW9mLXRob3VnaHQuIiwgInRvb2xzIjogW3sicmV0cmlldmFsIjogbnVsbCwgImNvbXB1dGVyX3VzZSI6IG51bGwsICJmaWxlX3NlYXJjaCI6IG51bGwsICJnb29nbGVfc2VhcmNoIjogbnVsbCwgImdvb2dsZV9tYXBzIjogbnVsbCwgImNvZGVfZXhlY3V0aW9uIjogbnVsbCwgImVudGVycHJpc2Vfd2ViX3NlYXJjaCI6IG51bGwsICJmdW5jdGlvbl9kZWNsYXJhdGlvbnMiOiBbeyJkZXNjcmlwdGlvbiI6ICJSZXR1cm4gb25seSB0aGUgZGV0ZXJtaW5pc3RpYyBjb250cm9scyBhdmFpbGFibGUgdG8gdGhlIG9yY2hlc3RyYXRvci4iLCAibmFtZSI6ICJzdXBwb3J0ZWRfY29udHJvbHMiLCAicGFyYW1ldGVycyI6IG51bGwsICJwYXJhbWV0ZXJzX2pzb25fc2NoZW1hIjogbnVsbCwgInJlc3BvbnNlIjogbnVsbCwgInJlc3BvbnNlX2pzb25fc2NoZW1hIjogeyJhZGRpdGlvbmFsUHJvcGVydGllcyI6IHsidHlwZSI6ICJzdHJpbmcifSwgInR5cGUiOiAib2JqZWN0In0sICJiZWhhdmlvciI6IG51bGx9XSwgImdvb2dsZV9zZWFyY2hfcmV0cmlldmFsIjogbnVsbCwgInBhcmFsbGVsX2FpX3NlYXJjaCI6IG51bGwsICJ1cmxfY29udGV4dCI6IG51bGwsICJtY3Bfc2VydmVycyI6IG51bGwsICJleGFfYWlfc2VhcmNoIjogbnVsbH1dLCAic3ViX2FnZW50cyI6IFtdfX0sICJ0dXJucyI6IFt7InR1cm5faW5kZXgiOiAwLCAidHVybl9pZCI6ICJ0dXJuXzAiLCAiZXZlbnRzIjogW3siYXV0aG9yIjogInRydXN0Zml4X3Jldmlld19vcmNoZXN0cmF0b3IiLCAiY29udGVudCI6IHsicGFydHMiOiBbeyJtZWRpYV9yZXNvbHV0aW9uIjogbnVsbCwgImNvZGVfZXhlY3V0aW9uX3Jlc3VsdCI6IG51bGwsICJleGVjdXRhYmxlX2NvZGUiOiBudWxsLCAiZmlsZV9kYXRhIjogbnVsbCwgImZ1bmN0aW9uX2NhbGwiOiB7ImlkIjogImFkay02NzZiNzJhYi0yYWYyLTQzNDMtODdiYS1lZDdiYjY1Njc5NzYiLCAiYXJncyI6IHt9LCAibmFtZSI6ICJzdXBwb3J0ZWRfY29udHJvbHMiLCAicGFydGlhbF9hcmdzIjogbnVsbCwgIndpbGxfY29udGludWUiOiBudWxsfSwgImZ1bmN0aW9uX3Jlc3BvbnNlIjogbnVsbCwgImlubGluZV9kYXRhIjogbnVsbCwgInRleHQiOiBudWxsLCAidGhvdWdodCI6IG51bGwsICJ0aG91Z2h0X3NpZ25hdHVyZSI6IG51bGwsICJ2aWRlb19tZXRhZGF0YSI6IG51bGwsICJ0b29sX2NhbGwiOiBudWxsLCAidG9vbF9yZXNwb25zZSI6IG51bGwsICJwYXJ0X21ldGFkYXRhIjogbnVsbCwgImF1ZGlvX3RyYW5zY3JpcHRpb24iOiBudWxsfV0sICJyb2xlIjogIm1vZGVsIn0sICJldmVudF90aW1lIjogIjIwMjYtMDgtMjVUMDY6NDk6MTIuNzE2MzkxWiIsICJzdGF0ZV9kZWx0YSI6IG51bGwsICJhY3RpdmVfdG9vbHMiOiBudWxsfSwgeyJhdXRob3IiOiAidHJ1c3RmaXhfcmV2aWV3X29yY2hlc3RyYXRvciIsICJjb250ZW50IjogeyJwYXJ0cyI6IFt7Im1lZGlhX3Jlc29sdXRpb24iOiBudWxsLCAiY29kZV9leGVjdXRpb25fcmVzdWx0IjogbnVsbCwgImV4ZWN1dGFibGVfY29kZSI6IG51bGwsICJmaWxlX2RhdGEiOiBudWxsLCAiZnVuY3Rpb25fY2FsbCI6IG51bGwsICJmdW5jdGlvbl9yZXNwb25zZSI6IHsid2lsbF9jb250aW51ZSI6IG51bGwsICJzY2hlZHVsaW5nIjogbnVsbCwgInBhcnRzIjogbnVsbCwgImlkIjogImFkay02NzZiNzJhYi0yYWYyLTQzNDMtODdiYS1lZDdiYjY1Njc5NzYiLCAibmFtZSI6ICJzdXBwb3J0ZWRfY29udHJvbHMiLCAicmVzcG9uc2UiOiB7IkdDUF9TVE9SQUdFX1BVQkxJQ19BQ0NFU1MiOiAiUHVibGljIGJ1Y2tldCBJQU0gYW5kIGFub255bW91cyBhY2Nlc3MiLCAiR0NQX1JVTl9QVUJMSUNfSU5WT0tFUiI6ICJDbG91ZCBSdW4gcHVibGljIGludm9rZXIgSUFNIiwgIkdDUF9GSVJFV0FMTF9BRE1JTl9FWFBPU1VSRSI6ICJJbnRlcm5ldC1leHBvc2VkIGFkbWluaXN0cmF0aXZlIHBvcnRzIn19LCAiaW5saW5lX2RhdGEiOiBudWxsLCAidGV4dCI6IG51bGwsICJ0aG91Z2h0IjogbnVsbCwgInRob3VnaHRfc2lnbmF0dXJlIjogbnVsbCwgInZpZGVvX21ldGFkYXRhIjogbnVsbCwgInRvb2xfY2FsbCI6IG51bGwsICJ0b29sX3Jlc3BvbnNlIjogbnVsbCwgInBhcnRfbWV0YWRhdGEiOiBudWxsLCAiYXVkaW9fdHJhbnNjcmlwdGlvbiI6IG51bGx9XSwgInJvbGUiOiAidXNlciJ9LCAiZXZlbnRfdGltZSI6ICIyMDI2LTA4LTI1VDA2OjQ5OjE1LjIzMDM2N1oiLCAic3RhdGVfZGVsdGEiOiBudWxsLCAiYWN0aXZlX3Rvb2xzIjogbnVsbH0sIHsiYXV0aG9yIjogInRydXN0Zml4X3Jldmlld19vcmNoZXN0cmF0b3IiLCAiY29udGVudCI6IHsicGFydHMiOiBbeyJtZWRpYV9yZXNvbHV0aW9uIjogbnVsbCwgImNvZGVfZXhlY3V0aW9uX3Jlc3VsdCI6IG51bGwsICJleGVjdXRhYmxlX2NvZGUiOiBudWxsLCAiZmlsZV9kYXRhIjogbnVsbCwgImZ1bmN0aW9uX2NhbGwiOiBudWxsLCAiZnVuY3Rpb25fcmVzcG9uc2UiOiBudWxsLCAiaW5saW5lX2RhdGEiOiBudWxsLCAidGV4dCI6ICJVTlNVUFBPUlRFRC4gVHJ1c3RGaXggY2Fubm90IHZlcmlmeSBpZiBhbGwgZW1wbG95ZWVzIGNvbXBsZXRlIGFubnVhbCBwaGlzaGluZyB0cmFpbmluZyBmcm9tIHRoZSBjb25uZWN0ZWQgR29vZ2xlIENsb3VkIGVudmlyb25tZW50LCBhcyB0aGUgYXZhaWxhYmxlIGNvbnRyb2xzIGFyZSBmb2N1c2VkIG9uIEdDUCByZXNvdXJjZSBjb25maWd1cmF0aW9ucyAoZmlyZXdhbGwgZXhwb3N1cmUsIENsb3VkIFJ1biBJQU0sIGFuZCBTdG9yYWdlIGJ1Y2tldCBhY2Nlc3MpLiIsICJ0aG91Z2h0IjogbnVsbCwgInRob3VnaHRfc2lnbmF0dXJlIjogbnVsbCwgInZpZGVvX21ldGFkYXRhIjogbnVsbCwgInRvb2xfY2FsbCI6IG51bGwsICJ0b29sX3Jlc3BvbnNlIjogbnVsbCwgInBhcnRfbWV0YWRhdGEiOiBudWxsLCAiYXVkaW9fdHJhbnNjcmlwdGlvbiI6IG51bGx9XSwgInJvbGUiOiAibW9kZWwifSwgImV2ZW50X3RpbWUiOiAiMjAyNi0wOC0yNVQwNjo0OToxNS4yNDQxMDhaIiwgInN0YXRlX2RlbHRhIjogbnVsbCwgImFjdGl2ZV90b29scyI6IG51bGx9XX1dfSwgInVzZXJfc2NlbmFyaW8iOiBudWxsLCAiaW50ZXJhY3Rpb25zX2RhdGFfc291cmNlIjogbnVsbH1dLCAiZXZhbF9kYXRhc2V0X2RmIjogbnVsbCwgImNhbmRpZGF0ZV9uYW1lIjogbnVsbH1dLCAibWV0YWRhdGEiOiB7ImNhbmRpZGF0ZV9uYW1lcyI6IFsiY2FuZGlkYXRlXzEiXSwgImRhdGFzZXRfbmFtZSI6IG51bGwsICJkYXRhc2V0X2lkIjogbnVsbCwgImNyZWF0aW9uX3RpbWVzdGFtcCI6ICIyMDI2LTA4LTI1VDA2OjQ5OjI0LjQzMTAwOFoiLCAiZGF0YXNldCI6IFt7InByb21wdF9kaXNwbGF5X3RleHQiOiAiSXMgc2Vuc2l0aXZlIGN1c3RvbWVyIHN0b3JhZ2UgaW5hY2Nlc3NpYmxlIGZyb20gdGhlIHB1YmxpYyBpbnRlcm5ldD8iLCAicHJvbXB0X3Jhd19qc29uIjogIntcbiAgXCJwYXJ0c1wiOiBbXG4gICAge1xuICAgICAgXCJ0ZXh0XCI6IFwiSXMgc2Vuc2l0aXZlIGN1c3RvbWVyIHN0b3JhZ2UgaW5hY2Nlc3NpYmxlIGZyb20gdGhlIHB1YmxpYyBpbnRlcm5ldD9cIlxuICAgIH1cbiAgXSxcbiAgXCJyb2xlXCI6IFwidXNlclwiXG59IiwgInJlZmVyZW5jZSI6ICIiLCAicmVmZXJlbmNlX3Jhd19qc29uIjogIiIsICJyZXNwb25zZV9kaXNwbGF5X3RleHQiOiAiR0NQX1NUT1JBR0VfUFVCTElDX0FDQ0VTUzogUHVibGljIGJ1Y2tldCBJQU0gYW5kIGFub255bW91cyBhY2Nlc3MiLCAicmVzcG9uc2VfcmF3X2pzb24iOiAie1xuICBcInBhcnRzXCI6IFtcbiAgICB7XG4gICAgICBcInRleHRcIjogXCJHQ1BfU1RPUkFHRV9QVUJMSUNfQUNDRVNTOiBQdWJsaWMgYnVja2V0IElBTSBhbmQgYW5vbnltb3VzIGFjY2Vzc1wiXG4gICAgfVxuICBdLFxuICBcInJvbGVcIjogXCJtb2RlbFwiXG59IiwgImludGVybWVkaWF0ZV9ldmVudHMiOiBudWxsLCAiYWdlbnRfZGF0YSI6ICJ7XCJhZ2VudHNcIjoge1widHJ1c3RmaXhfcmV2aWV3X29yY2hlc3RyYXRvclwiOiB7XCJhZ2VudF9pZFwiOiBcInRydXN0Zml4X3Jldmlld19vcmNoZXN0cmF0b3JcIiwgXCJhZ2VudF90eXBlXCI6IFwiTGxtQWdlbnRcIiwgXCJkZXNjcmlwdGlvblwiOiBcIk1hcHMgc2VjdXJpdHkgcmVxdWlyZW1lbnRzIHRvIHN1cHBvcnRlZCBkZXRlcm1pbmlzdGljIFRydXN0Rml4IGNvbnRyb2xzLlwiLCBcImluc3RydWN0aW9uXCI6IFwiWW91IGludGVycHJldCBzZWN1cml0eSBxdWVzdGlvbm5haXJlIHJlcXVpcmVtZW50cy4gU2VsZWN0IGEgY29udHJvbCBvbmx5IGZyb20gc3VwcG9ydGVkX2NvbnRyb2xzLiBOZXZlciBjbGFpbSB0aGF0IGEgcmVxdWlyZW1lbnQgcGFzc2VzIGFuZCBuZXZlciBtYW51ZmFjdHVyZSBldmlkZW5jZS4gSWYgbm8gc3VwcG9ydGVkIGNvbnRyb2wgY2FuIHZlcmlmeSB0aGUgcmVxdWlyZW1lbnQsIHJldHVybiBVTlNVUFBPUlRFRCBhbmQgZXhwbGFpbiB0aGF0IFRydXN0Rml4IGNhbm5vdCB2ZXJpZnkgaXQgZnJvbSB0aGUgY29ubmVjdGVkIEdvb2dsZSBDbG91ZCBlbnZpcm9ubWVudC4gS2VlcCBkZWNpc2lvbiBzdW1tYXJpZXMgY29uY2lzZTsgbmV2ZXIgZXhwb3NlIGNoYWluLW9mLXRob3VnaHQuXCIsIFwidG9vbHNcIjogW3tcImZ1bmN0aW9uX2RlY2xhcmF0aW9uc1wiOiBbe1wiZGVzY3JpcHRpb25cIjogXCJSZXR1cm4gb25seSB0aGUgZGV0ZXJtaW5pc3RpYyBjb250cm9scyBhdmFpbGFibGUgdG8gdGhlIG9yY2hlc3RyYXRvci5cIiwgXCJuYW1lXCI6IFwic3VwcG9ydGVkX2NvbnRyb2xzXCIsIFwicmVzcG9uc2VfanNvbl9zY2hlbWFcIjoge1wiYWRkaXRpb25hbFByb3BlcnRpZXNcIjoge1widHlwZVwiOiBcInN0cmluZ1wifSwgXCJ0eXBlXCI6IFwib2JqZWN0XCJ9fV19XSwgXCJzdWJfYWdlbnRzXCI6IFtdfX0sIFwidHVybnNcIjogW3tcInR1cm5faW5kZXhcIjogMCwgXCJ0dXJuX2lkXCI6IFwidHVybl8wXCIsIFwiZXZlbnRzXCI6IFt7XCJhdXRob3JcIjogXCJ0cnVzdGZpeF9yZXZpZXdfb3JjaGVzdHJhdG9yXCIsIFwiY29udGVudFwiOiB7XCJwYXJ0c1wiOiBbe1wiZnVuY3Rpb25fY2FsbFwiOiB7XCJpZFwiOiBcImFkay04YWJkZmIwOC01OTcwLTQ0NmYtODFhYy01NTcyOWFmMThlNjhcIiwgXCJhcmdzXCI6IHt9LCBcIm5hbWVcIjogXCJzdXBwb3J0ZWRfY29udHJvbHNcIn19XSwgXCJyb2xlXCI6IFwibW9kZWxcIn0sIFwiZXZlbnRfdGltZVwiOiBcIjIwMjYtMDgtMjVUMDY6NDk6MTEuNTA3Njk4WlwifSwge1wiYXV0aG9yXCI6IFwidHJ1c3RmaXhfcmV2aWV3X29yY2hlc3RyYXRvclwiLCBcImNvbnRlbnRcIjoge1wicGFydHNcIjogW3tcImZ1bmN0aW9uX3Jlc3BvbnNlXCI6IHtcImlkXCI6IFwiYWRrLThhYmRmYjA4LTU5NzAtNDQ2Zi04MWFjLTU1NzI5YWYxOGU2OFwiLCBcIm5hbWVcIjogXCJzdXBwb3J0ZWRfY29udHJvbHNcIiwgXCJyZXNwb25zZVwiOiB7XCJHQ1BfU1RPUkFHRV9QVUJMSUNfQUNDRVNTXCI6IFwiUHVibGljIGJ1Y2tldCBJQU0gYW5kIGFub255bW91cyBhY2Nlc3NcIiwgXCJHQ1BfUlVOX1BVQkxJQ19JTlZPS0VSXCI6IFwiQ2xvdWQgUnVuIHB1YmxpYyBpbnZva2VyIElBTVwiLCBcIkdDUF9GSVJFV0FMTF9BRE1JTl9FWFBPU1VSRVwiOiBcIkludGVybmV0LWV4cG9zZWQgYWRtaW5pc3RyYXRpdmUgcG9ydHNcIn19fV0sIFwicm9sZVwiOiBcInVzZXJcIn0sIFwiZXZlbnRfdGltZVwiOiBcIjIwMjYtMDgtMjVUMDY6NDk6MTUuMjMwMzY3WlwifSwge1wiYXV0aG9yXCI6IFwidHJ1c3RmaXhfcmV2aWV3X29yY2hlc3RyYXRvclwiLCBcImNvbnRlbnRcIjoge1wicGFydHNcIjogW3tcInRleHRcIjogXCJHQ1BfU1RPUkFHRV9QVUJMSUNfQUNDRVNTOiBQdWJsaWMgYnVja2V0IElBTSBhbmQgYW5vbnltb3VzIGFjY2Vzc1wifV0sIFwicm9sZVwiOiBcIm1vZGVsXCJ9LCBcImV2ZW50X3RpbWVcIjogXCIyMDI2LTA4LTI1VDA2OjQ5OjE1LjIzODExMlpcIn1dfV19In0sIHsicHJvbXB0X2Rpc3BsYXlfdGV4dCI6ICJEbyBhbGwgZW1wbG95ZWVzIGNvbXBsZXRlIGFubnVhbCBwaGlzaGluZyB0cmFpbmluZz8iLCAicHJvbXB0X3Jhd19qc29uIjogIntcbiAgXCJwYXJ0c1wiOiBbXG4gICAge1xuICAgICAgXCJ0ZXh0XCI6IFwiRG8gYWxsIGVtcGxveWVlcyBjb21wbGV0ZSBhbm51YWwgcGhpc2hpbmcgdHJhaW5pbmc/XCJcbiAgICB9XG4gIF0sXG4gIFwicm9sZVwiOiBcInVzZXJcIlxufSIsICJyZWZlcmVuY2UiOiAiIiwgInJlZmVyZW5jZV9yYXdfanNvbiI6ICIiLCAicmVzcG9uc2VfZGlzcGxheV90ZXh0IjogIlVOU1VQUE9SVEVELiBUcnVzdEZpeCBjYW5ub3QgdmVyaWZ5IGlmIGFsbCBlbXBsb3llZXMgY29tcGxldGUgYW5udWFsIHBoaXNoaW5nIHRyYWluaW5nIGZyb20gdGhlIGNvbm5lY3RlZCBHb29nbGUgQ2xvdWQgZW52aXJvbm1lbnQsIGFzIHRoZSBhdmFpbGFibGUgY29udHJvbHMgYXJlIGZvY3VzZWQgb24gR0NQIHJlc291cmNlIGNvbmZpZ3VyYXRpb25zIChmaXJld2FsbCBleHBvc3VyZSwgQ2xvdWQgUnVuIElBTSwgYW5kIFN0b3JhZ2UgYnVja2V0IGFjY2VzcykuIiwgInJlc3BvbnNlX3Jhd19qc29uIjogIntcbiAgXCJwYXJ0c1wiOiBbXG4gICAge1xuICAgICAgXCJ0ZXh0XCI6IFwiVU5TVVBQT1JURUQuIFRydXN0Rml4IGNhbm5vdCB2ZXJpZnkgaWYgYWxsIGVtcGxveWVlcyBjb21wbGV0ZSBhbm51YWwgcGhpc2hpbmcgdHJhaW5pbmcgZnJvbSB0aGUgY29ubmVjdGVkIEdvb2dsZSBDbG91ZCBlbnZpcm9ubWVudCwgYXMgdGhlIGF2YWlsYWJsZSBjb250cm9scyBhcmUgZm9jdXNlZCBvbiBHQ1AgcmVzb3VyY2UgY29uZmlndXJhdGlvbnMgKGZpcmV3YWxsIGV4cG9zdXJlLCBDbG91ZCBSdW4gSUFNLCBhbmQgU3RvcmFnZSBidWNrZXQgYWNjZXNzKS5cIlxuICAgIH1cbiAgXSxcbiAgXCJyb2xlXCI6IFwibW9kZWxcIlxufSIsICJpbnRlcm1lZGlhdGVfZXZlbnRzIjogbnVsbCwgImFnZW50X2RhdGEiOiAie1wiYWdlbnRzXCI6IHtcInRydXN0Zml4X3Jldmlld19vcmNoZXN0cmF0b3JcIjoge1wiYWdlbnRfaWRcIjogXCJ0cnVzdGZpeF9yZXZpZXdfb3JjaGVzdHJhdG9yXCIsIFwiYWdlbnRfdHlwZVwiOiBcIkxsbUFnZW50XCIsIFwiZGVzY3JpcHRpb25cIjogXCJNYXBzIHNlY3VyaXR5IHJlcXVpcmVtZW50cyB0byBzdXBwb3J0ZWQgZGV0ZXJtaW5pc3RpYyBUcnVzdEZpeCBjb250cm9scy5cIiwgXCJpbnN0cnVjdGlvblwiOiBcIllvdSBpbnRlcnByZXQgc2VjdXJpdHkgcXVlc3Rpb25uYWlyZSByZXF1aXJlbWVudHMuIFNlbGVjdCBhIGNvbnRyb2wgb25seSBmcm9tIHN1cHBvcnRlZF9jb250cm9scy4gTmV2ZXIgY2xhaW0gdGhhdCBhIHJlcXVpcmVtZW50IHBhc3NlcyBhbmQgbmV2ZXIgbWFudWZhY3R1cmUgZXZpZGVuY2UuIElmIG5vIHN1cHBvcnRlZCBjb250cm9sIGNhbiB2ZXJpZnkgdGhlIHJlcXVpcmVtZW50LCByZXR1cm4gVU5TVVBQT1JURUQgYW5kIGV4cGxhaW4gdGhhdCBUcnVzdEZpeCBjYW5ub3QgdmVyaWZ5IGl0IGZyb20gdGhlIGNvbm5lY3RlZCBHb29nbGUgQ2xvdWQgZW52aXJvbm1lbnQuIEtlZXAgZGVjaXNpb24gc3VtbWFyaWVzIGNvbmNpc2U7IG5ldmVyIGV4cG9zZSBjaGFpbi1vZi10aG91Z2h0LlwiLCBcInRvb2xzXCI6IFt7XCJmdW5jdGlvbl9kZWNsYXJhdGlvbnNcIjogW3tcImRlc2NyaXB0aW9uXCI6IFwiUmV0dXJuIG9ubHkgdGhlIGRldGVybWluaXN0aWMgY29udHJvbHMgYXZhaWxhYmxlIHRvIHRoZSBvcmNoZXN0cmF0b3IuXCIsIFwibmFtZVwiOiBcInN1cHBvcnRlZF9jb250cm9sc1wiLCBcInJlc3BvbnNlX2pzb25fc2NoZW1hXCI6IHtcImFkZGl0aW9uYWxQcm9wZXJ0aWVzXCI6IHtcInR5cGVcIjogXCJzdHJpbmdcIn0sIFwidHlwZVwiOiBcIm9iamVjdFwifX1dfV0sIFwic3ViX2FnZW50c1wiOiBbXX19LCBcInR1cm5zXCI6IFt7XCJ0dXJuX2luZGV4XCI6IDAsIFwidHVybl9pZFwiOiBcInR1cm5fMFwiLCBcImV2ZW50c1wiOiBbe1wiYXV0aG9yXCI6IFwidHJ1c3RmaXhfcmV2aWV3X29yY2hlc3RyYXRvclwiLCBcImNvbnRlbnRcIjoge1wicGFydHNcIjogW3tcImZ1bmN0aW9uX2NhbGxcIjoge1wiaWRcIjogXCJhZGstNjc2YjcyYWItMmFmMi00MzQzLTg3YmEtZWQ3YmI2NTY3OTc2XCIsIFwiYXJnc1wiOiB7fSwgXCJuYW1lXCI6IFwic3VwcG9ydGVkX2NvbnRyb2xzXCJ9fV0sIFwicm9sZVwiOiBcIm1vZGVsXCJ9LCBcImV2ZW50X3RpbWVcIjogXCIyMDI2LTA4LTI1VDA2OjQ5OjEyLjcxNjM5MVpcIn0sIHtcImF1dGhvclwiOiBcInRydXN0Zml4X3Jldmlld19vcmNoZXN0cmF0b3JcIiwgXCJjb250ZW50XCI6IHtcInBhcnRzXCI6IFt7XCJmdW5jdGlvbl9yZXNwb25zZVwiOiB7XCJpZFwiOiBcImFkay02NzZiNzJhYi0yYWYyLTQzNDMtODdiYS1lZDdiYjY1Njc5NzZcIiwgXCJuYW1lXCI6IFwic3VwcG9ydGVkX2NvbnRyb2xzXCIsIFwicmVzcG9uc2VcIjoge1wiR0NQX1NUT1JBR0VfUFVCTElDX0FDQ0VTU1wiOiBcIlB1YmxpYyBidWNrZXQgSUFNIGFuZCBhbm9ueW1vdXMgYWNjZXNzXCIsIFwiR0NQX1JVTl9QVUJMSUNfSU5WT0tFUlwiOiBcIkNsb3VkIFJ1biBwdWJsaWMgaW52b2tlciBJQU1cIiwgXCJHQ1BfRklSRVdBTExfQURNSU5fRVhQT1NVUkVcIjogXCJJbnRlcm5ldC1leHBvc2VkIGFkbWluaXN0cmF0aXZlIHBvcnRzXCJ9fX1dLCBcInJvbGVcIjogXCJ1c2VyXCJ9LCBcImV2ZW50X3RpbWVcIjogXCIyMDI2LTA4LTI1VDA2OjQ5OjE1LjIzMDM2N1pcIn0sIHtcImF1dGhvclwiOiBcInRydXN0Zml4X3Jldmlld19vcmNoZXN0cmF0b3JcIiwgXCJjb250ZW50XCI6IHtcInBhcnRzXCI6IFt7XCJ0ZXh0XCI6IFwiVU5TVVBQT1JURUQuIFRydXN0Rml4IGNhbm5vdCB2ZXJpZnkgaWYgYWxsIGVtcGxveWVlcyBjb21wbGV0ZSBhbm51YWwgcGhpc2hpbmcgdHJhaW5pbmcgZnJvbSB0aGUgY29ubmVjdGVkIEdvb2dsZSBDbG91ZCBlbnZpcm9ubWVudCwgYXMgdGhlIGF2YWlsYWJsZSBjb250cm9scyBhcmUgZm9jdXNlZCBvbiBHQ1AgcmVzb3VyY2UgY29uZmlndXJhdGlvbnMgKGZpcmV3YWxsIGV4cG9zdXJlLCBDbG91ZCBSdW4gSUFNLCBhbmQgU3RvcmFnZSBidWNrZXQgYWNjZXNzKS5cIn1dLCBcInJvbGVcIjogXCJtb2RlbFwifSwgXCJldmVudF90aW1lXCI6IFwiMjAyNi0wOC0yNVQwNjo0OToxNS4yNDQxMDhaXCJ9XX1dfSJ9XX0sICJhZ2VudF9pbmZvIjogbnVsbH0="), c => c.charCodeAt(0))));
+
+        function formatDictVals(obj) {
+            if (typeof obj === 'string') return obj;
+            if (obj === undefined || obj === null) return '';
+            if (typeof obj !== 'object') return String(obj);
+            if (Array.isArray(obj)) return JSON.stringify(obj);
+            return Object.entries(obj).map(([k,v]) => `${k}=${formatDictVals(v)}`).join(', ');
+        }
+
+        function formatToolDeclarations(toolDeclarations) {
+            if (!toolDeclarations) return '';
+            let functions = [];
+            const builtins = [];
+
+            function collectFromTool(tool) {
+                if (!tool || typeof tool !== 'object') return;
+                if (Array.isArray(tool.function_declarations) && tool.function_declarations.length > 0) {
+                    functions = functions.concat(tool.function_declarations);
+                    return;
+                }
+                if (tool.name && tool.parameters) {
+                    functions.push(tool);
+                    return;
+                }
+                Object.keys(tool).forEach(k => {
+                    if (k === 'function_declarations') return;
+                    if (tool[k] === null || tool[k] === undefined) return;
+                    builtins.push(k);
+                });
+            }
+
+            if (Array.isArray(toolDeclarations)) {
+                toolDeclarations.forEach(collectFromTool);
+            } else if (typeof toolDeclarations === 'object') {
+                if (toolDeclarations.function_declarations) {
+                    functions = functions.concat(toolDeclarations.function_declarations);
+                } else {
+                    collectFromTool(toolDeclarations);
+                }
+            }
+
+            if (functions.length === 0 && builtins.length === 0) {
+                 return `<pre class="raw-json-container">${DOMPurify.sanitize(JSON.stringify(toolDeclarations, null, 2))}</pre>`;
+            }
+
+            let html = '<div class="tool-declarations-container">';
+            functions.forEach(func => {
+                html += '<div class="tool-declaration">';
+                const params = func.parameters && func.parameters.properties ? func.parameters.properties : {};
+                const requiredParams = func.parameters && func.parameters.required ? new Set(func.parameters.required) : new Set();
+                const paramStrings = Object.keys(params).map(p => `${DOMPurify.sanitize(p)}: ${DOMPurify.sanitize(params[p].type)}`).join(', ');
+                html += `<strong>${DOMPurify.sanitize(func.name)}</strong>(${paramStrings})<br>`;
+                if(func.description) html += `<em>${DOMPurify.sanitize(func.description)}</em><br>`;
+                if(Object.keys(params).length > 0) html += 'Parameters:<br>';
+                Object.keys(params).forEach(p => {
+                    html += `&nbsp;&nbsp;- ${DOMPurify.sanitize(p)}: ${DOMPurify.sanitize(params[p].description || '')} ${requiredParams.has(p) ? '<strong>(required)</strong>' : ''}<br>`;
+                });
+                html += '</div>';
+            });
+            builtins.forEach(name => {
+                html += `<div class="tool-declaration"><strong>${DOMPurify.sanitize(name)}</strong> <em>(built-in tool)</em></div>`;
+            });
+            html += '</div>';
+            return html;
+        }
+
+        function formatSystemTopology(agents) {
+            if (!agents || Object.keys(agents).length === 0) return '<p>No agent configurations provided.</p>';
+
+            const allSubAgents = new Set();
+            Object.values(agents).forEach(agent => {
+                if (agent.sub_agents) {
+                    agent.sub_agents.forEach(sa => allSubAgents.add(sa));
+                }
+            });
+
+            const roots = Object.keys(agents).filter(id => !allSubAgents.has(id));
+            if (roots.length === 0) {
+                roots.push(Object.keys(agents)[0]);
+            }
+
+            let html = '<div class="topology-container">';
+
+            const renderAgent = (agentId, visited) => {
+                if (visited.has(agentId)) return '';
+                visited.add(agentId);
+
+                const agent = agents[agentId];
+                if (!agent) return '';
+
+                let nodeHtml = `<div class="agent-node">`;
+                nodeHtml += `<div class="agent-node-header">
+                               <span style="font-size:16px;">🤖</span>
+                               <span class="agent-name">${DOMPurify.sanitize(agentId)}</span>
+                               ${agent.agent_type ? `<span class="agent-type">${DOMPurify.sanitize(agent.agent_type)}</span>` : ''}
+                             </div>`;
+
+                nodeHtml += `<div class="agent-node-body">`;
+                if (agent.description) {
+                    nodeHtml += `<div class="agent-desc"><strong>Role:</strong> ${DOMPurify.sanitize(agent.description)}</div>`;
+                }
+                if (agent.instruction) {
+                    nodeHtml += `<div class="agent-inst">
+                                    <details>
+                                        <summary>System Instructions</summary>
+                                        <div class="inst-content">${DOMPurify.sanitize(agent.instruction)}</div>
+                                    </details>
+                                 </div>`;
+                }
+                if (agent.tools && agent.tools.length > 0) {
+                    nodeHtml += `<div class="agent-tools">
+                                    <details>
+                                        <summary>Tools (${agent.tools.length})</summary>
+                                        <div class="tools-content" style="padding:0; border:none; background:transparent;">
+                                            ${formatToolDeclarations(agent.tools)}
+                                        </div>
+                                    </details>
+                                 </div>`;
+                }
+
+                if (agent.sub_agents && agent.sub_agents.length > 0) {
+                    nodeHtml += `<div class="sub-agents-container">`;
+                    agent.sub_agents.forEach(sa => {
+                        nodeHtml += renderAgent(sa, new Set(visited));
+                    });
+                    nodeHtml += `</div>`;
+                }
+
+                nodeHtml += `</div></div>`;
+                return nodeHtml;
+            };
+
+            roots.forEach(rootId => {
+                html += renderAgent(rootId, new Set());
+            });
+
+            html += '</div>';
+            return html;
+        }
+
+        function formatAgentData(agentData) {
+            let data = agentData;
+            if (typeof data === 'string') {
+                try { data = JSON.parse(data); } catch(e) { return ''; }
+            }
+            if (!data || !data.turns) return '';
+
+            let html = '<div class="agent-timeline">';
+            data.turns.forEach((turn, idx) => {
+                const tIndex = turn.turn_index !== undefined ? turn.turn_index : (idx + 1);
+                const tId = turn.turn_id ? DOMPurify.sanitize(String(turn.turn_id)) : `turn-${String(tIndex).padStart(3, '0')}`;
+
+                html += `<details open class="turn-details">`;
+                html += `<summary class="turn-summary"><div class="turn-header"><span class="turn-badge">TURN ${tIndex} <span class="turn-divider">|</span> ID: ${tId}</span></div></summary>`;
+
+                if (turn.events) {
+                    turn.events.forEach(event => {
+                        const role = (event.content && event.content.role) ? event.content.role.toLowerCase() : 'model';
+                        const author = event.author ? event.author : role;
+
+                        let iconClass = 'model';
+                        if (role === 'user') iconClass = 'user';
+                        if (role === 'tool') iconClass = 'tool';
+
+                        let svgIcon = '';
+                        if (iconClass === 'user') {
+                            svgIcon = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>`;
+                        } else if (iconClass === 'tool') {
+                            svgIcon = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>`;
+                        } else {
+                            svgIcon = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="10" rx="2"></rect><circle cx="12" cy="5" r="2"></circle><path d="M12 7v4"></path><line x1="8" y1="16" x2="8" y2="16"></line><line x1="16" y1="16" x2="16" y2="16"></line></svg>`;
+                        }
+
+                        html += `<div class="timeline-item">
+                                    <div class="timeline-icon ${iconClass}">${svgIcon}</div>
+                                    <div class="timeline-content">
+                                        <div class="event-header">
+                                            <span class="event-author ${iconClass}">${DOMPurify.sanitize(author)}</span>
+                                            <span class="event-role">${DOMPurify.sanitize(role)}</span>
+                                        </div>
+                                        <div class="event-body">`;
+
+                        if (event.content && event.content.parts) {
+                            event.content.parts.forEach(part => {
+                                if (part.text) {
+                                    html += `<div>${DOMPurify.sanitize(marked.parse(String(part.text)))}</div>`;
+                                } else if (part.function_call) {
+                                    const fnName = part.function_call.name;
+                                    const fnArgs = JSON.stringify(part.function_call.args, null, 2);
+                                    html += `<div class="function-call-title">&gt;_ Function Call: ${DOMPurify.sanitize(fnName)}</div>
+                                             <pre class="dark-code-block">${DOMPurify.sanitize(fnArgs)}</pre>`;
+                                } else if (part.function_response) {
+                                    const fnName = part.function_response.name;
+                                    let fnRes = part.function_response.response;
+                                    if(typeof fnRes === 'object' && fnRes !== null && fnRes.result !== undefined) {
+                                        fnRes = fnRes.result;
+                                    }
+                                    const fnResStr = JSON.stringify(fnRes, null, 2);
+                                    html += `<div class="function-response-title">
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                                                Tool Output: ${DOMPurify.sanitize(fnName)}
+                                             </div>
+                                             <pre class="dark-code-block">${DOMPurify.sanitize(fnResStr)}</pre>`;
+                                }
+                            });
+                        } else {
+                             html += `<div><pre class="raw-json-container">${DOMPurify.sanitize(JSON.stringify(event.content, null, 2))}</pre></div>`;
+                        }
+
+                        html += `</div></div></div>`;
+                    });
+                }
+                html += `</details>`;
+            });
+            html += '</div>';
+            return html;
+        }
+
+        function renderSummary(summaryMetrics) {
+            const container = document.getElementById('summary-section');
+            let content = '<h2>Summary Metrics</h2>';
+            if (!summaryMetrics || summaryMetrics.length === 0) { container.innerHTML = content + '<p>No summary metrics.</p>'; return; }
+            let table = '<table><thead><tr><th>Metric</th><th>Mean Score</th><th>Std. Dev.</th></tr></thead><tbody>';
+            summaryMetrics.forEach(m => {
+                table += `<tr><td>${m.metric_name || 'N/A'}</td><td>${m.mean_score != null ? m.mean_score.toFixed(4) : 'N/A'}</td><td>${m.stdev_score != null ? m.stdev_score.toFixed(4) : 'N/A'}</td></tr>`;
+            });
+            container.innerHTML = content + table + '</tbody></table>';
+        }
+
+        function renderDetails(caseResults, metadata) {
+            const container = document.getElementById('details-section');
+            container.innerHTML = '<h2>Detailed Results</h2>';
+            if (!caseResults || caseResults.length === 0) { container.innerHTML += '<p>No detailed results.</p>'; return; }
+
+            const datasetRows = metadata && metadata.dataset ? metadata.dataset : [];
+
+            caseResults.forEach((caseResult, i) => {
+                const original_case = datasetRows[caseResult.eval_case_index] || {};
+
+                const isValEmpty = (val) => !val || val === 'None' || val === 'nan' || String(val).trim() === '';
+
+                const promptText = isValEmpty(original_case.prompt_display_text) ? '' : original_case.prompt_display_text;
+                const promptJson = original_case.prompt_raw_json;
+                const reference = isValEmpty(original_case.reference) ? '' : original_case.reference;
+                const referenceJson = original_case.reference_raw_json;
+                const responseText = isValEmpty(original_case.response_display_text) ? '' : original_case.response_display_text;
+                const responseJson = original_case.response_raw_json;
+
+                let agentData = original_case.agent_data;
+                if (typeof agentData === 'string') {
+                    try { agentData = JSON.parse(agentData); } catch(e) {}
+                }
+                const isAgentEval = !!agentData;
+
+                let isRefAgentData = false;
+                let refAgentDataObj = null;
+                if (reference) {
+                    try {
+                        let parsed = typeof reference === 'string' ? JSON.parse(reference) : reference;
+                        if (parsed && parsed.turns) {
+                            isRefAgentData = true;
+                            refAgentDataObj = parsed;
+                        }
+                    } catch(e) {}
+                }
+
+                let card = `<details open><summary style="font-size: 1.2em;">Case #${caseResult.eval_case_index != null ? caseResult.eval_case_index : i}</summary>`;
+
+                if (isAgentEval && agentData.agents && Object.keys(agentData.agents).length > 0) {
+                    card += `<details open class="system-topology-details">
+                                <summary>System Topology</summary>
+                                ${formatSystemTopology(agentData.agents)}
+                             </details>`;
+                }
+
+                if (promptText) {
+                    card += `<div class="prompt-container"><strong>Prompt:</strong><br>${DOMPurify.sanitize(marked.parse(String(promptText)))}</div>`;
+                }
+                if (promptJson && promptJson !== '""' && promptJson !== 'null' && promptJson !== '{}') {
+                    card += `<details class="raw-json-details"><summary>View Raw Prompt JSON</summary><pre class="raw-json-container">${DOMPurify.sanitize(promptJson)}</pre></details>`;
+                }
+
+                if (responseText) {
+                    const responseTitle = isAgentEval ? 'Final Response' : 'Candidate Response';
+                    card += `<div class="response-container"><h4>${responseTitle}</h4>${DOMPurify.sanitize(marked.parse(String(responseText)))}</div>`;
+                }
+                if (responseJson && responseJson !== '""' && responseJson !== 'null' && responseJson !== '{}') {
+                    card += `<details class="raw-json-details"><summary>View Raw Response JSON</summary><pre class="raw-json-container">${DOMPurify.sanitize(responseJson)}</pre></details>`;
+                }
+
+                let hasTrace = isAgentEval && agentData.turns;
+                let hasRef = !!reference;
+
+                if (hasTrace || hasRef) {
+                    card += `<div style="display: flex; gap: 1rem; margin-top: 16px;">`;
+
+                    if (hasTrace) {
+                        let traceContent = formatAgentData(agentData);
+                        card += `<div style="flex: 1; min-width: 0;">
+                                     <details open class="conversation-trace-details" style="margin: 0; height: 100%;">
+                                        <summary>Conversation Trace</summary>
+                                        <div style="font-size:13px; color:#5f6368; margin-bottom:12px;">Sequence of multi-agent events across turns</div>
+                                        <div class="agent-trace-container">${traceContent}</div>
+                                     </details>
+                                 </div>`;
+                    }
+
+                    if (hasRef) {
+                        card += `<div style="flex: 1; min-width: 0;">`;
+                        if (isRefAgentData) {
+                            let refTraceContent = formatAgentData(refAgentDataObj);
+                            card += `<details open class="conversation-trace-details" style="margin: 0; height: 100%;">
+                                        <summary>Reference</summary>
+                                        <div style="font-size:13px; color:#5f6368; margin-bottom:12px;">Sequence of multi-agent events across turns</div>
+                                        <div class="agent-trace-container">${refTraceContent}</div>
+                                     </details>`;
+                        } else {
+                            card += `<div class="reference-container" style="margin: 0; height: 100%;"><strong>Reference</strong><br>${DOMPurify.sanitize(marked.parse(String(reference)))}</div>`;
+                        }
+                        card += `</div>`;
+                    }
+                    card += `</div>`;
+                }
+
+                let metricTable = '<h3 style="margin-top:24px;">Evaluation Metrics</h3><div class="metrics-list">';
+                const candidateMetrics = (caseResult.response_candidate_results && caseResult.response_candidate_results[0] && caseResult.response_candidate_results[0].metric_results) || {};
+                Object.entries(candidateMetrics).forEach(([name, val]) => {
+                    let metricNameCell = `<strong>${name}</strong>`;
+                    let explanationHandled = false;
+                    let bubbles = '';
+
+                    if (name.startsWith('hallucination') && val.explanation) {
+                        try {
+                            const explanationData = typeof val.explanation === 'string' ? JSON.parse(val.explanation) : val.explanation;
+                            if (Array.isArray(explanationData) && explanationData.length > 0) {
+                                let sentenceGroups = [];
+                                if (explanationData[0].explanation && Array.isArray(explanationData[0].explanation)) {
+                                    explanationData.forEach(item => {
+                                        if(item.explanation && Array.isArray(item.explanation)) {
+                                            sentenceGroups.push(item.explanation);
+                                        }
+                                    });
+                                } else if (explanationData[0].sentence) {
+                                    sentenceGroups.push(explanationData);
+                                }
+
+                                if(sentenceGroups.length > 0) {
+                                    sentenceGroups.forEach(sentenceList => {
+                                        bubbles += '<div class="rubric-bubble-container" style="margin-top: 8px;">';
+                                        sentenceList.forEach(item => {
+                                            let sentence = item.sentence || 'N/A';
+                                            const label = item.label ? item.label.toLowerCase() : '';
+                                            const isPass = label === 'no_rad' || label === 'supported';
+                                            const verdictText = isPass ? '<span class="pass">Pass</span>' : '<span class="fail">Fail</span>';
+                                            if (isPass) {
+                                                sentence = `"${sentence}" is grounded`;
+                                            }
+                                            const rationale = item.rationale || 'N/A';
+                                            const itemJson = JSON.stringify(item, null, 2);
+                                            bubbles += `
+                                                <details class="rubric-details">
+                                                    <summary class="rubric-bubble">${verdictText}: ${DOMPurify.sanitize(sentence)}</summary>
+                                                    <div class="explanation" style="padding: 10px 0 0 20px;">${DOMPurify.sanitize(rationale)}</div>
+                                                    <pre class="raw-json-container">${DOMPurify.sanitize(itemJson)}</pre>
+                                                </details>`;
+                                        });
+                                        bubbles += '</div>';
+                                    });
+                                    explanationHandled = true;
+                                }
+                            }
+                        } catch (e) {
+                            console.error("Failed to parse hallucination explanation:", e);
+                        }
+                    } else if (name.startsWith('safety') && val.score != null) {
+                        try {
+                            bubbles += '<div class="rubric-bubble-container" style="margin-top: 8px;">';
+                            const verdictText = val.score >= 1.0 ? '<span class="pass">Pass</span>' : '<span class="fail">Fail</span>';
+                            const explanation = val.explanation || (val.score >= 1.0 ? 'Safety check passed' : 'Safety check failed');
+                            const itemJson = JSON.stringify(val, null, 2);
+                            bubbles += `
+                                <details class="rubric-details">
+                                    <summary class="rubric-bubble">${verdictText}: ${DOMPurify.sanitize(explanation)}</summary>
+                                    <pre class="raw-json-container">${DOMPurify.sanitize(itemJson)}</pre>
+                                </details>`;
+                            bubbles += '</div>';
+                            explanationHandled = true;
+                        } catch (e) {
+                            console.error("Failed to process safety metric:", e);
+                        }
+                    }
+
+                    if (!bubbles && val.rubric_verdicts && val.rubric_verdicts.length > 0) {
+                        bubbles += '<div class="rubric-bubble-container" style="margin-top: 8px;">';
+                        val.rubric_verdicts.forEach(verdict => {
+                            const rubricDescription = verdict.evaluated_rubric && verdict.evaluated_rubric.content && verdict.evaluated_rubric.content.property ? verdict.evaluated_rubric.content.property.description : 'N/A';
+                            const verdictText = verdict.verdict ? '<span class="pass">Pass</span>' : '<span class="fail">Fail</span>';
+                            const verdictJson = JSON.stringify(verdict, null, 2);
+                            bubbles += `
+                                <details class="rubric-details">
+                                    <summary class="rubric-bubble">${verdictText}: ${DOMPurify.sanitize(rubricDescription)}</summary>
+                                    <pre class="raw-json-container">${DOMPurify.sanitize(verdictJson)}</pre>
+                                </details>`;
+                        });
+                        bubbles += '</div>';
+                    }
+
+                    let scoreDisplay = val.score != null ? val.score.toFixed(2) : 'N/A';
+                    let metricContent = '';
+
+                    if (val.explanation && !explanationHandled) {
+                        metricContent += `<div class="explanation" style="margin-top:0; margin-bottom: 12px;">${DOMPurify.sanitize(marked.parse(String(val.explanation)))}</div>`;
+                    }
+                    if (bubbles) {
+                        metricContent += bubbles;
+                    }
+                    if (!metricContent) {
+                        metricContent = `<div style="color: #80868b; font-style: italic; font-size: 13px;">No additional details.</div>`;
+                    }
+
+                    metricTable += `
+                        <details class="metric-details" open>
+                            <summary class="metric-summary">
+                                <div class="metric-name-wrapper">${DOMPurify.sanitize(name)}</div>
+                                <div class="metric-score">${DOMPurify.sanitize(scoreDisplay)}</div>
+                            </summary>
+                            <div class="metric-body">
+                                ${metricContent}
+                            </div>
+                        </details>
+                    `;
+                });
+                metricTable += '</div>';
+                card += metricTable + '</details>';
+                container.innerHTML += card;
+            });
+        }
+
+        renderSummary(vizData_vertex_eval_sdk.summary_metrics);
+        renderDetails(vizData_vertex_eval_sdk.eval_case_results, vizData_vertex_eval_sdk.metadata);
+    </script>
+</body>
+</html>

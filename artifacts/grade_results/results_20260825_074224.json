@@ -1,0 +1,515 @@
+{
+  "eval_case_results": [
+    {
+      "eval_case_index": 0,
+      "response_candidate_results": [
+        {
+          "response_index": 0,
+          "metric_results": {
+            "custom_response_quality": {
+              "metric_name": "custom_response_quality",
+              "score": 5.0,
+              "explanation": "The agent followed its instructions precisely by checking available deterministic controls and selecting the relevant control (`GCP_STORAGE_PUBLIC_ACCESS`) for the security questionnaire requirement about storage public accessibility.",
+              "rubric_verdicts": null,
+              "raw_output": null,
+              "error_message": null
+            }
+          }
+        }
+      ]
+    },
+    {
+      "eval_case_index": 1,
+      "response_candidate_results": [
+        {
+          "response_index": 0,
+          "metric_results": {
+            "custom_response_quality": {
+              "metric_name": "custom_response_quality",
+              "score": 5.0,
+              "explanation": "The agent followed all system instructions perfectly. It checked the available supported controls, correctly determined that none verify annual employee phishing training, returned UNSUPPORTED, and clearly explained the limitation without exposing chain-of-thought.",
+              "rubric_verdicts": null,
+              "raw_output": null,
+              "error_message": null
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "summary_metrics": [
+    {
+      "metric_name": "custom_response_quality",
+      "num_cases_total": 2,
+      "num_cases_valid": 2,
+      "num_cases_error": 0,
+      "mean_score": 5.0,
+      "stdev_score": 0.0,
+      "pass_rate": null
+    }
+  ],
+  "win_rates": null,
+  "evaluation_dataset": [
+    {
+      "bigquery_source": null,
+      "gcs_source": null,
+      "eval_cases": [
+        {
+          "prompt": {
+            "parts": [
+              {
+                "media_resolution": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "file_data": null,
+                "function_call": null,
+                "function_response": null,
+                "inline_data": null,
+                "text": "Is sensitive customer storage inaccessible from the public internet?",
+                "thought": null,
+                "thought_signature": null,
+                "video_metadata": null,
+                "tool_call": null,
+                "tool_response": null,
+                "part_metadata": null,
+                "audio_transcription": null
+              }
+            ],
+            "role": "user"
+          },
+          "responses": [
+            {
+              "response": {
+                "parts": [
+                  {
+                    "media_resolution": null,
+                    "code_execution_result": null,
+                    "executable_code": null,
+                    "file_data": null,
+                    "function_call": null,
+                    "function_response": null,
+                    "inline_data": null,
+                    "text": "GCP_STORAGE_PUBLIC_ACCESS",
+                    "thought": null,
+                    "thought_signature": null,
+                    "video_metadata": null,
+                    "tool_call": null,
+                    "tool_response": null,
+                    "part_metadata": null,
+                    "audio_transcription": null
+                  }
+                ],
+                "role": "model"
+              }
+            }
+          ],
+          "reference": null,
+          "system_instruction": null,
+          "conversation_history": null,
+          "rubric_groups": null,
+          "eval_case_id": "storage_public_access_mapping",
+          "intermediate_events": null,
+          "agent_info": null,
+          "agent_data": {
+            "agents": {
+              "trustfix_review_orchestrator": {
+                "agent_id": "trustfix_review_orchestrator",
+                "agent_type": "LlmAgent",
+                "description": "Maps security requirements to supported deterministic TrustFix controls.",
+                "instruction": "You interpret security questionnaire requirements. Select a control only from supported_controls. Never claim that a requirement passes and never manufacture evidence. If no supported control can verify the requirement, return UNSUPPORTED and explain that TrustFix cannot verify it from the connected Google Cloud environment. Keep decision summaries concise; never expose chain-of-thought.",
+                "tools": [
+                  {
+                    "retrieval": null,
+                    "computer_use": null,
+                    "file_search": null,
+                    "google_search": null,
+                    "google_maps": null,
+                    "code_execution": null,
+                    "enterprise_web_search": null,
+                    "function_declarations": [
+                      {
+                        "description": "Return only the deterministic controls available to the orchestrator.",
+                        "name": "supported_controls",
+                        "parameters": null,
+                        "parameters_json_schema": null,
+                        "response": null,
+                        "response_json_schema": {
+                          "additionalProperties": {
+                            "type": "string"
+                          },
+                          "type": "object"
+                        },
+                        "behavior": null
+                      }
+                    ],
+                    "google_search_retrieval": null,
+                    "parallel_ai_search": null,
+                    "url_context": null,
+                    "mcp_servers": null,
+                    "exa_ai_search": null
+                  }
+                ],
+                "sub_agents": []
+              }
+            },
+            "turns": [
+              {
+                "turn_index": 0,
+                "turn_id": "turn_0",
+                "events": [
+                  {
+                    "author": "trustfix_review_orchestrator",
+                    "content": {
+                      "parts": [
+                        {
+                          "media_resolution": null,
+                          "code_execution_result": null,
+                          "executable_code": null,
+                          "file_data": null,
+                          "function_call": {
+                            "id": "adk-7533aada-eafb-47b1-8290-51bacb1646f4",
+                            "args": {},
+                            "name": "supported_controls",
+                            "partial_args": null,
+                            "will_continue": null
+                          },
+                          "function_response": null,
+                          "inline_data": null,
+                          "text": null,
+                          "thought": null,
+                          "thought_signature": null,
+                          "video_metadata": null,
+                          "tool_call": null,
+                          "tool_response": null,
+                          "part_metadata": null,
+                          "audio_transcription": null
+                        }
+                      ],
+                      "role": "model"
+                    },
+                    "event_time": "2026-08-25T02:12:08.106620Z",
+                    "state_delta": null,
+                    "active_tools": null
+                  },
+                  {
+                    "author": "trustfix_review_orchestrator",
+                    "content": {
+                      "parts": [
+                        {
+                          "media_resolution": null,
+                          "code_execution_result": null,
+                          "executable_code": null,
+                          "file_data": null,
+                          "function_call": null,
+                          "function_response": {
+                            "will_continue": null,
+                            "scheduling": null,
+                            "parts": null,
+                            "id": "adk-7533aada-eafb-47b1-8290-51bacb1646f4",
+                            "name": "supported_controls",
+                            "response": {
+                              "GCP_STORAGE_PUBLIC_ACCESS": "Public bucket IAM and anonymous access",
+                              "GCP_RUN_PUBLIC_INVOKER": "Cloud Run public invoker IAM",
+                              "GCP_FIREWALL_ADMIN_EXPOSURE": "Internet-exposed administrative ports"
+                            }
+                          },
+                          "inline_data": null,
+                          "text": null,
+                          "thought": null,
+                          "thought_signature": null,
+                          "video_metadata": null,
+                          "tool_call": null,
+                          "tool_response": null,
+                          "part_metadata": null,
+                          "audio_transcription": null
+                        }
+                      ],
+                      "role": "user"
+                    },
+                    "event_time": "2026-08-25T02:12:11.309846Z",
+                    "state_delta": null,
+                    "active_tools": null
+                  },
+                  {
+                    "author": "trustfix_review_orchestrator",
+                    "content": {
+                      "parts": [
+                        {
+                          "media_resolution": null,
+                          "code_execution_result": null,
+                          "executable_code": null,
+                          "file_data": null,
+                          "function_call": null,
+                          "function_response": null,
+                          "inline_data": null,
+                          "text": "GCP_STORAGE_PUBLIC_ACCESS",
+                          "thought": null,
+                          "thought_signature": null,
+                          "video_metadata": null,
+                          "tool_call": null,
+                          "tool_response": null,
+                          "part_metadata": null,
+                          "audio_transcription": null
+                        }
+                      ],
+                      "role": "model"
+                    },
+                    "event_time": "2026-08-25T02:12:11.314354Z",
+                    "state_delta": null,
+                    "active_tools": null
+                  }
+                ]
+              }
+            ]
+          },
+          "user_scenario": null,
+          "interactions_data_source": null
+        },
+        {
+          "prompt": {
+            "parts": [
+              {
+                "media_resolution": null,
+                "code_execution_result": null,
+                "executable_code": null,
+                "file_data": null,
+                "function_call": null,
+                "function_response": null,
+                "inline_data": null,
+                "text": "Do all employees complete annual phishing training?",
+                "thought": null,
+                "thought_signature": null,
+                "video_metadata": null,
+                "tool_call": null,
+                "tool_response": null,
+                "part_metadata": null,
+                "audio_transcription": null
+              }
+            ],
+            "role": "user"
+          },
+          "responses": [
+            {
+              "response": {
+                "parts": [
+                  {
+                    "media_resolution": null,
+                    "code_execution_result": null,
+                    "executable_code": null,
+                    "file_data": null,
+                    "function_call": null,
+                    "function_response": null,
+                    "inline_data": null,
+                    "text": "UNSUPPORTED. TrustFix cannot verify if employees complete annual phishing training because none of the connected Google Cloud environment controls are designed to check for employee training or awareness programs.",
+                    "thought": null,
+                    "thought_signature": null,
+                    "video_metadata": null,
+                    "tool_call": null,
+                    "tool_response": null,
+                    "part_metadata": null,
+                    "audio_transcription": null
+                  }
+                ],
+                "role": "model"
+              }
+            }
+          ],
+          "reference": null,
+          "system_instruction": null,
+          "conversation_history": null,
+          "rubric_groups": null,
+          "eval_case_id": "unsupported_phishing_training",
+          "intermediate_events": null,
+          "agent_info": null,
+          "agent_data": {
+            "agents": {
+              "trustfix_review_orchestrator": {
+                "agent_id": "trustfix_review_orchestrator",
+                "agent_type": "LlmAgent",
+                "description": "Maps security requirements to supported deterministic TrustFix controls.",
+                "instruction": "You interpret security questionnaire requirements. Select a control only from supported_controls. Never claim that a requirement passes and never manufacture evidence. If no supported control can verify the requirement, return UNSUPPORTED and explain that TrustFix cannot verify it from the connected Google Cloud environment. Keep decision summaries concise; never expose chain-of-thought.",
+                "tools": [
+                  {
+                    "retrieval": null,
+                    "computer_use": null,
+                    "file_search": null,
+                    "google_search": null,
+                    "google_maps": null,
+                    "code_execution": null,
+                    "enterprise_web_search": null,
+                    "function_declarations": [
+                      {
+                        "description": "Return only the deterministic controls available to the orchestrator.",
+                        "name": "supported_controls",
+                        "parameters": null,
+                        "parameters_json_schema": null,
+                        "response": null,
+                        "response_json_schema": {
+                          "additionalProperties": {
+                            "type": "string"
+                          },
+                          "type": "object"
+                        },
+                        "behavior": null
+                      }
+                    ],
+                    "google_search_retrieval": null,
+                    "parallel_ai_search": null,
+                    "url_context": null,
+                    "mcp_servers": null,
+                    "exa_ai_search": null
+                  }
+                ],
+                "sub_agents": []
+              }
+            },
+            "turns": [
+              {
+                "turn_index": 0,
+                "turn_id": "turn_0",
+                "events": [
+                  {
+                    "author": "trustfix_review_orchestrator",
+                    "content": {
+                      "parts": [
+                        {
+                          "media_resolution": null,
+                          "code_execution_result": null,
+                          "executable_code": null,
+                          "file_data": null,
+                          "function_call": {
+                            "id": "adk-e8c2e396-5e8b-4114-8ca0-f2b17cbfd793",
+                            "args": {},
+                            "name": "supported_controls",
+                            "partial_args": null,
+                            "will_continue": null
+                          },
+                          "function_response": null,
+                          "inline_data": null,
+                          "text": null,
+                          "thought": null,
+                          "thought_signature": null,
+                          "video_metadata": null,
+                          "tool_call": null,
+                          "tool_response": null,
+                          "part_metadata": null,
+                          "audio_transcription": null
+                        }
+                      ],
+                      "role": "model"
+                    },
+                    "event_time": "2026-08-25T02:12:07.151909Z",
+                    "state_delta": null,
+                    "active_tools": null
+                  },
+                  {
+                    "author": "trustfix_review_orchestrator",
+                    "content": {
+                      "parts": [
+                        {
+                          "media_resolution": null,
+                          "code_execution_result": null,
+                          "executable_code": null,
+                          "file_data": null,
+                          "function_call": null,
+                          "function_response": {
+                            "will_continue": null,
+                            "scheduling": null,
+                            "parts": null,
+                            "id": "adk-e8c2e396-5e8b-4114-8ca0-f2b17cbfd793",
+                            "name": "supported_controls",
+                            "response": {
+                              "GCP_STORAGE_PUBLIC_ACCESS": "Public bucket IAM and anonymous access",
+                              "GCP_RUN_PUBLIC_INVOKER": "Cloud Run public invoker IAM",
+                              "GCP_FIREWALL_ADMIN_EXPOSURE": "Internet-exposed administrative ports"
+                            }
+                          },
+                          "inline_data": null,
+                          "text": null,
+                          "thought": null,
+                          "thought_signature": null,
+                          "video_metadata": null,
+                          "tool_call": null,
+                          "tool_response": null,
+                          "part_metadata": null,
+                          "audio_transcription": null
+                        }
+                      ],
+                      "role": "user"
+                    },
+                    "event_time": "2026-08-25T02:12:12.115432Z",
+                    "state_delta": null,
+                    "active_tools": null
+                  },
+                  {
+                    "author": "trustfix_review_orchestrator",
+                    "content": {
+                      "parts": [
+                        {
+                          "media_resolution": null,
+                          "code_execution_result": null,
+                          "executable_code": null,
+                          "file_data": null,
+                          "function_call": null,
+                          "function_response": null,
+                          "inline_data": null,
+                          "text": "UNSUPPORTED. TrustFix cannot verify if employees complete annual phishing training because none of the connected Google Cloud environment controls are designed to check for employee training or awareness programs.",
+                          "thought": null,
+                          "thought_signature": null,
+                          "video_metadata": null,
+                          "tool_call": null,
+                          "tool_response": null,
+                          "part_metadata": null,
+                          "audio_transcription": null
+                        }
+                      ],
+                      "role": "model"
+                    },
+                    "event_time": "2026-08-25T02:12:12.120393Z",
+                    "state_delta": null,
+                    "active_tools": null
+                  }
+                ]
+              }
+            ]
+          },
+          "user_scenario": null,
+          "interactions_data_source": null
+        }
+      ],
+      "eval_dataset_df": null,
+      "candidate_name": null
+    }
+  ],
+  "metadata": {
+    "candidate_names": [
+      "candidate_1"
+    ],
+    "dataset_name": null,
+    "dataset_id": null,
+    "creation_timestamp": "2026-08-25T02:12:24.203240Z",
+    "dataset": [
+      {
+        "prompt_display_text": "Is sensitive customer storage inaccessible from the public internet?",
+        "prompt_raw_json": "{\n  \"parts\": [\n    {\n      \"text\": \"Is sensitive customer storage inaccessible from the public internet?\"\n    }\n  ],\n  \"role\": \"user\"\n}",
+        "reference": "",
+        "reference_raw_json": "",
+        "response_display_text": "GCP_STORAGE_PUBLIC_ACCESS",
+        "response_raw_json": "{\n  \"parts\": [\n    {\n      \"text\": \"GCP_STORAGE_PUBLIC_ACCESS\"\n    }\n  ],\n  \"role\": \"model\"\n}",
+        "intermediate_events": null,
+        "agent_data": "{\"agents\": {\"trustfix_review_orchestrator\": {\"agent_id\": \"trustfix_review_orchestrator\", \"agent_type\": \"LlmAgent\", \"description\": \"Maps security requirements to supported deterministic TrustFix controls.\", \"instruction\": \"You interpret security questionnaire requirements. Select a control only from supported_controls. Never claim that a requirement passes and never manufacture evidence. If no supported control can verify the requirement, return UNSUPPORTED and explain that TrustFix cannot verify it from the connected Google Cloud environment. Keep decision summaries concise; never expose chain-of-thought.\", \"tools\": [{\"function_declarations\": [{\"description\": \"Return only the deterministic controls available to the orchestrator.\", \"name\": \"supported_controls\", \"response_json_schema\": {\"additionalProperties\": {\"type\": \"string\"}, \"type\": \"object\"}}]}], \"sub_agents\": []}}, \"turns\": [{\"turn_index\": 0, \"turn_id\": \"turn_0\", \"events\": [{\"author\": \"trustfix_review_orchestrator\", \"content\": {\"parts\": [{\"function_call\": {\"id\": \"adk-7533aada-eafb-47b1-8290-51bacb1646f4\", \"args\": {}, \"name\": \"supported_controls\"}}], \"role\": \"model\"}, \"event_time\": \"2026-08-25T02:12:08.106620Z\"}, {\"author\": \"trustfix_review_orchestrator\", \"content\": {\"parts\": [{\"function_response\": {\"id\": \"adk-7533aada-eafb-47b1-8290-51bacb1646f4\", \"name\": \"supported_controls\", \"response\": {\"GCP_STORAGE_PUBLIC_ACCESS\": \"Public bucket IAM and anonymous access\", \"GCP_RUN_PUBLIC_INVOKER\": \"Cloud Run public invoker IAM\", \"GCP_FIREWALL_ADMIN_EXPOSURE\": \"Internet-exposed administrative ports\"}}}], \"role\": \"user\"}, \"event_time\": \"2026-08-25T02:12:11.309846Z\"}, {\"author\": \"trustfix_review_orchestrator\", \"content\": {\"parts\": [{\"text\": \"GCP_STORAGE_PUBLIC_ACCESS\"}], \"role\": \"model\"}, \"event_time\": \"2026-08-25T02:12:11.314354Z\"}]}]}"
+      },
+      {
+        "prompt_display_text": "Do all employees complete annual phishing training?",
+        "prompt_raw_json": "{\n  \"parts\": [\n    {\n      \"text\": \"Do all employees complete annual phishing training?\"\n    }\n  ],\n  \"role\": \"user\"\n}",
+        "reference": "",
+        "reference_raw_json": "",
+        "response_display_text": "UNSUPPORTED. TrustFix cannot verify if employees complete annual phishing training because none of the connected Google Cloud environment controls are designed to check for employee training or awareness programs.",
+        "response_raw_json": "{\n  \"parts\": [\n    {\n      \"text\": \"UNSUPPORTED. TrustFix cannot verify if employees complete annual phishing training because none of the connected Google Cloud environment controls are designed to check for employee training or awareness programs.\"\n    }\n  ],\n  \"role\": \"model\"\n}",
+        "intermediate_events": null,
+        "agent_data": "{\"agents\": {\"trustfix_review_orchestrator\": {\"agent_id\": \"trustfix_review_orchestrator\", \"agent_type\": \"LlmAgent\", \"description\": \"Maps security requirements to supported deterministic TrustFix controls.\", \"instruction\": \"You interpret security questionnaire requirements. Select a control only from supported_controls. Never claim that a requirement passes and never manufacture evidence. If no supported control can verify the requirement, return UNSUPPORTED and explain that TrustFix cannot verify it from the connected Google Cloud environment. Keep decision summaries concise; never expose chain-of-thought.\", \"tools\": [{\"function_declarations\": [{\"description\": \"Return only the deterministic controls available to the orchestrator.\", \"name\": \"supported_controls\", \"response_json_schema\": {\"additionalProperties\": {\"type\": \"string\"}, \"type\": \"object\"}}]}], \"sub_agents\": []}}, \"turns\": [{\"turn_index\": 0, \"turn_id\": \"turn_0\", \"events\": [{\"author\": \"trustfix_review_orchestrator\", \"content\": {\"parts\": [{\"function_call\": {\"id\": \"adk-e8c2e396-5e8b-4114-8ca0-f2b17cbfd793\", \"args\": {}, \"name\": \"supported_controls\"}}], \"role\": \"model\"}, \"event_time\": \"2026-08-25T02:12:07.151909Z\"}, {\"author\": \"trustfix_review_orchestrator\", \"content\": {\"parts\": [{\"function_response\": {\"id\": \"adk-e8c2e396-5e8b-4114-8ca0-f2b17cbfd793\", \"name\": \"supported_controls\", \"response\": {\"GCP_STORAGE_PUBLIC_ACCESS\": \"Public bucket IAM and anonymous access\", \"GCP_RUN_PUBLIC_INVOKER\": \"Cloud Run public invoker IAM\", \"GCP_FIREWALL_ADMIN_EXPOSURE\": \"Internet-exposed administrative ports\"}}}], \"role\": \"user\"}, \"event_time\": \"2026-08-25T02:12:12.115432Z\"}, {\"author\": \"trustfix_review_orchestrator\", \"content\": {\"parts\": [{\"text\": \"UNSUPPORTED. TrustFix cannot verify if employees complete annual phishing training because none of the connected Google Cloud environment controls are designed to check for employee training or awareness programs.\"}], \"role\": \"model\"}, \"event_time\": \"2026-08-25T02:12:12.120393Z\"}]}]}"
+      }
+    ]
+  },
+  "agent_info": null
+}

@@ -1,0 +1,14 @@
+name: "trustfix"
+acli_version: "1.4.1"
+agent_directory: "trustfix_agent"
+region: "us-central1"
+base_template: "local_agents"
+generated_at: "2026-08-25T02:07:43.154901+00:00"
+language: "python"
+create_params:
+  deployment_target: "cloud_run"
+  session_type: "in_memory"
+  cicd_runner: "google_cloud_build"
+  is_a2a: true
+  agent_gateway: False
+  agent_guidance_filename: "AGENTS.md"

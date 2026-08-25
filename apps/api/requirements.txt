@@ -1,0 +1,16 @@
+fastapi==0.116.1
+uvicorn[standard]==0.35.0
+pydantic-settings==2.10.1
+google-adk==1.14.1
+google-cloud-storage==2.19.0
+google-cloud-run==0.16.1
+google-cloud-compute==1.39.0
+google-cloud-firestore==2.21.0
+google-cloud-pubsub==2.31.1
+google-cloud-aiplatform==1.111.0
+google-auth==2.40.3
+httpx==0.28.1
+python-multipart==0.0.20
+openpyxl==3.1.5
+pytest==8.4.1
+pytest-asyncio==1.1.0

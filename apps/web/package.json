@@ -1,0 +1,33 @@
+{
+  "name": "@trustfix/web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:e2e": "playwright test"
+  },
+  "dependencies": {
+    "@phosphor-icons/react": "^2.1.10",
+    "google-auth-library": "^11.0.2",
+    "next": "^15.5.2",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3.3.1",
+    "@playwright/test": "^1.55.0",
+    "@testing-library/react": "^16.3.0",
+    "@types/node": "^22.18.0",
+    "@types/react": "^19.1.12",
+    "@types/react-dom": "^19.1.9",
+    "eslint": "^9.34.0",
+    "eslint-config-next": "^15.5.2",
+    "jsdom": "^26.1.0",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
+  }
+}
