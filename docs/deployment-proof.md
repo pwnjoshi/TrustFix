@@ -7,9 +7,9 @@
 | Platform project | `trustfix-506602` |
 | Disposable target | `trustfix-demo-target` |
 | Region | `us-central1` |
-| Public site | `trustfix-app-00005-s2t` |
-| Public legacy alias | `trustfix-web-00006-cfh` |
-| Protected workspace | `trustfix-workspace-00003-lpk` |
+| Public site | `trustfix-app-00006-l92` |
+| Public legacy alias | `trustfix-web-00007-kgp` |
+| Protected workspace | `trustfix-workspace-00004-wlm` |
 | API | `trustfix-api-00012-z5g` |
 | Scanner worker | `trustfix-scanner-worker-00010-dk2` |
 | Remediator worker | `trustfix-remediator-worker-00010-2wk` |

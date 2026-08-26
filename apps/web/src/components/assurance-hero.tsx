@@ -1,26 +1,31 @@
 "use client";
+
 import Link from "next/link";
-import { useEffect, useRef } from "react";
-import { ArrowRight, Brain, CheckCircle, Cloud, Fingerprint, Lightning, ShieldCheck, Warning } from "@phosphor-icons/react";
+import { ArrowRight, CheckCircle, Cloud, Fingerprint, Lightning, ShieldCheck, Warning } from "@phosphor-icons/react";
 
 export function AssuranceHero() {
-  const section = useRef<HTMLElement>(null);
-  useEffect(() => {
-    const node = section.current;
-    if (!node || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const move = (event: PointerEvent) => {
-      const rect = node.getBoundingClientRect();
-      node.style.setProperty("--pointer-x", `${((event.clientX - rect.left) / rect.width) * 100}%`);
-      node.style.setProperty("--pointer-y", `${((event.clientY - rect.top) / rect.height) * 100}%`);
-      node.style.setProperty("--tilt-x", `${((event.clientY - rect.top) / rect.height - .5) * -5}deg`);
-      node.style.setProperty("--tilt-y", `${((event.clientX - rect.left) / rect.width - .5) * 7}deg`);
-    };
-    node.addEventListener("pointermove", move);
-    return () => node.removeEventListener("pointermove", move);
-  }, []);
-  return <section className="hero-v2" ref={section}>
-    <div className="hero-aurora one"/><div className="hero-aurora two"/><div className="hero-grid-lines"/>
-    <div className="hero-copy-v2"><div className="hero-badge"><span/><strong>Autonomous cloud assurance</strong><small>Gemini 3.5 + Google ADK</small></div><h1>Cloud security answers<br/><em>that prove themselves.</em></h1><p>TrustFix turns security requirements into live Google Cloud checks, governs the smallest safe fix, and independently verifies the result—while you work on something else.</p><div className="hero-actions"><Link className="button primary luminous" href="/demo">Experience the live story <ArrowRight/></Link><a className="button dark-outline" href="/app">Open protected workspace</a></div><div className="hero-proof-row"><span><CheckCircle weight="fill"/> Real infrastructure</span><span><ShieldCheck weight="fill"/> Human-governed changes</span><span><Fingerprint weight="fill"/> Audit-ready proof</span></div></div>
-    <div className="hero-system"><div className="system-chrome"><span/><span/><span/><strong>TRUSTFIX / MISSION CONTROL</strong><small>LIVE</small></div><div className="system-canvas"><div className="system-status"><div><span className="micro">CUSTOMER REQUIREMENT</span><strong>Is sensitive storage inaccessible from the public internet?</strong></div><span className="status failed"><Warning/> Failed</span></div><div className="topology"><div className="topology-node source"><Cloud/><span>Google Cloud</span><small>trustfix-demo-target</small></div><svg viewBox="0 0 600 160" preserveAspectRatio="none"><path d="M72 85 C180 20 235 150 330 78 S470 40 535 82"/><path className="flow-path" d="M72 85 C180 20 235 150 330 78 S470 40 535 82"/></svg><div className="topology-node risk-node"><Warning/><span>Public bucket</span><small>allUsers → objectViewer</small></div><div className="agent-brain"><Brain weight="duotone"/></div></div><div className="agent-decision"><div className="decision-icon"><Lightning weight="fill"/></div><div><span className="micro">AGENT DECISION</span><strong>Minimum-change remediation ready</strong><small>Remove 1 public principal · rollback captured · approval required</small></div><span className="decision-time">1.8s</span></div><div className="system-verification"><CheckCircle weight="fill"/><div><span className="micro">INDEPENDENT VERIFICATION</span><strong>Anonymous request denied</strong></div><code>HTTP 403</code></div></div><div className="system-footer"><span><i/>Evidence collected</span><span>Drift fingerprint locked</span><span>Proof Pack ready</span></div></div>
+  return <section className="hero-v3">
+    <div className="hero-v3-glow"/><div className="hero-v3-grid"/>
+    <div className="hero-v3-copy">
+      <div className="hero-v3-badge"><span/> Autonomous cloud assurance <small>BUILT WITH GOOGLE ADK</small></div>
+      <h1>Security answers are easy.<br/><em>Proof changes everything.</em></h1>
+      <p>TrustFix inspects real Google Cloud infrastructure, governs the smallest safe fix, and independently verifies the result—turning every security claim into defensible evidence.</p>
+      <div className="hero-actions"><Link className="button primary luminous" href="/demo">Explore the interactive demo <ArrowRight/></Link><a className="button dark-outline" href="/app">Open real workspace</a></div>
+      <div className="hero-v3-trust"><span><CheckCircle weight="fill"/> Live infrastructure</span><span><ShieldCheck weight="fill"/> Approval governed</span><span><Fingerprint weight="fill"/> Audit ready</span></div>
+    </div>
+
+    <div className="proof-window" aria-label="TrustFix evidence-backed remediation preview">
+      <header><div className="window-dots"><i/><i/><i/></div><strong>TRUSTFIX · ASSURANCE RUN</strong><span><i/> LIVE</span></header>
+      <div className="proof-window-body">
+        <aside><span className="rail-active"><i>01</i>Interpret</span><span><i>02</i>Inspect</span><span><i>03</i>Evaluate</span><span><i>04</i>Approve</span><span><i>05</i>Verify</span></aside>
+        <main>
+          <div className="proof-question"><div><span className="micro">SECURITY REQUIREMENT</span><h2>Is customer storage inaccessible from the public internet?</h2></div><span className="status failed"><Warning/> Finding</span></div>
+          <div className="proof-resource"><span className="proof-resource-icon"><Cloud/></span><div><strong>gs://trustfix-public-storage-demo</strong><small>allUsers → roles/storage.objectViewer</small></div><span>MEDIUM RISK</span></div>
+          <div className="proof-flow"><div><span className="flow-number">1</span><p><small>OBSERVED</small><strong>Public principal detected</strong></p></div><ArrowRight/><div><span className="flow-number">2</span><p><small>MINIMUM CHANGE</small><strong>Remove one IAM binding</strong></p></div><ArrowRight/><div className="flow-success"><CheckCircle weight="fill"/><p><small>PROVED</small><strong>Anonymous HTTP 403</strong></p></div></div>
+          <div className="proof-decision"><span><Lightning weight="fill"/></span><div><small>TRUSTFIX AGENT DECISION</small><strong>Approval-ready remediation with captured rollback</strong></div><span className="proof-awaiting">Awaiting reviewer</span></div>
+        </main>
+      </div>
+      <footer><span><i/> Evidence collected</span><span>Drift fingerprint locked</span><span>Gemini 3.5 Flash · Google ADK</span></footer>
+    </div>
   </section>;
 }
