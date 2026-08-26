@@ -1,1 +1,2 @@
-import { EvidencePage } from "@/components/live-section-page"; export default function Page(){return <EvidencePage kind="activity"/>}
+import { EvidencePage } from "@/components/live-section-page";
+export default function Page() { return <EvidencePage kind="activity" />; }

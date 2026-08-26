@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
+import pytest
 from google.adk.agents.run_config import RunConfig, StreamingMode
 from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
@@ -20,6 +22,10 @@ from google.genai import types
 from trustfix_agent.agent import root_agent
 
 
+@pytest.mark.skipif(
+    not os.getenv("GEMINI_API_KEY") and not os.getenv("GOOGLE_API_KEY"),
+    reason="Requires GEMINI_API_KEY or GOOGLE_API_KEY environment variable",
+)
 def test_agent_stream() -> None:
     """
     Integration test for the agent stream functionality.

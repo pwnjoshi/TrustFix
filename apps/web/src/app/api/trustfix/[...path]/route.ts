@@ -1,38 +1,76 @@
 import { GoogleAuth } from "google-auth-library";
 import { NextRequest, NextResponse } from "next/server";
 
-
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-
-async function proxy(request: NextRequest, context: { params: Promise<{ path: string[] }> }) {
+async function proxy(
+  request: NextRequest,
+  context: { params: Promise<{ path: string[] }> },
+) {
   const apiBase = process.env.API_BASE_URL;
-  if (!apiBase) return NextResponse.json({ detail: "Backend is not configured" }, { status: 503 });
+  if (!apiBase) {
+    return NextResponse.json({ detail: "Backend is not configured" }, { status: 503 });
+  }
+
   const { path } = await context.params;
   const target = new URL(path.join("/"), `${apiBase.replace(/\/$/, "")}/`);
   target.search = request.nextUrl.search;
+
   const headers = new Headers();
+
+  // Forward relevant request headers
   const contentType = request.headers.get("content-type");
   if (contentType) headers.set("content-type", contentType);
+
   const idempotency = request.headers.get("idempotency-key");
   if (idempotency) headers.set("idempotency-key", idempotency);
+
   const assertion = request.headers.get("x-goog-iap-jwt-assertion");
   if (assertion) headers.set("x-trustfix-iap-jwt", assertion);
-  if (process.env.TRUSTFIX_AUTH_MODE === "dev") headers.set("x-trustfix-dev-proxy", "true");
+
+  // Forward role header for role-based operations
+  const role = request.headers.get("x-trustfix-role");
+  if (role) headers.set("x-trustfix-role", role);
+
+  if (process.env.TRUSTFIX_AUTH_MODE === "dev") {
+    headers.set("x-trustfix-dev-proxy", "true");
+  }
+
+  // Cloud Run service-to-service authentication
   if (process.env.K_SERVICE) {
     const client = await new GoogleAuth().getIdTokenClient(apiBase);
-    headers.set("authorization", `Bearer ${await client.idTokenProvider.fetchIdToken(apiBase)}`);
+    headers.set(
+      "authorization",
+      `Bearer ${await client.idTokenProvider.fetchIdToken(apiBase)}`,
+    );
   }
-  const body = ["GET", "HEAD"].includes(request.method) ? undefined : await request.arrayBuffer();
-  const response = await fetch(target, { method: request.method, headers, body, cache: "no-store" });
+
+  const body = ["GET", "HEAD"].includes(request.method)
+    ? undefined
+    : await request.arrayBuffer();
+
+  const response = await fetch(target, {
+    method: request.method,
+    headers,
+    body,
+    cache: "no-store",
+  });
+
   const responseHeaders = new Headers();
   const responseType = response.headers.get("content-type");
   if (responseType) responseHeaders.set("content-type", responseType);
   const disposition = response.headers.get("content-disposition");
   if (disposition) responseHeaders.set("content-disposition", disposition);
-  return new NextResponse(response.body, { status: response.status, headers: responseHeaders });
+
+  return new NextResponse(response.body, {
+    status: response.status,
+    headers: responseHeaders,
+  });
 }
 
 export const GET = proxy;
 export const POST = proxy;
+export const PUT = proxy;
+export const PATCH = proxy;
+export const DELETE = proxy;

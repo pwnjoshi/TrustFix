@@ -4,17 +4,24 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .config import get_settings
 from .auth import current_user, provision_user, verify_identity
+from .controls import REGISTRY
 from .jobs import publish
 from .models import Approval, Job, PolicySettings, RemediationRequest, Review, Role, WorkspaceInvitation
 from .orchestrator import ReviewOrchestrator
-from .seed import demo_review
+from .seed import demo_evidence, demo_review
 from .store import store
 from .questionnaires import QuestionnaireError, export_csv, export_xlsx, parse_csv, parse_xlsx
 
 
 settings = get_settings()
 app = FastAPI(title="TrustFix API", version="0.1.0", docs_url="/api/docs")
-app.add_middleware(CORSMiddleware, allow_origins=settings.allowed_origins.split(","), allow_credentials=True, allow_methods=["GET", "POST"], allow_headers=["Content-Type", "Authorization", "Idempotency-Key", "X-TrustFix-Role"])
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.allowed_origins.split(","),
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
+    allow_headers=["Content-Type", "Authorization", "Idempotency-Key", "X-TrustFix-Role"],
+)
 orchestrator = ReviewOrchestrator(settings)
 
 
@@ -36,12 +43,26 @@ def health():
 
 @app.get("/ready")
 def ready():
-    return {"status": "ready", "live_mode": settings.live_mode, "target_project_configured": bool(settings.trustfix_target_project_id), "model": settings.trustfix_model}
+    return {
+        "status": "ready",
+        "live_mode": settings.live_mode,
+        "target_project_configured": bool(settings.trustfix_target_project_id),
+        "model": settings.trustfix_model,
+    }
 
 
 @app.get("/api/system")
 def system():
-    return {"environment": settings.trustfix_env, "platform_project": settings.trustfix_platform_project_id, "target_project": settings.trustfix_target_project_id, "region": settings.google_cloud_region, "model": settings.trustfix_model, "live_mode": settings.live_mode, "firestore": "configured" if settings.trustfix_platform_project_id else "local adapter", "pubsub": "configured" if settings.trustfix_platform_project_id else "local adapter"}
+    return {
+        "environment": settings.trustfix_env,
+        "platform_project": settings.trustfix_platform_project_id,
+        "target_project": settings.trustfix_target_project_id,
+        "region": settings.google_cloud_region,
+        "model": settings.trustfix_model,
+        "live_mode": settings.live_mode,
+        "firestore": "configured" if settings.trustfix_platform_project_id else "local adapter",
+        "pubsub": "configured" if settings.trustfix_platform_project_id else "local adapter",
+    }
 
 
 @app.get("/api/auth/me")
@@ -87,7 +108,9 @@ async def complete_onboarding(request: Request):
         raise HTTPException(422, "Organization name is required")
     if primary_use_case not in {"Customer security reviews", "Cloud security assurance", "Hackathon demonstration", "Other"}:
         raise HTTPException(422, "Select a valid primary use case")
-    if not target_project_id or len(target_project_id) > 63 or not all(character.islower() or character.isdigit() or character == "-" for character in target_project_id):
+    if not target_project_id or len(target_project_id) > 63 or not all(
+        c.islower() or c.isdigit() or c == "-" for c in target_project_id
+    ):
         raise HTTPException(422, "Enter a valid Google Cloud project ID")
     if target_project_id == settings.trustfix_platform_project_id:
         raise HTTPException(422, "The target project must be separate from the TrustFix platform project")
@@ -130,10 +153,12 @@ def verify_google_cloud_connection(request: Request):
     review_id = f"review-demo-{user.workspace_id.removeprefix('workspace-')}"
     review = store.get("reviews", review_id)
     if not review:
-        review = demo_review()
+        review = demo_review(user.workspace_id)
         review.id = review_id
-        review.workspace_id = user.workspace_id
         store.put("reviews", review.id, review)
+        # Seed demo evidence
+        for ev in demo_evidence(user.workspace_id):
+            store.put("evidence", ev.id, ev)
     job = Job(workspace_id=user.workspace_id, review_id=review.id, kind="SCAN")
     review.status = "Queued"
     store.put("reviews", review.id, review)
@@ -152,7 +177,9 @@ async def configure_google_cloud_connection(request: Request):
         raise HTTPException(404, "Workspace not found")
     payload = await request.json()
     target_project_id = str(payload.get("target_project_id", "")).strip().lower()
-    if not target_project_id or len(target_project_id) > 63 or not all(character.islower() or character.isdigit() or character == "-" for character in target_project_id):
+    if not target_project_id or len(target_project_id) > 63 or not all(
+        c.islower() or c.isdigit() or c == "-" for c in target_project_id
+    ):
         raise HTTPException(422, "Enter a valid Google Cloud project ID")
     if target_project_id == settings.trustfix_platform_project_id:
         raise HTTPException(422, "The target project must be separate from the TrustFix platform project")
@@ -162,7 +189,11 @@ async def configure_google_cloud_connection(request: Request):
         "project": target_project_id,
         "scanner_principal": f"trustfix-scanner@{settings.trustfix_platform_project_id}.iam.gserviceaccount.com",
         "required_role": "roles/viewer",
-        "iam_command": f"gcloud projects add-iam-policy-binding {target_project_id} --member=serviceAccount:trustfix-scanner@{settings.trustfix_platform_project_id}.iam.gserviceaccount.com --role=roles/viewer",
+        "iam_command": (
+            f"gcloud projects add-iam-policy-binding {target_project_id} "
+            f"--member=serviceAccount:trustfix-scanner@{settings.trustfix_platform_project_id}.iam.gserviceaccount.com "
+            f"--role=roles/viewer"
+        ),
     }
 
 
@@ -174,7 +205,13 @@ def team(request: Request):
     for member in store.list("workspace_members"):
         if member.workspace_id == current.workspace_id and member.user_id in users:
             account = users[member.user_id]
-            members.append({"id": member.id, "email": account.email, "display_name": account.display_name, "role": member.role, "status": "Active"})
+            members.append({
+                "id": member.id,
+                "email": account.email,
+                "display_name": account.display_name,
+                "role": member.role,
+                "status": "Active",
+            })
     invitations = [item for item in store.list("workspace_invitations") if item.workspace_id == current.workspace_id]
     return {"members": members, "invitations": invitations}
 
@@ -192,7 +229,11 @@ async def invite_team_member(request: Request):
         raise HTTPException(422, "Invalid workspace role") from exc
     if "@" not in email or len(email) > 254:
         raise HTTPException(422, "Enter a valid email address")
-    existing = next((item for item in store.list("workspace_invitations") if item.workspace_id == current.workspace_id and item.email == email), None)
+    existing = next(
+        (item for item in store.list("workspace_invitations")
+         if item.workspace_id == current.workspace_id and item.email == email),
+        None,
+    )
     if existing:
         return existing
     invitation = WorkspaceInvitation(workspace_id=current.workspace_id, email=email, role=role, invited_by=current.id)
@@ -219,13 +260,56 @@ async def update_policies(request: Request):
     return policies
 
 
+@app.get("/api/controls")
+def list_controls(request: Request):
+    """Return the control registry with last-run status from this workspace's most recent evidence."""
+    user = current_user(request)
+    evidence_by_control: dict[str, list] = {}
+    for ev in store.list("evidence"):
+        if ev.workspace_id == user.workspace_id:
+            evidence_by_control.setdefault(ev.control_id, []).append(ev)
+
+    result = []
+    for control_id, definition in REGISTRY.items():
+        # Look up last result for this workspace
+        result_key_prefix = f"review-demo-{user.workspace_id.removeprefix('workspace-')}:"
+        last_status = None
+        for key in store.list("control_results"):
+            if str(getattr(key, 'control_id', '')) == control_id:
+                last_status = str(getattr(key, 'status', ''))
+                break
+
+        result.append({
+            "id": control_id,
+            "name": definition.name,
+            "description": definition.description,
+            "risk": definition.risk,
+            "evidence_count": len(evidence_by_control.get(control_id, [])),
+            "last_status": last_status or ("FAILED" if any(
+                e.relevant_properties.get("public_principals") or e.relevant_properties.get("all_users_invoker") or e.relevant_properties.get("exposed_admin_ports")
+                for e in evidence_by_control.get(control_id, [])
+            ) else "VERIFIED" if evidence_by_control.get(control_id) else None),
+        })
+    return result
+
+
+@app.get("/api/reviews")
+def list_reviews(request: Request):
+    """List all reviews for the current workspace."""
+    user = current_user(request)
+    reviews = [r for r in store.list("reviews") if r.workspace_id == user.workspace_id]
+    return sorted(reviews, key=lambda r: r.updated_at, reverse=True)
+
+
 @app.post("/api/reviews/demo", response_model=Review)
 def create_demo_review(request: Request):
     user = current_user(request)
-    review = demo_review()
+    review = demo_review(user.workspace_id)
     review.id = f"review-demo-{user.workspace_id.removeprefix('workspace-')}"
-    review.workspace_id = user.workspace_id
     store.put("reviews", review.id, review)
+    # Seed demo evidence
+    for ev in demo_evidence(user.workspace_id):
+        store.put("evidence", ev.id, ev)
     return review
 
 
@@ -267,7 +351,14 @@ def run_review(review_id: str, request: Request):
 
 
 @app.post("/api/reviews/import", response_model=Review)
-async def import_review(name: str = Form(...), workspace_id: str = Form("workspace-demo"), question_column: str | None = Form(None), file: UploadFile = File(...)):
+async def import_review(
+    request: Request,
+    name: str = Form(...),
+    question_column: str | None = Form(None),
+    file: UploadFile = File(...),
+):
+    # Authenticated endpoint — user required
+    user = current_user(request)
     content = await file.read()
     if len(content) > 10 * 1024 * 1024:
         raise HTTPException(413, "Questionnaire exceeds the 10 MB upload limit")
@@ -281,7 +372,7 @@ async def import_review(name: str = Form(...), workspace_id: str = Form("workspa
             raise QuestionnaireError("Supported upload formats are CSV and XLSX")
     except QuestionnaireError as exc:
         raise HTTPException(422, str(exc)) from exc
-    review = Review(workspace_id=workspace_id, name=name, questions=questions)
+    review = Review(workspace_id=user.workspace_id, name=name, questions=questions)
     store.put("reviews", review.id, review)
     return review
 
@@ -315,9 +406,17 @@ def export_review(review_id: str, format: str, request: Request):
     if not review:
         raise HTTPException(404, "Review not found")
     if format == "csv":
-        return Response(export_csv(review), media_type="text/csv", headers={"Content-Disposition": f'attachment; filename="{review_id}.csv"'})
+        return Response(
+            export_csv(review),
+            media_type="text/csv",
+            headers={"Content-Disposition": f'attachment; filename="{review_id}.csv"'},
+        )
     if format == "xlsx":
-        return Response(export_xlsx(review), media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", headers={"Content-Disposition": f'attachment; filename="{review_id}.xlsx"'})
+        return Response(
+            export_xlsx(review),
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={"Content-Disposition": f'attachment; filename="{review_id}.xlsx"'},
+        )
     raise HTTPException(404, "Supported export formats are csv and xlsx")
 
 

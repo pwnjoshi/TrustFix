@@ -1,1 +1,2 @@
-import { PoliciesPage } from "@/components/live-section-page"; export default function Page(){return <PoliciesPage/>}
+import { PoliciesPage } from "@/components/live-section-page";
+export default function Page() { return <PoliciesPage />; }

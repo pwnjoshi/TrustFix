@@ -45,9 +45,35 @@ def _firewall_evaluator(evidence: list[Evidence]) -> tuple[ControlStatus, str]:
 REGISTRY = {
     c.id: c
     for c in (
-        ControlDefinition("GCP_STORAGE_PUBLIC_ACCESS", "Public cloud storage", "Customer buckets deny anonymous access.", (r"storage|bucket|customer data.*public|anonymous access",), Risk.MEDIUM, _storage_evaluator),
-        ControlDefinition("GCP_RUN_PUBLIC_INVOKER", "Internal Cloud Run authentication", "Internal services require authentication.", (r"cloud run|internal\b.*\bservices?|unauthenticated|publicly invokable",), Risk.HIGH, _run_evaluator),
-        ControlDefinition("GCP_FIREWALL_ADMIN_EXPOSURE", "Administrative network exposure", "Administrative ports are restricted to trusted networks.", (r"firewall|administrative|ssh|rdp|port 22|port 3389",), Risk.HIGH, _firewall_evaluator),
+        ControlDefinition(
+            "GCP_STORAGE_PUBLIC_ACCESS",
+            "Public cloud storage",
+            "Customer buckets deny anonymous access.",
+            # Require storage/bucket context + some access concern (not just any mention of "storage")
+            (r"(storage|bucket).{0,60}(public|anonymous|internet|access|inaccessible|restrict)",
+             r"(public|anonymous|internet).{0,60}(storage|bucket|object)",),
+            Risk.MEDIUM,
+            _storage_evaluator,
+        ),
+        ControlDefinition(
+            "GCP_RUN_PUBLIC_INVOKER",
+            "Internal Cloud Run authentication",
+            "Internal services require authentication.",
+            (r"cloud\s+run|internal\b.{0,50}\bservices?\b.{0,50}(auth|access|invok|public)",
+             r"(unauthenticated|publicly\s+invokable).{0,60}(service|api|endpoint)",),
+            Risk.HIGH,
+            _run_evaluator,
+        ),
+        ControlDefinition(
+            "GCP_FIREWALL_ADMIN_EXPOSURE",
+            "Administrative network exposure",
+            "Administrative ports are restricted to trusted networks.",
+            (r"firewall|administrative\s+interface",
+             r"(ssh|rdp|port\s+22|port\s+3389).{0,60}(public|internet|network|restrict|access)",
+             r"(network|internet).{0,60}(administrat|ssh|rdp)",),
+            Risk.HIGH,
+            _firewall_evaluator,
+        ),
     )
 }
 
