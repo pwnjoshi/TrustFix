@@ -194,6 +194,7 @@ Thumbs.db
 # ADK
 .adk/
 artifacts/traces/
+artifacts/grade_results/
 
 # Agent CLI specific
 .persist_vector_store

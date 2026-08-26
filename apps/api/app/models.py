@@ -78,6 +78,7 @@ class RemediationPlan(BaseModel):
     workspace_id: str
     review_id: str | None = None
     control_id: str
+    target_project_id: str | None = None
     resource: str
     current_state: str
     proposed_change: str
@@ -142,6 +143,9 @@ class Workspace(BaseModel):
     organization_name: str | None = None
     primary_use_case: str | None = None
     target_project_id: str | None = None
+    target_configured_at: datetime | None = None
+    target_verified_project_id: str | None = None
+    target_verified_at: datetime | None = None
     target_boundary_confirmed: bool = False
     onboarding_complete: bool = False
     created_at: datetime = Field(default_factory=now)

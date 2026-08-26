@@ -29,7 +29,7 @@ class ReviewOrchestrator:
             return adapter.collect_run(workspace_id, self.settings.google_cloud_region)
         return adapter.collect_firewall(workspace_id)
 
-    def run(self, review: Review) -> Review:
+    def run(self, review: Review, strict_permissions: bool = False) -> Review:
         review.status = "Scanning"
         store.put("reviews", review.id, review)
         for item in review.questions:
@@ -44,6 +44,8 @@ class ReviewOrchestrator:
                 evidence = self._collect(review.workspace_id, item.control_id)
                 result = evaluate(item.control_id, evidence)
             except PermissionGap as gap:
+                if strict_permissions:
+                    raise
                 result = ControlResult(control_id=item.control_id, status=ControlStatus.NEEDS_REVIEW, summary=str(gap), missing_permission=gap.permission)
             item.status = result.status
             item.evidence_ids = [e.id for e in result.evidence]

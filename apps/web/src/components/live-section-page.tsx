@@ -133,8 +133,8 @@ export function IntegrationsPage() {
               <h3>Google Cloud</h3>
               <p>Live infrastructure inspection and governed remediation.</p>
             </div>
-            <span className={`status ${connection.status === "CONNECTED" ? "verified" : "failed"}`}>
-              {connection.status === "CONNECTED" ? "Connected" : "Not configured"}
+            <span className={`status ${connection.status === "VERIFIED" ? "verified" : connection.status === "VERIFICATION_REQUIRED" ? "needs-review" : "failed"}`}>
+              {connection.status === "VERIFIED" ? "Verified" : connection.status === "VERIFICATION_REQUIRED" ? "Verification required" : "Not configured"}
             </span>
             <dl>
               <div><dt>Project</dt><dd>{String(connection.project || "—")}</dd></div>
@@ -151,6 +151,11 @@ export function IntegrationsPage() {
                 </dd>
               </div>
             </dl>
+            <div className="connection-explainer">
+              <strong>How this connection works</strong>
+              <p>Saving a project ID only selects the inspection boundary. TrustFix becomes operational after its dedicated scanner service account successfully reads that exact project. Your Google login authenticates this workspace; it does not grant cloud access.</p>
+              <ol><li><span>1</span>Enter the exact Google Cloud project ID</li><li><span>2</span>Grant the displayed scanner identity read access</li><li><span>3</span>Verify and collect fresh project-scoped evidence</li></ol>
+            </div>
             <label className="connection-editor">
               Workspace target project
               <input
@@ -166,7 +171,7 @@ export function IntegrationsPage() {
               onClick={verify}
               disabled={verifying || !project}
             >
-              {verifying ? "Saving and verifying…" : "Save & verify project"}
+              {verifying ? "Testing scanner access…" : connection.status === "VERIFIED" && project === connection.project ? "Reverify connection" : "Save and verify access"}
             </button>
             {error && <p className="form-error" role="alert">{error}</p>}
           </article>

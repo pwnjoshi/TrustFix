@@ -23,12 +23,12 @@ Updated: 2026-08-26
 
 ## Deployed
 
-- Public site: `trustfix-app-00008-msw`
-- Public legacy alias: `trustfix-web-00009-5jz`
-- Protected workspace: `trustfix-workspace-00006-4g5`
-- API: `trustfix-api-00012-z5g`
-- Scanner worker: `trustfix-scanner-worker-00010-dk2`
-- Remediator worker: `trustfix-remediator-worker-00010-2wk`
+- Public site: `trustfix-app-00009-5zx`
+- Public legacy alias: `trustfix-web-00010-jbp`
+- Protected workspace: `trustfix-workspace-00007-x4t`
+- API: `trustfix-api-00013-62l`
+- Scanner worker: `trustfix-scanner-worker-00011-kqx`
+- Remediator worker: `trustfix-remediator-worker-00011-bzl`
 - ADK agent: `trustfix-agent-00003-9c4`
 - Pub/Sub subscriptions: `trustfix-scan-push`, `trustfix-remediation-push`
 

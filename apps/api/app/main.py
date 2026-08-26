@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from fastapi import FastAPI, File, Form, Header, HTTPException, Request, UploadFile
 from fastapi.responses import JSONResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
@@ -8,7 +10,7 @@ from .controls import REGISTRY
 from .jobs import publish
 from .models import Approval, Job, PolicySettings, RemediationRequest, Review, Role, WorkspaceInvitation
 from .orchestrator import ReviewOrchestrator
-from .seed import demo_evidence, demo_review
+from .seed import demo_review
 from .store import store
 from .questionnaires import QuestionnaireError, export_csv, export_xlsx, parse_csv, parse_xlsx
 
@@ -23,6 +25,24 @@ app.add_middleware(
     allow_headers=["Content-Type", "Authorization", "Idempotency-Key", "X-TrustFix-Role"],
 )
 orchestrator = ReviewOrchestrator(settings)
+
+
+def _workspace_target(workspace):
+    return (workspace.target_project_id if workspace else None) or settings.trustfix_target_project_id
+
+
+def _verified_target(workspace) -> str | None:
+    target = _workspace_target(workspace)
+    if workspace and target and workspace.target_verified_project_id == target and workspace.target_verified_at:
+        return target
+    return None
+
+
+def _require_verified_target(workspace) -> str:
+    target = _verified_target(workspace)
+    if not target:
+        raise HTTPException(409, "Verify the exact Google Cloud target in Integrations before using live assurance features")
+    return target
 
 
 @app.middleware("http")
@@ -86,7 +106,9 @@ def onboarding(request: Request):
         "onboarding_complete": workspace.onboarding_complete and bool(workspace.target_project_id),
         "target_project": target_project,
         "platform_project": settings.trustfix_platform_project_id,
-        "connection_ready": bool(target_project),
+        "connection_ready": bool(_verified_target(workspace)),
+        "connection_status": "VERIFIED" if _verified_target(workspace) else "VERIFICATION_REQUIRED" if target_project else "NOT_CONFIGURED",
+        "last_verified": workspace.target_verified_at,
         "scanner_principal": f"trustfix-scanner@{settings.trustfix_platform_project_id}.iam.gserviceaccount.com",
     }
 
@@ -116,6 +138,8 @@ async def complete_onboarding(request: Request):
         raise HTTPException(422, "The target project must be separate from the TrustFix platform project")
     if not boundary_confirmed:
         raise HTTPException(422, "Confirm that the target is a disposable project")
+    if workspace.target_verified_project_id != target_project_id or not workspace.target_verified_at:
+        raise HTTPException(409, "Verify this exact Google Cloud project before completing onboarding")
     workspace.organization_name = organization_name
     workspace.name = f"{organization_name} workspace"
     workspace.primary_use_case = primary_use_case
@@ -131,15 +155,15 @@ def google_cloud_connection(request: Request):
     user = current_user(request)
     workspace = store.get("workspaces", user.workspace_id)
     target_project = (workspace.target_project_id if workspace else None) or settings.trustfix_target_project_id
-    live_evidence = [item for item in store.list("evidence") if item.workspace_id == user.workspace_id and item.live]
-    latest = max((item.collected_at for item in live_evidence), default=None)
+    verified_target = _verified_target(workspace)
+    live_evidence = [item for item in store.list("evidence") if item.workspace_id == user.workspace_id and item.live and item.project == verified_target] if verified_target else []
     return {
-        "status": "CONNECTED" if target_project else "NOT_CONFIGURED",
+        "status": "VERIFIED" if verified_target else "VERIFICATION_REQUIRED" if target_project else "NOT_CONFIGURED",
         "project": target_project,
         "boundary": "Disposable target project",
         "authentication": "Dedicated Cloud Run service accounts",
         "region": settings.google_cloud_region,
-        "last_verified": latest,
+        "last_verified": workspace.target_verified_at if verified_target else None,
         "evidence_count": len(live_evidence),
     }
 
@@ -156,10 +180,7 @@ def verify_google_cloud_connection(request: Request):
         review = demo_review(user.workspace_id)
         review.id = review_id
         store.put("reviews", review.id, review)
-        # Seed demo evidence
-        for ev in demo_evidence(user.workspace_id):
-            store.put("evidence", ev.id, ev)
-    job = Job(workspace_id=user.workspace_id, review_id=review.id, kind="SCAN")
+    job = Job(workspace_id=user.workspace_id, review_id=review.id, kind="CONNECTION_VERIFY")
     review.status = "Queued"
     store.put("reviews", review.id, review)
     store.put("jobs", job.id, job)
@@ -183,7 +204,12 @@ async def configure_google_cloud_connection(request: Request):
         raise HTTPException(422, "Enter a valid Google Cloud project ID")
     if target_project_id == settings.trustfix_platform_project_id:
         raise HTTPException(422, "The target project must be separate from the TrustFix platform project")
-    workspace.target_project_id = target_project_id
+    if workspace.target_project_id != target_project_id:
+        workspace.target_project_id = target_project_id
+        workspace.target_configured_at = datetime.now(timezone.utc)
+        workspace.target_verified_project_id = None
+        workspace.target_verified_at = None
+        workspace.updated_at = datetime.now(timezone.utc)
     store.put("workspaces", workspace.id, workspace)
     return {
         "project": target_project_id,
@@ -326,6 +352,8 @@ def current_demo_review(request: Request):
 @app.post("/api/reviews/{review_id}/start", status_code=202)
 def start_review(review_id: str, request: Request):
     user = current_user(request)
+    workspace = store.get("workspaces", user.workspace_id)
+    _require_verified_target(workspace)
     review = store.get("reviews", review_id)
     if not review or review.workspace_id != user.workspace_id:
         raise HTTPException(404, "Review not found")
@@ -346,7 +374,7 @@ def run_review(review_id: str, request: Request):
     if not review:
         raise HTTPException(404, "Review not found")
     workspace = store.get("workspaces", user.workspace_id)
-    target_project = (workspace.target_project_id if workspace else None) or settings.trustfix_target_project_id
+    target_project = _require_verified_target(workspace)
     return ReviewOrchestrator(settings, target_project).run(review)
 
 
@@ -411,22 +439,27 @@ def command_center(request: Request):
     user = current_user(request)
     workspace = store.get("workspaces", user.workspace_id)
     reviews = [item for item in store.list("reviews") if item.workspace_id == user.workspace_id]
-    evidence_items = [item for item in store.list("evidence") if item.workspace_id == user.workspace_id]
+    verified_target = _verified_target(workspace)
+    connection_status = "VERIFIED" if verified_target else "VERIFICATION_REQUIRED" if _workspace_target(workspace) else "NOT_CONFIGURED"
+    evidence_items = [item for item in store.list("evidence") if item.workspace_id == user.workspace_id and item.project == verified_target] if verified_target else []
     plans = [item for item in store.list("remediation_plans") if item.workspace_id == user.workspace_id]
     approvals = [item for item in store.list("approvals") if item.workspace_id == user.workspace_id]
     jobs = [item for item in store.list("jobs") if item.workspace_id == user.workspace_id]
     events = [item for item in store.list("activity_events") if item.workspace_id == user.workspace_id]
-    latest_review = max(reviews, key=lambda item: item.updated_at, default=None)
+    latest_review = max(reviews, key=lambda item: item.updated_at, default=None) if verified_target else None
     questions = latest_review.questions if latest_review else []
     verified = sum(1 for item in questions if str(item.status) == "VERIFIED")
     failed = sum(1 for item in questions if str(item.status) == "FAILED")
     total_supported = sum(1 for item in questions if str(item.status) != "UNSUPPORTED")
     assurance_score = round((verified / total_supported) * 100) if total_supported else 0
     approved_plan_ids = {item.plan_id for item in approvals if item.decision == "APPROVED"}
-    pending_approvals = sum(1 for item in plans if item.id not in approved_plan_ids)
+    pending_approvals = sum(1 for item in plans if item.id not in approved_plan_ids) if verified_target else 0
     return {
         "workspace": workspace,
         "target_project": (workspace.target_project_id if workspace else None) or settings.trustfix_target_project_id,
+        "connection_status": connection_status,
+        "connection_verified": bool(verified_target),
+        "last_verified": workspace.target_verified_at if verified_target else None,
         "assurance_score": assurance_score,
         "verified_controls": verified,
         "failed_controls": failed,
@@ -434,8 +467,8 @@ def command_center(request: Request):
         "evidence_count": len(evidence_items),
         "live_evidence_count": sum(1 for item in evidence_items if item.live),
         "latest_review": latest_review,
-        "jobs": sorted(jobs, key=lambda item: item.updated_at, reverse=True)[:8],
-        "activity": sorted(events, key=lambda item: item.timestamp, reverse=True)[:8],
+        "jobs": sorted(jobs, key=lambda item: item.updated_at, reverse=True)[:8] if verified_target else [],
+        "activity": sorted(events, key=lambda item: item.timestamp, reverse=True)[:8] if verified_target else [],
         "model": settings.trustfix_model,
     }
 
@@ -467,19 +500,20 @@ def export_review(review_id: str, format: str, request: Request):
 def export_proof_pack(review_id: str, request: Request):
     """Download a portable evidence manifest linking answers, proof, approvals, and actions."""
     user = current_user(request)
+    workspace = store.get("workspaces", user.workspace_id)
+    target_project = _require_verified_target(workspace)
     review = store.get("reviews", review_id)
     if not review or review.workspace_id != user.workspace_id:
         raise HTTPException(404, "Review not found")
     evidence_ids = {evidence_id for question in review.questions for evidence_id in question.evidence_ids}
     evidence_items = [
         item for item in store.list("evidence")
-        if item.workspace_id == user.workspace_id and item.id in evidence_ids
+        if item.workspace_id == user.workspace_id and item.id in evidence_ids and item.project == target_project and item.live
     ]
     plans = [item for item in store.list("remediation_plans") if item.workspace_id == user.workspace_id and item.review_id == review.id]
     plan_ids = {item.id for item in plans}
     approvals = [item for item in store.list("approvals") if item.workspace_id == user.workspace_id and item.plan_id in plan_ids]
     activity_items = [item for item in store.list("activity_events") if item.workspace_id == user.workspace_id and item.review_id == review.id]
-    workspace = store.get("workspaces", user.workspace_id)
     payload = {
         "manifest_version": "1.0",
         "product": "TrustFix",
@@ -505,7 +539,9 @@ def export_proof_pack(review_id: str, request: Request):
 @app.get("/api/evidence")
 def evidence(request: Request):
     user = current_user(request)
-    return [e for e in store.list("evidence") if e.workspace_id == user.workspace_id]
+    workspace = store.get("workspaces", user.workspace_id)
+    target_project = _require_verified_target(workspace)
+    return [e for e in store.list("evidence") if e.workspace_id == user.workspace_id and e.project == target_project]
 
 
 @app.get("/api/remediations")
@@ -557,6 +593,8 @@ async def execute_remediation(request: RemediationRequest, x_trustfix_role: str 
 @app.post("/api/remediations/{plan_id}/approve", status_code=202)
 def approve_remediation(plan_id: str, request: Request, idempotency_key: str = Header(alias="Idempotency-Key")):
     user = current_user(request)
+    workspace = store.get("workspaces", user.workspace_id)
+    _require_verified_target(workspace)
     if user.role not in {Role.OWNER, Role.ADMIN, Role.REVIEWER}:
         raise HTTPException(403, "Security Reviewer, Admin, or Owner role required")
     if len(idempotency_key) < 8:
@@ -567,6 +605,8 @@ def approve_remediation(plan_id: str, request: Request, idempotency_key: str = H
     plan = store.get("remediation_plans", plan_id)
     if not plan or plan.workspace_id != user.workspace_id:
         raise HTTPException(404, "Remediation plan not found")
+    if plan.target_project_id != _verified_target(workspace):
+        raise HTTPException(409, "This remediation plan belongs to a different or unverified Google Cloud target. Run assurance again.")
     approval = Approval(workspace_id=user.workspace_id, plan_id=plan.id, user_id=user.id, decision="APPROVED")
     if not plan.review_id:
         raise HTTPException(409, "Remediation plan is missing its review binding")

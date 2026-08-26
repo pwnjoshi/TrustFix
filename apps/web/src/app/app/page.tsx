@@ -11,7 +11,7 @@ type Question = { status?: string; question: string; control_id?: string };
 type Review = { id: string; name: string; status: string; questions: Question[]; updated_at: string };
 type Job = { id: string; kind: string; status: string; phase: string; progress: number; updated_at: string };
 type Activity = { id: string; actor: string; action: string; resource: string; result: string; timestamp: string };
-type Center = { target_project?: string; assurance_score: number; verified_controls: number; failed_controls: number; pending_approvals: number; evidence_count: number; live_evidence_count: number; latest_review?: Review; jobs: Job[]; activity: Activity[]; model: string };
+type Center = { target_project?: string; connection_status: "NOT_CONFIGURED" | "VERIFICATION_REQUIRED" | "VERIFIED"; connection_verified: boolean; last_verified?: string; assurance_score: number; verified_controls: number; failed_controls: number; pending_approvals: number; evidence_count: number; live_evidence_count: number; latest_review?: Review; jobs: Job[]; activity: Activity[]; model: string };
 
 function relativeTime(value: string) {
   const seconds = Math.max(0, Math.floor((Date.now() - new Date(value).getTime()) / 1000));
@@ -62,6 +62,10 @@ export default function Dashboard() {
 
   if (center === undefined) return <DashboardSkeleton />;
   if (!center) return <main className="page"><section className="empty-state"><Warning size={28}/><h2>Command Center unavailable</h2><p>Reload the workspace or check System health.</p><button className="button secondary" onClick={load}>Retry</button></section></main>;
+  if (!center.connection_verified) return <main className="page command-center">
+    <header className="command-hero"><div><span className="breadcrumb">TRUSTFIX / CONNECTION REQUIRED</span><h1>Verify cloud access before assurance begins.</h1><p>A project name alone is not a connection. TrustFix will show live controls, evidence, approvals, and Proof Packs only after its scanner successfully inspects the exact target.</p></div><Link className="button primary glow" href="/app/integrations">Configure integration <ArrowRight/></Link></header>
+    <section className="connection-gate"><div className="connection-gate-icon"><Cloud weight="duotone"/></div><span className="status needs-review">{center.connection_status === "NOT_CONFIGURED" ? "Project required" : "Verification required"}</span><h2>{center.target_project ? `${center.target_project} is configured, not verified` : "No Google Cloud target configured"}</h2><p>Grant the TrustFix scanner read access in that Google Cloud project, then run verification. Historical data from other projects is intentionally hidden.</p><ol><li><span>01</span><div><strong>Select the boundary</strong><small>Enter a real Google Cloud project ID—not a display name.</small></div></li><li><span>02</span><div><strong>Grant scanner IAM</strong><small>A dedicated keyless service account receives read-only project access.</small></div></li><li><span>03</span><div><strong>Verify with fresh evidence</strong><small>TrustFix calls Storage, Cloud Run, and Firewall APIs before enabling operations.</small></div></li></ol><Link className="button primary" href="/app/integrations">Open Google Cloud setup <ArrowRight/></Link></section>
+  </main>;
   const score = center.assurance_score;
   const activeJob = center.jobs.find((job) => job.status === "RUNNING" || job.status === "QUEUED");
   const needsAttention = (center.latest_review?.questions || []).filter((item) => item.status === "FAILED" || item.status === "NEEDS_REVIEW");

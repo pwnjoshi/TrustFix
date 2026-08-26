@@ -116,4 +116,4 @@ def plan_for(workspace_id: str, result: ControlResult, policy: PolicyEngine) -> 
     }
     change, expected, impact, rollback = changes[result.control_id]
     before = item.raw or item.relevant_properties
-    return RemediationPlan(workspace_id=workspace_id, control_id=result.control_id, resource=item.resource_identifier, current_state=item.observation, proposed_change=change, expected_result=expected, potential_impact=impact, dependencies_checked=3, rollback=rollback, risk=control.risk, decision=policy.decide(result.control_id, control.risk), expected_fingerprint=fingerprint(before))
+    return RemediationPlan(workspace_id=workspace_id, control_id=result.control_id, target_project_id=item.project, resource=item.resource_identifier, current_state=item.observation, proposed_change=change, expected_result=expected, potential_impact=impact, dependencies_checked=3, rollback=rollback, risk=control.risk, decision=policy.decide(result.control_id, control.risk), expected_fingerprint=fingerprint(before))

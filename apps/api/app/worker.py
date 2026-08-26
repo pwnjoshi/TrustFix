@@ -51,9 +51,28 @@ async def scan(request: Request):
         target_project_id = (workspace.target_project_id if workspace else None) or settings.trustfix_target_project_id
         if not target_project_id:
             raise RuntimeError("Workspace Google Cloud target is not configured")
-        ReviewOrchestrator(settings, target_project_id).run(review)
+        if (
+            not workspace
+            or workspace.target_verified_project_id != target_project_id
+            or not workspace.target_verified_at
+            or plan.target_project_id != target_project_id
+        ):
+            raise RuntimeError("Remediation refused: the plan is not bound to the currently verified Google Cloud target")
+        is_connection_check = job.kind == "CONNECTION_VERIFY"
+        if not is_connection_check and (
+            not workspace
+            or workspace.target_verified_project_id != target_project_id
+            or not workspace.target_verified_at
+        ):
+            raise RuntimeError("Google Cloud target is not verified. Verify the exact project in Integrations before running assurance.")
+        ReviewOrchestrator(settings, target_project_id).run(review, strict_permissions=is_connection_check)
+        if is_connection_check and workspace:
+            workspace.target_verified_project_id = target_project_id
+            workspace.target_verified_at = datetime.now(timezone.utc)
+            workspace.updated_at = datetime.now(timezone.utc)
+            store.put("workspaces", workspace.id, workspace)
         job.status = "SUCCEEDED"
-        job.phase = "Evidence verified"
+        job.phase = "Connection verified" if is_connection_check else "Evidence verified"
         job.progress = 100
         logger.info(json.dumps({"event": "scan_completed", "run_id": job.id, "workspace_id": job.workspace_id, "review_id": job.review_id}))
     except Exception as exc:
