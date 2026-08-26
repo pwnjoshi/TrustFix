@@ -1,15 +1,25 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { ArrowRight, CheckCircle, Cloud, Fingerprint, Lightning, ShieldCheck, Warning } from "@phosphor-icons/react";
 
+const proofOutcomes = ["verified evidence", "governed fixes", "audit-ready proof"];
+
 export function AssuranceHero() {
+  const [outcomeIndex, setOutcomeIndex] = useState(0);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setOutcomeIndex((current) => (current + 1) % proofOutcomes.length), 2800);
+    return () => window.clearInterval(timer);
+  }, []);
+
   return <section className="hero-v3">
     <div className="hero-v3-glow"/><div className="hero-v3-grid"/>
     <div className="hero-v3-copy">
       <div className="hero-v3-badge"><span/> Autonomous cloud assurance <small>BUILT WITH GOOGLE ADK</small></div>
-      <h1>Security answers are easy.<br/><em>Proof changes everything.</em></h1>
-      <p>TrustFix inspects real Google Cloud infrastructure, governs the smallest safe fix, and independently verifies the result—turning every security claim into defensible evidence.</p>
+      <h1 aria-label="Turn cloud risk into verified evidence."><span>Turn cloud risk into</span><span className="hero-v3-outcome" aria-hidden="true"><em key={proofOutcomes[outcomeIndex]}>{proofOutcomes[outcomeIndex]}</em></span></h1>
+      <p>TrustFix inspects live Google Cloud, governs the smallest safe fix, and verifies the result with audit-ready evidence.</p>
       <div className="hero-actions"><Link className="button primary luminous" href="/demo">Explore the interactive demo <ArrowRight/></Link><a className="button dark-outline" href="/app">Open real workspace</a></div>
       <div className="hero-v3-trust"><span><CheckCircle weight="fill"/> Live infrastructure</span><span><ShieldCheck weight="fill"/> Approval governed</span><span><Fingerprint weight="fill"/> Audit ready</span></div>
     </div>
