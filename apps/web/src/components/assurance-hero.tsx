@@ -20,7 +20,7 @@ export function AssuranceHero() {
       <div className="hero-v3-badge"><span/> Autonomous cloud assurance <small>BUILT WITH GOOGLE ADK</small></div>
       <h1 aria-label="Turn cloud risk into verified evidence."><span>Turn cloud risk into</span><span className="hero-v3-outcome" aria-hidden="true"><em key={proofOutcomes[outcomeIndex]}>{proofOutcomes[outcomeIndex]}</em></span></h1>
       <p>TrustFix inspects live Google Cloud, governs the smallest safe fix, and verifies the result with audit-ready evidence.</p>
-      <div className="hero-actions"><Link className="button primary luminous" href="/demo">Explore the interactive demo <ArrowRight/></Link><a className="button dark-outline" href="/app">Open real workspace</a></div>
+      <div className="hero-actions"><Link className="button primary luminous" href="https://thetrustfix.xyz/demo">Explore interactive demo <ArrowRight/></Link><a className="button dark-outline" href="/app">Start for free</a></div>
       <div className="hero-v3-trust"><span><CheckCircle weight="fill"/> Live infrastructure</span><span><ShieldCheck weight="fill"/> Approval governed</span><span><Fingerprint weight="fill"/> Audit ready</span></div>
     </div>
 

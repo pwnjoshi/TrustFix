@@ -9,6 +9,7 @@ import {
   UsersThree, X,
 } from "@phosphor-icons/react";
 import { Mark } from "./brand";
+import { ThemeToggle } from "./theme-toggle";
 
 const primary = [
   ["Overview", "/app", Gauge],
@@ -89,6 +90,7 @@ export function Sidebar({ open, close }: { open: boolean; close: () => void }) {
             <small>Firestore-backed</small>
           </div>
         </div>
+        <ThemeToggle />
         <div className="user-card">
           <span className="avatar" aria-hidden="true">{initials}</span>
           <div>

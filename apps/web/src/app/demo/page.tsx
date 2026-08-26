@@ -250,7 +250,7 @@ export default function PublicDemo() {
           <h2>Move from illustrative data to your protected workspace.</h2>
         </div>
         <a className="button primary" href="/app">
-          Sign in and start onboarding <ArrowRight />
+          Start for free <ArrowRight />
         </a>
       </section>
 

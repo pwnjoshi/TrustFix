@@ -17,6 +17,8 @@ Updated: 2026-08-26
 - Public marketing pages hand off to the IAP-protected workspace with full-page navigation, preventing protected API responses from being parsed as public-page JSON.
 - Workspace-scoped Google Cloud target selection, validation, verification, and durable onboarding completion.
 - Production onboarding now explains the exact customer IAM setup, generates a project-specific read-only grant, tests live API access, and blocks completion until that exact project is verified.
+- Public demo links are canonical to `thetrustfix.xyz`, workspace entry is the only IAP handoff, signed-out CTAs use `Start for free`, and authenticated workspace pages use `Open workspace`.
+- Persistent system-aware light and dark themes cover the marketing site, mobile navigation, onboarding, and authenticated product workspace.
 - Cinematic mobile-first public site, responsive Command Center, assurance score, Agent Mission Control, mobile bottom navigation, and portable Proof Packs.
 - Gemini 3.5 Flash migration with ten-case evidence, safety, unsupported-control, and prompt-injection evaluation at 5.0/5.0.
 - Poison-message protection: unsupported mutations are refused, recorded as failed safely, and acknowledged without an infinite Pub/Sub retry loop.
@@ -24,9 +26,9 @@ Updated: 2026-08-26
 
 ## Deployed
 
-- Public site: `trustfix-app-00011-ccq`
-- Public legacy alias: `trustfix-web-00012-2pq`
-- Protected workspace: `trustfix-workspace-00009-l7q`
+- Public site: `trustfix-app-00012-cmg`
+- Public legacy alias: `trustfix-web-00013-spp`
+- Protected workspace: `trustfix-workspace-00010-8wb`
 - API: `trustfix-api-00014-ktl`
 - Scanner worker: `trustfix-scanner-worker-00012-p8g`
 - Remediator worker: `trustfix-remediator-worker-00012-tfw`
