@@ -191,6 +191,8 @@ class Job(BaseModel):
     review_id: str
     kind: str
     status: str = "QUEUED"
+    phase: str = "Queued"
+    progress: int = Field(default=0, ge=0, le=100)
     error: str | None = None
     created_at: datetime = Field(default_factory=now)
     updated_at: datetime = Field(default_factory=now)

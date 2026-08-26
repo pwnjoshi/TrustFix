@@ -43,6 +43,8 @@ async def scan(request: Request):
         raise HTTPException(404, "Review not found")
     try:
         job.status = "RUNNING"
+        job.phase = "Inspecting Google Cloud"
+        job.progress = 20
         job.updated_at = datetime.now(timezone.utc)
         store.put("jobs", job.id, job)
         workspace = store.get("workspaces", review.workspace_id)
@@ -51,9 +53,12 @@ async def scan(request: Request):
             raise RuntimeError("Workspace Google Cloud target is not configured")
         ReviewOrchestrator(settings, target_project_id).run(review)
         job.status = "SUCCEEDED"
+        job.phase = "Evidence verified"
+        job.progress = 100
         logger.info(json.dumps({"event": "scan_completed", "run_id": job.id, "workspace_id": job.workspace_id, "review_id": job.review_id}))
     except Exception as exc:
         job.status = "FAILED"
+        job.phase = "Inspection failed"
         job.error = f"{type(exc).__name__}: {exc}"
         logger.exception("scan_failed", extra={"run_id": job.id, "workspace_id": job.workspace_id, "review_id": job.review_id})
     finally:
@@ -72,11 +77,26 @@ async def remediate(request: Request):
     plan = store.get("remediation_plans", data["plan_id"])
     approval = store.get("approvals", data["approval_id"])
     if not plan or not approval or approval.decision != "APPROVED" or plan.workspace_id != data["workspace_id"]:
-        raise HTTPException(409, "A valid approval is required")
+        if job:
+            job.status = "FAILED"
+            job.phase = "Approval validation failed safely"
+            job.error = "A valid persisted approval is required"
+            job.updated_at = datetime.now(timezone.utc)
+            store.put("jobs", job.id, job)
+        logger.error(json.dumps({"event": "remediation_rejected", "run_id": data.get("job_id"), "reason": "invalid_approval"}))
+        return
     if plan.control_id != "GCP_STORAGE_PUBLIC_ACCESS":
-        raise HTTPException(501, "This remediation executor is not enabled")
+        job.status = "FAILED"
+        job.phase = "Unsupported mutation refused safely"
+        job.error = f"No mutation executor is enabled for {plan.control_id}"
+        job.updated_at = datetime.now(timezone.utc)
+        store.put("jobs", job.id, job)
+        logger.warning(json.dumps({"event": "remediation_refused", "run_id": job.id, "control_id": plan.control_id}))
+        return
     try:
         job.status = "RUNNING"
+        job.phase = "Checking approval and drift"
+        job.progress = 15
         store.put("jobs", job.id, job)
         workspace = store.get("workspaces", job.workspace_id)
         target_project_id = (workspace.target_project_id if workspace else None) or settings.trustfix_target_project_id
@@ -85,6 +105,9 @@ async def remediate(request: Request):
         adapter = GcpControlAdapter(target_project_id)
         before = {"resource": plan.resource, "fingerprint": plan.expected_fingerprint}
         execution = adapter.remediate_storage(plan.resource, plan.expected_fingerprint)
+        job.phase = "Verifying anonymous access"
+        job.progress = 70
+        store.put("jobs", job.id, job)
         anonymous_status = await adapter.anonymous_storage_probe(plan.resource)
         if anonymous_status not in {401, 403, 404}:
             raise RuntimeError(f"Verification failed: anonymous request returned HTTP {anonymous_status}")
@@ -100,9 +123,12 @@ async def remediate(request: Request):
         store.put("activity_events", event.id, event)
         store.put("remediation_actions", job.id, {"plan_id": plan.id, "before": before, "after": execution, "anonymous_status": anonymous_status, "status": "VERIFIED"})
         job.status = "SUCCEEDED"
+        job.phase = "Remediation independently verified"
+        job.progress = 100
         logger.info(json.dumps({"event": "remediation_verified", "run_id": job.id, "workspace_id": job.workspace_id, "review_id": job.review_id, "control_id": plan.control_id}))
     except Exception as exc:
         job.status = "FAILED"
+        job.phase = "Remediation failed safely"
         job.error = f"{type(exc).__name__}: {exc}"
         logger.exception("remediation_failed", extra={"run_id": job.id, "workspace_id": job.workspace_id, "review_id": job.review_id, "control_id": plan.control_id})
     finally:

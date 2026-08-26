@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     trustfix_target_project_id: str | None = None
     google_cloud_location: str = "global"
     google_cloud_region: str = "us-central1"
-    trustfix_model: str = "gemini-2.5-flash"
+    trustfix_model: str = "gemini-3.5-flash"
     firestore_database: str = "(default)"
     evidence_bucket: str | None = None
     pubsub_scan_topic: str = "trustfix-scan-jobs"

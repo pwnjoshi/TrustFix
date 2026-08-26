@@ -1,5 +1,5 @@
 from fastapi import FastAPI, File, Form, Header, HTTPException, Request, UploadFile
-from fastapi.responses import Response
+from fastapi.responses import JSONResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 from .config import get_settings
@@ -397,6 +397,49 @@ def get_job(job_id: str, request: Request):
     return job
 
 
+@app.get("/api/jobs")
+def list_jobs(request: Request):
+    """Recent workspace jobs for the operator-facing Mission Control timeline."""
+    user = current_user(request)
+    jobs = [item for item in store.list("jobs") if item.workspace_id == user.workspace_id]
+    return sorted(jobs, key=lambda item: item.updated_at, reverse=True)[:25]
+
+
+@app.get("/api/command-center")
+def command_center(request: Request):
+    """One bounded payload for the dashboard's assurance and operations overview."""
+    user = current_user(request)
+    workspace = store.get("workspaces", user.workspace_id)
+    reviews = [item for item in store.list("reviews") if item.workspace_id == user.workspace_id]
+    evidence_items = [item for item in store.list("evidence") if item.workspace_id == user.workspace_id]
+    plans = [item for item in store.list("remediation_plans") if item.workspace_id == user.workspace_id]
+    approvals = [item for item in store.list("approvals") if item.workspace_id == user.workspace_id]
+    jobs = [item for item in store.list("jobs") if item.workspace_id == user.workspace_id]
+    events = [item for item in store.list("activity_events") if item.workspace_id == user.workspace_id]
+    latest_review = max(reviews, key=lambda item: item.updated_at, default=None)
+    questions = latest_review.questions if latest_review else []
+    verified = sum(1 for item in questions if str(item.status) == "VERIFIED")
+    failed = sum(1 for item in questions if str(item.status) == "FAILED")
+    total_supported = sum(1 for item in questions if str(item.status) != "UNSUPPORTED")
+    assurance_score = round((verified / total_supported) * 100) if total_supported else 0
+    approved_plan_ids = {item.plan_id for item in approvals if item.decision == "APPROVED"}
+    pending_approvals = sum(1 for item in plans if item.id not in approved_plan_ids)
+    return {
+        "workspace": workspace,
+        "target_project": (workspace.target_project_id if workspace else None) or settings.trustfix_target_project_id,
+        "assurance_score": assurance_score,
+        "verified_controls": verified,
+        "failed_controls": failed,
+        "pending_approvals": pending_approvals,
+        "evidence_count": len(evidence_items),
+        "live_evidence_count": sum(1 for item in evidence_items if item.live),
+        "latest_review": latest_review,
+        "jobs": sorted(jobs, key=lambda item: item.updated_at, reverse=True)[:8],
+        "activity": sorted(events, key=lambda item: item.timestamp, reverse=True)[:8],
+        "model": settings.trustfix_model,
+    }
+
+
 @app.get("/api/reviews/{review_id}/export.{format}")
 def export_review(review_id: str, format: str, request: Request):
     user = current_user(request)
@@ -420,6 +463,45 @@ def export_review(review_id: str, format: str, request: Request):
     raise HTTPException(404, "Supported export formats are csv and xlsx")
 
 
+@app.get("/api/reviews/{review_id}/proof-pack.json")
+def export_proof_pack(review_id: str, request: Request):
+    """Download a portable evidence manifest linking answers, proof, approvals, and actions."""
+    user = current_user(request)
+    review = store.get("reviews", review_id)
+    if not review or review.workspace_id != user.workspace_id:
+        raise HTTPException(404, "Review not found")
+    evidence_ids = {evidence_id for question in review.questions for evidence_id in question.evidence_ids}
+    evidence_items = [
+        item for item in store.list("evidence")
+        if item.workspace_id == user.workspace_id and item.id in evidence_ids
+    ]
+    plans = [item for item in store.list("remediation_plans") if item.workspace_id == user.workspace_id and item.review_id == review.id]
+    plan_ids = {item.id for item in plans}
+    approvals = [item for item in store.list("approvals") if item.workspace_id == user.workspace_id and item.plan_id in plan_ids]
+    activity_items = [item for item in store.list("activity_events") if item.workspace_id == user.workspace_id and item.review_id == review.id]
+    workspace = store.get("workspaces", user.workspace_id)
+    payload = {
+        "manifest_version": "1.0",
+        "product": "TrustFix",
+        "statement": "Evidence-backed cloud assurance proof pack",
+        "workspace": workspace,
+        "review": review,
+        "evidence": evidence_items,
+        "remediation_plans": plans,
+        "approvals": approvals,
+        "activity": activity_items,
+        "generated_by": {"model": settings.trustfix_model, "platform_project": settings.trustfix_platform_project_id},
+    }
+    return JSONResponse(
+        content={key: (
+            [item.model_dump(mode="json") for item in value]
+            if isinstance(value, list) else value.model_dump(mode="json")
+            if hasattr(value, "model_dump") else value
+        ) for key, value in payload.items()},
+        headers={"Content-Disposition": f'attachment; filename="{review_id}-trustfix-proof-pack.json"'},
+    )
+
+
 @app.get("/api/evidence")
 def evidence(request: Request):
     user = current_user(request)
@@ -437,7 +519,8 @@ def remediations(request: Request):
 def activity(request: Request, review_id: str | None = None):
     user = current_user(request)
     events = [e for e in store.list("activity_events") if e.workspace_id == user.workspace_id]
-    return [event for event in events if not review_id or event.review_id == review_id]
+    filtered = [event for event in events if not review_id or event.review_id == review_id]
+    return sorted(filtered, key=lambda event: event.timestamp, reverse=True)
 
 
 @app.post("/api/remediations/execute")

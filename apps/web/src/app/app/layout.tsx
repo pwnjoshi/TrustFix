@@ -2,6 +2,8 @@
 import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Bell, List } from "@phosphor-icons/react";
+import { Article, Gauge, ShieldWarning, SquaresFour } from "@phosphor-icons/react";
+import Link from "next/link";
 import { Sidebar } from "@/components/sidebar";
 import { Mark } from "@/components/brand";
 import { ErrorBoundary } from "@/components/error-boundary";
@@ -77,13 +79,19 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <List size={22} />
           </button>
           <Mark />
-          <button aria-label="Notifications">
+          <button aria-label="Notifications" title="No unread notifications" disabled>
             <Bell size={20} />
           </button>
         </header>
         <ErrorBoundary>
           {children}
         </ErrorBoundary>
+        <nav className="mobile-bottom-nav" aria-label="Primary mobile navigation">
+          <Link href="/app" className={pathname === "/app" ? "active" : ""}><Gauge/><span>Overview</span></Link>
+          <Link href="/app/reviews" className={pathname.startsWith("/app/reviews") ? "active" : ""}><Article/><span>Reviews</span></Link>
+          <Link href="/app/findings" className={pathname.startsWith("/app/findings") ? "active" : ""}><ShieldWarning/><span>Findings</span></Link>
+          <Link href="/app/evidence" className={pathname.startsWith("/app/evidence") ? "active" : ""}><SquaresFour/><span>Evidence</span></Link>
+        </nav>
       </div>
     </div>
   );

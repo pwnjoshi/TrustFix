@@ -21,9 +21,8 @@ def supported_controls() -> dict[str, str]:
 
 root_agent = Agent(
     name="trustfix_review_orchestrator",
-    model=os.getenv("TRUSTFIX_MODEL", "gemini-2.5-flash"),
+    model=os.getenv("TRUSTFIX_MODEL", "gemini-3.5-flash"),
     description="Maps security requirements to supported deterministic TrustFix controls.",
     instruction="""You interpret security questionnaire requirements. Select a control only from supported_controls. Never claim that a requirement passes and never manufacture evidence. If no supported control can verify the requirement, return UNSUPPORTED and explain that TrustFix cannot verify it from the connected Google Cloud environment. Keep decision summaries concise; never expose chain-of-thought.""",
     tools=[supported_controls],
 )
-

@@ -1,218 +1,75 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { ArrowRight, CheckCircle, Cloud, Play, Warning } from "@phosphor-icons/react";
+import { useCallback, useEffect, useState } from "react";
+import { ArrowRight, Brain, CheckCircle, Cloud, DownloadSimple, Fingerprint, Lightning, Play, Pulse, ShieldCheck, Sparkle, Warning } from "@phosphor-icons/react";
 import { DashboardSkeleton } from "@/components/skeleton";
 import { useToast } from "@/components/toast";
 
 const api = "/api/trustfix/api";
-
 type Question = { status?: string; question: string; control_id?: string };
-type Review = { id: string; name: string; status: string; questions: Question[] };
-type Connection = { status: string; project?: string; evidence_count: number; last_verified?: string };
+type Review = { id: string; name: string; status: string; questions: Question[]; updated_at: string };
+type Job = { id: string; kind: string; status: string; phase: string; progress: number; updated_at: string };
+type Activity = { id: string; actor: string; action: string; resource: string; result: string; timestamp: string };
+type Center = { target_project?: string; assurance_score: number; verified_controls: number; failed_controls: number; pending_approvals: number; evidence_count: number; live_evidence_count: number; latest_review?: Review; jobs: Job[]; activity: Activity[]; model: string };
+
+function relativeTime(value: string) {
+  const seconds = Math.max(0, Math.floor((Date.now() - new Date(value).getTime()) / 1000));
+  if (seconds < 60) return "just now";
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+  return `${Math.floor(seconds / 86400)}d ago`;
+}
 
 export default function Dashboard() {
-  const [review, setReview] = useState<Review | null | undefined>(undefined);
-  const [connection, setConnection] = useState<Connection | null>(null);
+  const [center, setCenter] = useState<Center | null | undefined>(undefined);
   const [running, setRunning] = useState(false);
   const { show } = useToast();
-
-  async function load() {
+  const load = useCallback(async () => {
     try {
-      const [reviewRes, connRes] = await Promise.all([
-        fetch(`${api}/reviews/demo/current`, { cache: "no-store" })
-          .then(async (r) => (r.status === 404 ? fetch(`${api}/reviews/demo`, { method: "POST" }) : r))
-          .then((r) => r.json()),
-        fetch(`${api}/integrations/google-cloud`, { cache: "no-store" }).then((r) => r.json()),
-      ]);
-      setReview(reviewRes);
-      setConnection(connRes);
-    } catch (e) {
-      setReview(null);
-      show(e instanceof Error ? e.message : "Could not load dashboard", "error");
+      const response = await fetch(`${api}/command-center`, { cache: "no-store" });
+      const body = await response.json();
+      if (!response.ok) throw new Error(body.detail || "Command Center could not load");
+      setCenter(body);
+    } catch (error) {
+      setCenter(null);
+      show(error instanceof Error ? error.message : "Command Center could not load", "error");
     }
-  }
-
-  useEffect(() => { load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [show]);
+  useEffect(() => { load(); }, [load]);
 
   async function runReview() {
-    if (!review) return;
+    if (!center?.latest_review) return;
     setRunning(true);
     try {
-      const jobRes = await fetch(`${api}/reviews/${review.id}/start`, { method: "POST" });
-      const job = await jobRes.json();
-      if (!jobRes.ok) throw new Error(job.detail || "Could not start review");
-      show("Live review started — results will update shortly", "info");
-      // Poll for completion
-      for (let i = 0; i < 90; i++) {
-        await new Promise((r) => setTimeout(r, 2000));
-        const j = await fetch(`${api}/jobs/${job.job_id}`, { cache: "no-store" }).then((r) => r.json());
-        if (j.status === "SUCCEEDED") { await load(); show("Review completed", "success"); return; }
-        if (j.status === "FAILED") throw new Error(j.error || "Review failed");
+      const response = await fetch(`${api}/reviews/${center.latest_review.id}/start`, { method: "POST" });
+      const queued = await response.json();
+      if (!response.ok) throw new Error(queued.detail || "Could not start assurance run");
+      show("Autonomous assurance run started", "info");
+      for (let attempt = 0; attempt < 90; attempt++) {
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        await load();
+        const jobResponse = await fetch(`${api}/jobs/${queued.job_id}`, { cache: "no-store" });
+        const job = await jobResponse.json();
+        if (job.status === "SUCCEEDED") { await load(); show("Evidence verified", "success"); return; }
+        if (job.status === "FAILED") throw new Error(job.error || "Assurance run failed");
       }
-    } catch (e) {
-      show(e instanceof Error ? e.message : "Review failed", "error");
-    } finally {
-      setRunning(false);
-    }
+      throw new Error("The run is continuing in the background. Mission Control will keep its status.");
+    } catch (error) {
+      show(error instanceof Error ? error.message : "Assurance run failed", "error");
+    } finally { setRunning(false); }
   }
 
-  // Show skeleton while loading
-  if (review === undefined) return <DashboardSkeleton />;
+  if (center === undefined) return <DashboardSkeleton />;
+  if (!center) return <main className="page"><section className="empty-state"><Warning size={28}/><h2>Command Center unavailable</h2><p>Reload the workspace or check System health.</p><button className="button secondary" onClick={load}>Retry</button></section></main>;
+  const score = center.assurance_score;
+  const activeJob = center.jobs.find((job) => job.status === "RUNNING" || job.status === "QUEUED");
+  const needsAttention = (center.latest_review?.questions || []).filter((item) => item.status === "FAILED" || item.status === "NEEDS_REVIEW");
 
-  const counts = review?.questions.reduce(
-    (sum, q) => ({ ...sum, [q.status || "NEEDS_REVIEW"]: (sum[q.status || "NEEDS_REVIEW"] || 0) + 1 }),
-    {} as Record<string, number>,
-  ) || {};
-
-  const total = review?.questions.length || 0;
-  const verified = counts.VERIFIED || 0;
-  const failed = review?.questions.filter((q) => q.status === "FAILED") || [];
-  const progressPct = total > 0 ? (verified / total) * 100 : 0;
-
-  return (
-    <main className="page dashboard">
-      <div className="page-heading">
-        <div>
-          <span className="breadcrumb">TRUSTFIX / OVERVIEW</span>
-          <h1>Security assurance</h1>
-          <p>Live posture across the connected disposable Google Cloud project.</p>
-        </div>
-        <button
-          className="button primary"
-          onClick={runReview}
-          disabled={running || !review}
-          style={{ marginTop: 8 }}
-        >
-          <Play size={14} />
-          {running ? "Running…" : "Run live review"}
-        </button>
-      </div>
-
-      <section className="metrics">
-        <article>
-          <span>Active reviews</span>
-          <strong>{review ? 1 : 0}</strong>
-          <small>{review?.status || "No review"}</small>
-        </article>
-        <article>
-          <span>Verified controls</span>
-          <strong>{verified}</strong>
-          <small className="positive"><CheckCircle /> Evidence backed</small>
-        </article>
-        <article>
-          <span>Failed controls</span>
-          <strong>{counts.FAILED || 0}</strong>
-          <small className={counts.FAILED ? "negative" : ""}>
-            {counts.FAILED ? <><Warning /> Action required</> : "All clear"}
-          </small>
-        </article>
-        <article>
-          <span>Needs review</span>
-          <strong>{(counts.NEEDS_REVIEW || 0) + (counts.UNSUPPORTED || 0)}</strong>
-          <small>Manual review</small>
-        </article>
-      </section>
-
-      <div className="dashboard-grid">
-        <section className="panel current-review">
-          <div className="panel-heading">
-            <div>
-              <span className="overline">CURRENT SECURITY REVIEW</span>
-              <h2>{review?.name || "No review yet"}</h2>
-            </div>
-            <Link href="/app/reviews">
-              Open review <ArrowRight size={15} />
-            </Link>
-          </div>
-          <div className="review-progress">
-            <div className="score">
-              <strong>{verified}</strong>
-              <span>/ {total} verified</span>
-            </div>
-            <div className="progress-track">
-              <span style={{ width: `${progressPct}%` }} />
-            </div>
-            <div className="progress-legend">
-              <span><span className="legend verified" />Verified ({verified})</span>
-              <span><span className="legend failed" />Failed ({counts.FAILED || 0})</span>
-            </div>
-          </div>
-          <div className="review-meta">
-            <div>
-              <span>Status</span>
-              <strong>{review?.status || "—"}</strong>
-            </div>
-            <div>
-              <span>Target</span>
-              <strong>{connection?.project || "Not configured"}</strong>
-            </div>
-            <div>
-              <span>Evidence records</span>
-              <strong>{connection?.evidence_count ?? 0}</strong>
-            </div>
-          </div>
-        </section>
-
-        <section className="panel findings">
-          <div className="panel-heading">
-            <div>
-              <span className="overline">FINDINGS REQUIRING ACTION</span>
-              <h2>Open findings</h2>
-            </div>
-            <span className="count">{failed.length}</span>
-          </div>
-          {failed.length > 0 ? (
-            failed.map((q) => (
-              <Link href="/app/reviews" className="finding-row" key={q.question}>
-                <span className="finding-icon critical"><Warning size={18} /></span>
-                <div>
-                  <strong>{q.question}</strong>
-                  <small>{q.control_id}</small>
-                </div>
-                <ArrowRight />
-              </Link>
-            ))
-          ) : (
-            <div className="finding-row">
-              <span className="finding-icon info"><CheckCircle /></span>
-              <div>
-                <strong>{review ? "No failed controls" : "Run a review first"}</strong>
-                <small>{review ? "All controls passing" : "Click 'Run live review' above"}</small>
-              </div>
-            </div>
-          )}
-        </section>
-
-        <section className="panel connection" style={{ gridColumn: "1 / -1" }}>
-          <div className="panel-heading">
-            <div>
-              <span className="overline">CLOUD CONNECTION</span>
-              <h2>Google Cloud</h2>
-            </div>
-            <span className={`status ${connection?.status === "CONNECTED" ? "verified" : "needs-review"}`}>
-              {connection?.status === "CONNECTED" ? "Connected" : "Not configured"}
-            </span>
-          </div>
-          <div className="cloud-mark"><Cloud size={26} /></div>
-          <dl>
-            <div><dt>Project</dt><dd>{connection?.project || "—"}</dd></div>
-            <div><dt>Evidence</dt><dd>{connection?.evidence_count ?? 0} records</dd></div>
-            <div>
-              <dt>Last verified</dt>
-              <dd>
-                {connection?.last_verified
-                  ? new Date(connection.last_verified).toLocaleString()
-                  : "Run verification"}
-              </dd>
-            </div>
-          </dl>
-          <Link href="/app/integrations" className="button secondary wide">
-            Manage connection
-          </Link>
-        </section>
-      </div>
-    </main>
-  );
+  return <main className="page command-center">
+    <header className="command-hero"><div><span className="breadcrumb">TRUSTFIX / COMMAND CENTER</span><h1>Cloud assurance, continuously proven.</h1><p>Autonomous inspection, governed remediation, and evidence that stays connected to every claim.</p></div><div className="command-actions">{center.latest_review && <a className="button secondary" href={`${api}/reviews/${center.latest_review.id}/proof-pack.json`}><DownloadSimple/> Proof Pack</a>}<button className="button primary glow" onClick={runReview} disabled={running || !center.latest_review}><Play weight="fill"/>{running ? "Agent running…" : "Run assurance"}</button></div></header>
+    <section className="assurance-overview"><article className="assurance-score-card"><div className="score-ring" style={{ "--score": `${score * 3.6}deg` } as React.CSSProperties}><div><strong>{score}</strong><span>/100</span></div></div><div><span className="overline">ASSURANCE SCORE</span><h2>{score >= 80 ? "Strong posture" : score >= 50 ? "Action recommended" : "Assurance gap detected"}</h2><p>Calculated from currently supported, evidence-backed controls.</p></div></article><div className="command-metrics"><article><CheckCircle/><span>Verified</span><strong>{center.verified_controls}</strong><small>Live controls passing</small></article><article><Warning/><span>Failed</span><strong>{center.failed_controls}</strong><small>Require attention</small></article><article><ShieldCheck/><span>Approvals</span><strong>{center.pending_approvals}</strong><small>Governed actions waiting</small></article><article><Fingerprint/><span>Evidence</span><strong>{center.evidence_count}</strong><small>{center.live_evidence_count} live records</small></article></div></section>
+    <section className="mission-panel"><div className="mission-heading"><div><span className="overline">AGENT MISSION CONTROL</span><h2>Observe every autonomous step</h2></div><span className={`live-pill ${activeJob ? "active" : ""}`}><span/>{activeJob ? "Agent active" : "Standing by"}</span></div><div className="mission-grid"><div className="agent-core"><div className="agent-orbit"><Brain weight="duotone"/><span className="orbit-dot one"/><span className="orbit-dot two"/></div><strong>TrustFix Orchestrator</strong><small>{center.model} · Google ADK</small><div className="target-chip"><Cloud/> {center.target_project || "No target configured"}</div></div><div className="mission-stream">{(center.jobs.length ? center.jobs.slice(0, 5) : [{ id: "idle", kind: "READY", status: "READY", phase: "Ready for the next assurance run", progress: 0, updated_at: new Date().toISOString() }]).map((job, index) => <article key={job.id} className={index === 0 ? "current" : ""}><span className={`mission-state ${job.status.toLowerCase()}`}>{job.status === "SUCCEEDED" ? <CheckCircle weight="fill"/> : job.status === "FAILED" ? <Warning weight="fill"/> : <Pulse/>}</span><div><strong>{job.phase}</strong><small>{job.kind} · {relativeTime(job.updated_at)}</small>{job.status === "RUNNING" && <div className="mission-progress"><span style={{ width: `${job.progress}%` }}/></div>}</div><code>{job.id.slice(0, 8)}</code></article>)}</div></div></section>
+    <div className="command-lower-grid"><section className="panel attention-panel"><div className="panel-heading"><div><span className="overline">PRIORITIZED NEXT ACTIONS</span><h2>What needs attention</h2></div><span className="count">{needsAttention.length}</span></div>{needsAttention.length ? needsAttention.slice(0, 4).map((item) => <Link href="/app/reviews" className="action-row" key={item.question}><span className="severity-dot"/><div><strong>{item.question}</strong><small>{item.control_id || "Manual evidence required"}</small></div><ArrowRight/></Link>) : <div className="celebration-empty"><Sparkle weight="duotone"/><strong>No urgent control failures</strong><p>Run assurance again to refresh the evidence boundary.</p></div>}</section><section className="panel audit-panel"><div className="panel-heading"><div><span className="overline">EVIDENCE LINEAGE</span><h2>Recent verified activity</h2></div><Link href="/app/activity">Full audit <ArrowRight/></Link></div>{center.activity.length ? center.activity.slice(0, 5).map((event) => <article key={event.id}><span className="audit-node"><Lightning/></span><div><strong>{event.action}</strong><small>{event.actor} · {event.resource}</small></div><time>{relativeTime(event.timestamp)}</time></article>) : <div className="celebration-empty compact"><Pulse/><strong>Activity appears after the first run</strong></div>}</section></div>
+  </main>;
 }
