@@ -10,7 +10,7 @@ import { ErrorBoundary } from "@/components/error-boundary";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
-  const [ready, setReady] = useState(false);
+  const [checkingAccess, setCheckingAccess] = useState(true);
   const pathname = usePathname();
   const router = useRouter();
 
@@ -29,11 +29,18 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
     // Allow onboarding page without auth check
     if (pathname === "/app/onboarding") {
-      setReady(true);
+      setCheckingAccess(false);
       return;
     }
 
-    fetch("/api/trustfix/api/onboarding", { cache: "no-store" })
+    if (window.sessionStorage.getItem("trustfix:onboarding-complete") === "true") {
+      setCheckingAccess(false);
+      return;
+    }
+
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 8000);
+    fetch("/api/trustfix/api/onboarding", { cache: "no-store", signal: controller.signal })
       .then((r) => {
         if (r.status === 401) {
           // Not authenticated at all — let the IAP handle it
@@ -48,30 +55,25 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         if (!data.onboarding_complete) {
           router.replace("/app/onboarding");
         } else {
-          setReady(true);
+          window.sessionStorage.setItem("trustfix:onboarding-complete", "true");
         }
       })
-      .catch(() => {
-        // Network error — still show the app rather than looping
-        setReady(true);
+      .catch(() => undefined)
+      .finally(() => {
+        window.clearTimeout(timeout);
+        setCheckingAccess(false);
       });
+    return () => {
+      window.clearTimeout(timeout);
+      controller.abort();
+    };
   }, [pathname, router]);
 
   if (pathname === "/app/onboarding") return <>{children}</>;
 
-  if (!ready) {
-    return (
-      <main className="onboarding">
-        <div className="onboarding-card">
-          <Mark />
-          <p>Preparing your authenticated workspace…</p>
-        </div>
-      </main>
-    );
-  }
-
   return (
     <div className="app-shell">
+      <div className={`route-auth-progress ${checkingAccess ? "active" : ""}`} aria-hidden="true" />
       <Sidebar open={open} close={() => setOpen(false)} />
       <div className="app-main">
         <header className="mobile-header">

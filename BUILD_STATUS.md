@@ -23,9 +23,9 @@ Updated: 2026-08-26
 
 ## Deployed
 
-- Public site: `trustfix-app-00009-5zx`
-- Public legacy alias: `trustfix-web-00010-jbp`
-- Protected workspace: `trustfix-workspace-00007-x4t`
+- Public site: `trustfix-app-00010-xmg`
+- Public legacy alias: `trustfix-web-00011-8tg`
+- Protected workspace: `trustfix-workspace-00008-mk9`
 - API: `trustfix-api-00013-62l`
 - Scanner worker: `trustfix-scanner-worker-00011-kqx`
 - Remediator worker: `trustfix-remediator-worker-00011-bzl`
