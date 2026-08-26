@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import {
-  CheckCircle, Cloud, HardDrives, Info, LockKey,
+  ArrowSquareOut, Check, CheckCircle, Cloud, Copy, HardDrives, Info, LockKey,
   Pulse, ShieldWarning, UserPlus, Warning,
 } from "@phosphor-icons/react";
 import { useToast } from "./toast";
@@ -66,6 +66,7 @@ export function IntegrationsPage() {
   const [project, setProject] = useState("");
   const [error, setError] = useState("");
   const [verifying, setVerifying] = useState(false);
+  const [copied, setCopied] = useState(false);
   const { show } = useToast();
 
   const load = useCallback(() =>
@@ -120,6 +121,11 @@ export function IntegrationsPage() {
     }
   }
 
+  const scannerPrincipal = String(connection?.scanner_principal || "");
+  const iamCommand = project && scannerPrincipal
+    ? `gcloud projects add-iam-policy-binding ${project} --member="serviceAccount:${scannerPrincipal}" --role="roles/viewer"`
+    : "";
+
   return (
     <main className="page section-page">
       <Heading title="Integrations" description="Connected systems TrustFix can inspect and verify." />
@@ -161,11 +167,12 @@ export function IntegrationsPage() {
               <input
                 value={project}
                 onChange={(e) => setProject(e.target.value.toLowerCase().trim())}
-                pattern="[a-z0-9-]+"
-                placeholder="my-disposable-target"
+                pattern="[a-z][a-z0-9-]{4,28}[a-z0-9]"
+                placeholder="acme-production-security"
                 aria-label="Workspace target project"
               />
             </label>
+            {project && <div className="connection-iam-guide"><div><strong>1. Grant scanner access in the target project</strong><span>Run as a Project Owner or IAM administrator. This grants read-only Viewer access to the dedicated keyless scanner.</span></div><div className="cloud-command"><header><span>Google Cloud Shell</span><button type="button" onClick={async () => { await navigator.clipboard.writeText(iamCommand); setCopied(true); window.setTimeout(() => setCopied(false), 1800); }}>{copied ? <Check/> : <Copy/>}{copied ? "Copied" : "Copy command"}</button></header><code>{iamCommand}</code></div><a className="button secondary" href={`https://console.cloud.google.com/iam-admin/iam?project=${encodeURIComponent(project)}`} target="_blank" rel="noreferrer">Open project IAM <ArrowSquareOut/></a><div><strong>2. Verify live API access</strong><span>TrustFix tests Storage, Cloud Run, and Firewall visibility before marking this project verified.</span></div></div>}
             <button
               className="button primary"
               onClick={verify}

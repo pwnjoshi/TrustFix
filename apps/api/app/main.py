@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+import re
 
 from fastapi import FastAPI, File, Form, Header, HTTPException, Request, UploadFile
 from fastapi.responses import JSONResponse, Response
@@ -16,6 +17,7 @@ from .questionnaires import QuestionnaireError, export_csv, export_xlsx, parse_c
 
 
 settings = get_settings()
+GCP_PROJECT_ID_PATTERN = re.compile(r"^[a-z][a-z0-9-]{4,28}[a-z0-9]$")
 app = FastAPI(title="TrustFix API", version="0.1.0", docs_url="/api/docs")
 app.add_middleware(
     CORSMiddleware,
@@ -128,16 +130,14 @@ async def complete_onboarding(request: Request):
     boundary_confirmed = bool(payload.get("target_boundary_confirmed"))
     if len(organization_name) < 2:
         raise HTTPException(422, "Organization name is required")
-    if primary_use_case not in {"Customer security reviews", "Cloud security assurance", "Hackathon demonstration", "Other"}:
+    if primary_use_case not in {"Customer security reviews", "Continuous cloud assurance", "Compliance evidence operations", "Other"}:
         raise HTTPException(422, "Select a valid primary use case")
-    if not target_project_id or len(target_project_id) > 63 or not all(
-        c.islower() or c.isdigit() or c == "-" for c in target_project_id
-    ):
+    if not GCP_PROJECT_ID_PATTERN.fullmatch(target_project_id):
         raise HTTPException(422, "Enter a valid Google Cloud project ID")
     if target_project_id == settings.trustfix_platform_project_id:
         raise HTTPException(422, "The target project must be separate from the TrustFix platform project")
     if not boundary_confirmed:
-        raise HTTPException(422, "Confirm that the target is a disposable project")
+        raise HTTPException(422, "Confirm the Google Cloud inspection boundary")
     if workspace.target_verified_project_id != target_project_id or not workspace.target_verified_at:
         raise HTTPException(409, "Verify this exact Google Cloud project before completing onboarding")
     workspace.organization_name = organization_name
@@ -160,11 +160,18 @@ def google_cloud_connection(request: Request):
     return {
         "status": "VERIFIED" if verified_target else "VERIFICATION_REQUIRED" if target_project else "NOT_CONFIGURED",
         "project": target_project,
-        "boundary": "Disposable target project",
+        "boundary": "Verified workspace project",
         "authentication": "Dedicated Cloud Run service accounts",
         "region": settings.google_cloud_region,
         "last_verified": workspace.target_verified_at if verified_target else None,
         "evidence_count": len(live_evidence),
+        "scanner_principal": f"trustfix-scanner@{settings.trustfix_platform_project_id}.iam.gserviceaccount.com",
+        "required_role": "roles/viewer",
+        "iam_command": (
+            f"gcloud projects add-iam-policy-binding {target_project} "
+            f"--member=\"serviceAccount:trustfix-scanner@{settings.trustfix_platform_project_id}.iam.gserviceaccount.com\" "
+            f"--role=\"roles/viewer\""
+        ) if target_project else None,
     }
 
 
@@ -198,9 +205,7 @@ async def configure_google_cloud_connection(request: Request):
         raise HTTPException(404, "Workspace not found")
     payload = await request.json()
     target_project_id = str(payload.get("target_project_id", "")).strip().lower()
-    if not target_project_id or len(target_project_id) > 63 or not all(
-        c.islower() or c.isdigit() or c == "-" for c in target_project_id
-    ):
+    if not GCP_PROJECT_ID_PATTERN.fullmatch(target_project_id):
         raise HTTPException(422, "Enter a valid Google Cloud project ID")
     if target_project_id == settings.trustfix_platform_project_id:
         raise HTTPException(422, "The target project must be separate from the TrustFix platform project")

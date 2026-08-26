@@ -5,14 +5,14 @@
 | Item | Value |
 |---|---|
 | Platform project | `trustfix-506602` |
-| Disposable target | `trustfix-demo-target` |
+| Current verified target | `trustfix-demo-target` |
 | Region | `us-central1` |
-| Public site | `trustfix-app-00010-xmg` |
-| Public legacy alias | `trustfix-web-00011-8tg` |
-| Protected workspace | `trustfix-workspace-00008-mk9` |
-| API | `trustfix-api-00013-62l` |
-| Scanner worker | `trustfix-scanner-worker-00011-kqx` |
-| Remediator worker | `trustfix-remediator-worker-00011-bzl` |
+| Public site | `trustfix-app-00011-ccq` |
+| Public legacy alias | `trustfix-web-00012-2pq` |
+| Protected workspace | `trustfix-workspace-00009-l7q` |
+| API | `trustfix-api-00014-ktl` |
+| Scanner worker | `trustfix-scanner-worker-00012-p8g` |
+| Remediator worker | `trustfix-remediator-worker-00012-tfw` |
 | ADK agent | `trustfix-agent-00003-9c4` |
 | Gemini model | `gemini-3.5-flash` |
 | State | Firestore `(default)` |
@@ -37,3 +37,7 @@ The private API and workers return 403 to anonymous requests. Pub/Sub uses `trus
 ## Authentication status
 
 The IAP OAuth client is configured and interactive Google login is operational. The marketing site remains public while the workspace remains protected.
+
+## Customer project onboarding
+
+Customers enter the immutable Google Cloud Project ID, grant `roles/viewer` to the displayed keyless TrustFix scanner service account, and run live verification. TrustFix does not mark the integration connected or unlock onboarding until the scanner successfully inspects the exact configured project. Remediation permissions are deliberately separate and are never granted by onboarding.

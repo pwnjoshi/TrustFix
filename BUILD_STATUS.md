@@ -16,19 +16,20 @@ Updated: 2026-08-26
 - CSV/XLSX import/export, sandbox setup/reset/destroy, and live storage acceptance utility.
 - Public marketing pages hand off to the IAP-protected workspace with full-page navigation, preventing protected API responses from being parsed as public-page JSON.
 - Workspace-scoped Google Cloud target selection, validation, verification, and durable onboarding completion.
+- Production onboarding now explains the exact customer IAM setup, generates a project-specific read-only grant, tests live API access, and blocks completion until that exact project is verified.
 - Cinematic mobile-first public site, responsive Command Center, assurance score, Agent Mission Control, mobile bottom navigation, and portable Proof Packs.
 - Gemini 3.5 Flash migration with ten-case evidence, safety, unsupported-control, and prompt-injection evaluation at 5.0/5.0.
 - Poison-message protection: unsupported mutations are refused, recorded as failed safely, and acknowledged without an infinite Pub/Sub retry loop.
-- Lint, strict type check, 21 unit/integration/API tests, 10 agent evaluations, and a production build all pass.
+- Lint, strict type check, component tests, 18 API tests, 10 agent evaluations, and a 21-route production build all pass.
 
 ## Deployed
 
-- Public site: `trustfix-app-00010-xmg`
-- Public legacy alias: `trustfix-web-00011-8tg`
-- Protected workspace: `trustfix-workspace-00008-mk9`
-- API: `trustfix-api-00013-62l`
-- Scanner worker: `trustfix-scanner-worker-00011-kqx`
-- Remediator worker: `trustfix-remediator-worker-00011-bzl`
+- Public site: `trustfix-app-00011-ccq`
+- Public legacy alias: `trustfix-web-00012-2pq`
+- Protected workspace: `trustfix-workspace-00009-l7q`
+- API: `trustfix-api-00014-ktl`
+- Scanner worker: `trustfix-scanner-worker-00012-p8g`
+- Remediator worker: `trustfix-remediator-worker-00012-tfw`
 - ADK agent: `trustfix-agent-00003-9c4`
 - Pub/Sub subscriptions: `trustfix-scan-push`, `trustfix-remediation-push`
 
