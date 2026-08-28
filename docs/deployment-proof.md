@@ -7,12 +7,12 @@
 | Platform project | `trustfix-506602` |
 | Current verified target | `trustfix-demo-target` |
 | Region | `us-central1` |
-| Public site | `trustfix-app-00016-ppm` |
-| Public legacy alias | `trustfix-web-00017-t8g` |
-| Protected workspace | `trustfix-workspace-00014-x6g` |
-| API | `trustfix-api-00014-ktl` |
-| Scanner worker | `trustfix-scanner-worker-00012-p8g` |
-| Remediator worker | `trustfix-remediator-worker-00012-tfw` |
+| Public site | `trustfix-app-00017-n7b` |
+| Public legacy alias | `trustfix-web-00018-w8g` |
+| Protected workspace | `trustfix-workspace-00015-gtb` |
+| API | `trustfix-api-00015-tdw` |
+| Scanner worker | `trustfix-scanner-worker-00013-w85` |
+| Remediator worker | `trustfix-remediator-worker-00013-kld` |
 | ADK agent | `trustfix-agent-00003-9c4` |
 | Gemini model | `gemini-3.5-flash` |
 | State | Firestore `(default)` |
@@ -41,6 +41,8 @@ The IAP OAuth client is configured and interactive Google login is operational. 
 The public domain serves the stable-gradient interactive-demo CTA and mobile-first touch refinements from the same verified image deployed to all three web services. Anonymous workspace access still redirects through IAP, and the protected service retains `minScale=1`.
 
 Light/dark preference is applied before first paint, synchronized across same-origin tabs, and transferred as a non-sensitive one-time query value when the public domain hands the user to the IAP-protected workspace. Onboarding consumes and removes that value, persists the preference on the workspace origin, and exposes the same accessible theme control as the rest of the product.
+
+The production-readiness audit added immutable target-project binding to reviews and filters active control status, findings, approvals, jobs, and activity through the current verified workspace boundary. Visibility-aware 15-second refresh keeps operational pages current without polling hidden tabs. The policy API and UI expose only implemented mutation behavior, and the deployed 10-case ADK evaluation scored 5.0/5.0 with zero errors (`results_20260828_112353`).
 
 ## Customer project onboarding
 

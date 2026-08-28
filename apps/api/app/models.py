@@ -105,6 +105,7 @@ class ReviewQuestion(BaseModel):
 class Review(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid4()))
     workspace_id: str
+    target_project_id: str | None = None
     name: str
     status: str = "Draft"
     questions: list[ReviewQuestion]
@@ -174,8 +175,8 @@ class WorkspaceInvitation(BaseModel):
 class PolicySettings(BaseModel):
     workspace_id: str
     storage: PolicyDecision = PolicyDecision.REQUIRE_APPROVAL
-    cloud_run: PolicyDecision = PolicyDecision.REQUIRE_APPROVAL
-    firewall: PolicyDecision = PolicyDecision.REQUIRE_APPROVAL
+    cloud_run: PolicyDecision = PolicyDecision.MANUAL_ONLY
+    firewall: PolicyDecision = PolicyDecision.MANUAL_ONLY
     updated_at: datetime = Field(default_factory=now)
 
 

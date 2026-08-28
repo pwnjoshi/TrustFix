@@ -53,6 +53,7 @@ export default function Dashboard() {
   const [center, setCenter] = useState<Center | null | undefined>(undefined);
   const [running, setRunning] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [lastSynced, setLastSynced] = useState<Date | null>(null);
   const { show } = useToast();
 
   const load = useCallback(async (announce = false) => {
@@ -62,16 +63,26 @@ export default function Dashboard() {
       const body = await response.json();
       if (!response.ok) throw new Error(body.detail || "Command Center could not load");
       setCenter(body);
+      setLastSynced(new Date());
       if (announce) show("Command Center refreshed", "success");
     } catch (error) {
-      setCenter(null);
-      show(error instanceof Error ? error.message : "Command Center could not load", "error");
+      setCenter((current) => current === undefined ? null : current);
+      if (announce) show(error instanceof Error ? error.message : "Command Center could not load", "error");
     } finally {
       if (announce) setRefreshing(false);
     }
   }, [show]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    load();
+    const refreshVisible = () => { if (document.visibilityState === "visible") load(); };
+    const timer = window.setInterval(refreshVisible, 15_000);
+    document.addEventListener("visibilitychange", refreshVisible);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", refreshVisible);
+    };
+  }, [load]);
 
   async function runReview() {
     if (!center?.latest_review) return;
@@ -118,7 +129,7 @@ export default function Dashboard() {
   return <main className="page command-center">
     <header className="command-hero">
       <div><span className="breadcrumb">{center.workspace?.organization_name || center.workspace?.name || "TRUSTFIX"} / COMMAND CENTER</span><h1>Cloud assurance, continuously proven.</h1><p>See live posture, agent work, governed decisions, and evidence from one operational view.</p></div>
-      <div className="command-actions"><button className="button secondary" onClick={() => load(true)} disabled={refreshing}><ArrowClockwise className={refreshing ? "spin" : ""}/>{refreshing ? "Refreshing…" : "Refresh"}</button>{proofPackUrl && <a className="button secondary" href={proofPackUrl}><DownloadSimple/> Proof Pack</a>}<button className="button primary glow" onClick={runReview} disabled={running || !center.latest_review}><Play weight="fill"/>{running ? "Agent running…" : "Run assurance"}</button></div>
+      <div className="command-actions"><span className="live-sync" title={lastSynced?.toLocaleString()}><span/>Live · {lastSynced ? relativeTime(lastSynced.toISOString()) : "connecting"}</span><button className="button secondary" onClick={() => load(true)} disabled={refreshing}><ArrowClockwise className={refreshing ? "spin" : ""}/>{refreshing ? "Refreshing…" : "Refresh"}</button>{proofPackUrl && <a className="button secondary" href={proofPackUrl}><DownloadSimple/> Proof Pack</a>}<button className="button primary glow" onClick={runReview} disabled={running || !center.latest_review}><Play weight="fill"/>{running ? "Agent running…" : "Run assurance"}</button></div>
     </header>
 
     <section className="boundary-status" aria-label="Verified Google Cloud boundary">

@@ -21,21 +21,25 @@ Updated: 2026-08-26
 - Persistent system-aware light and dark themes cover the marketing site, mobile navigation, onboarding, and authenticated product workspace.
 - Theme preference now synchronizes across routes and tabs, survives the public-site to IAP-workspace origin handoff, initializes before paint, and is directly controllable from onboarding.
 - Command Center now exposes verified-boundary freshness, supported-control coverage, real-data operator shortcuts, manual refresh, responsive action hierarchy, and theme-correct operational panels.
+- Command Center and live operational pages now refresh visibility-aware data every 15 seconds, preserve the last good state through transient refresh failures, and show an explicit live-sync signal.
+- Reviews, control status, findings, approvals, jobs, and activity are scoped to the currently verified workspace target; stale target-project records cannot affect the active assurance score or action counts.
+- Workspace policies now drive remediation planning while enforcing the deployed capability boundary: storage remains approval-gated and Cloud Run/firewall remain clearly manual-only until their rollback-tested executors ship.
+- Team access creation no longer claims that an email was sent; it accurately separates the workspace role record from the required Google IAP access grant.
 - Homepage light mode now has a dedicated hero palette across the atmosphere, kinetic headline, CTAs, trust signals, and complete evidence-preview console.
 - The interactive-demo CTA now keeps a stable gradient through hover and press states without flashing, while touch devices receive motion-free interactions and mobile-first navigation, content, proof-preview, footer, demo, and workspace layouts.
 - Cinematic mobile-first public site, responsive Command Center, assurance score, Agent Mission Control, mobile bottom navigation, and portable Proof Packs.
 - Gemini 3.5 Flash migration with ten-case evidence, safety, unsupported-control, and prompt-injection evaluation at 5.0/5.0.
 - Poison-message protection: unsupported mutations are refused, recorded as failed safely, and acknowledged without an infinite Pub/Sub retry loop.
-- Lint, strict type check, component tests, 18 API tests, 10 agent evaluations, and a 21-route production build all pass.
+- Lint, strict type check, component tests, 19 API tests, 10 agent evaluations at 5.0/5.0, and a 21-route production build all pass.
 
 ## Deployed
 
-- Public site: `trustfix-app-00016-ppm`
-- Public legacy alias: `trustfix-web-00017-t8g`
-- Protected workspace: `trustfix-workspace-00014-x6g`
-- API: `trustfix-api-00014-ktl`
-- Scanner worker: `trustfix-scanner-worker-00012-p8g`
-- Remediator worker: `trustfix-remediator-worker-00012-tfw`
+- Public site: `trustfix-app-00017-n7b`
+- Public legacy alias: `trustfix-web-00018-w8g`
+- Protected workspace: `trustfix-workspace-00015-gtb`
+- API: `trustfix-api-00015-tdw`
+- Scanner worker: `trustfix-scanner-worker-00013-w85`
+- Remediator worker: `trustfix-remediator-worker-00013-kld`
 - ADK agent: `trustfix-agent-00003-9c4`
 - Pub/Sub subscriptions: `trustfix-scan-push`, `trustfix-remediation-push`
 

@@ -58,6 +58,18 @@ function relativeTime(iso: string): string {
   return `${d}d ago`;
 }
 
+function useLiveRefresh(refresh: () => void, intervalMs = 15_000) {
+  useEffect(() => {
+    const refreshVisible = () => { if (document.visibilityState === "visible") refresh(); };
+    const timer = window.setInterval(refreshVisible, intervalMs);
+    document.addEventListener("visibilitychange", refreshVisible);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", refreshVisible);
+    };
+  }, [intervalMs, refresh]);
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Integrations Page
 // ─────────────────────────────────────────────────────────────────────────────
@@ -83,6 +95,7 @@ export function IntegrationsPage() {
   []);
 
   useEffect(() => { load(); }, [load]);
+  useLiveRefresh(load);
 
   async function verify() {
     setVerifying(true);
@@ -240,7 +253,7 @@ export function TeamPage() {
       if (!response.ok) throw new Error(body.detail || "Invitation failed");
       setEmail("");
       await load();
-      show(`Invitation sent to ${email}`, "success");
+      show(`Access record created for ${email}`, "success");
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Invitation failed";
       setError(msg);
@@ -294,7 +307,7 @@ export function TeamPage() {
           <form className="invite-panel" onSubmit={invite}>
             <div>
               <h2>Invite team member</h2>
-              <p>The user joins after the platform administrator grants IAP access and they sign in.</p>
+              <p>Create the workspace role record, then grant the same email IAP access in Google Cloud. TrustFix does not send an email invitation yet.</p>
             </div>
             <label>
               Email
@@ -315,7 +328,7 @@ export function TeamPage() {
               </select>
             </label>
             <button className="button primary" disabled={busy}>
-              {busy ? "Saving…" : "Create invitation"}
+              {busy ? "Saving…" : "Create access record"}
             </button>
             {error && <p className="form-error" role="alert">{error}</p>}
           </form>
@@ -343,6 +356,7 @@ export function SystemPage() {
   []);
 
   useEffect(() => { load(); }, [load]);
+  useLiveRefresh(load);
 
   return (
     <main className="page section-page">
@@ -383,6 +397,7 @@ export function EvidencePage({ kind }: { kind: "evidence" | "activity" | "findin
   [kind, endpoint]);
 
   useEffect(() => { load(); }, [load]);
+  useLiveRefresh(load);
 
   const title = kind === "findings" ? "Findings" : kind[0].toUpperCase() + kind.slice(1);
   const description =
@@ -498,6 +513,7 @@ export function ControlsPage() {
   []);
 
   useEffect(() => { load(); }, [load]);
+  useLiveRefresh(load);
 
   const statusClass = (s: string) =>
     s === "VERIFIED" ? "verified" : s === "FAILED" ? "failed" : "needs-review";
@@ -552,10 +568,10 @@ export function PoliciesPage() {
   useEffect(() => { load(); }, [load]);
 
   const controlDefs = [
-    ["storage", "Public storage remediation"],
-    ["cloud_run", "Cloud Run access remediation"],
-    ["firewall", "Firewall remediation"],
-  ];
+    ["storage", "Public storage remediation", true, "Approved execution is enabled for explicitly named disposable TrustFix buckets."],
+    ["cloud_run", "Cloud Run access remediation", false, "Inspection is live; mutation remains manual until rollback acceptance is complete."],
+    ["firewall", "Firewall remediation", false, "Inspection is live; mutation remains manual until rollback acceptance is complete."],
+  ] as const;
 
   async function save() {
     if (!data) return;
@@ -594,20 +610,20 @@ export function PoliciesPage() {
     <main className="page section-page">
       <Heading title="Policies" description="Deterministic approval boundaries for infrastructure changes." />
       <div className="data-panel policy-list">
-        {controlDefs.map(([key, label]) => (
+        {controlDefs.map(([key, label, executable, detail]) => (
           <div className="data-row" key={key}>
             <span className="control-icon"><LockKey /></span>
             <div>
               <strong>{label}</strong>
-              <p>Applied to this signed-in workspace.</p>
+              <p>{detail}</p>
             </div>
             <select
               value={data[key] || "REQUIRE_APPROVAL"}
               onChange={(e) => setData({ ...data, [key]: e.target.value })}
               aria-label={`${label} policy`}
+              disabled={!executable}
             >
-              <option value="AUTO_REMEDIATE">Auto remediate</option>
-              <option value="REQUIRE_APPROVAL">Require approval</option>
+              {executable && <option value="REQUIRE_APPROVAL">Require approval</option>}
               <option value="MANUAL_ONLY">Manual only</option>
             </select>
           </div>

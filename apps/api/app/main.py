@@ -276,6 +276,12 @@ async def invite_team_member(request: Request):
 def get_policies(request: Request):
     current = current_user(request)
     policies = store.get("policy_settings", current.workspace_id) or PolicySettings(workspace_id=current.workspace_id)
+    # The production executor currently supports approved storage changes only.
+    # Never advertise an executable policy for controls that stop at inspection/planning.
+    policies.cloud_run = "MANUAL_ONLY"
+    policies.firewall = "MANUAL_ONLY"
+    if policies.storage == "AUTO_REMEDIATE":
+        policies.storage = "REQUIRE_APPROVAL"
     store.put("policy_settings", current.workspace_id, policies)
     return policies
 
@@ -287,6 +293,10 @@ async def update_policies(request: Request):
         raise HTTPException(403, "Owner or Admin role required")
     payload = await request.json()
     policies = PolicySettings(workspace_id=current.workspace_id, **payload)
+    if policies.storage == "AUTO_REMEDIATE":
+        raise HTTPException(422, "Automatic storage mutation is not enabled; choose Require approval or Manual only")
+    policies.cloud_run = "MANUAL_ONLY"
+    policies.firewall = "MANUAL_ONLY"
     store.put("policy_settings", current.workspace_id, policies)
     return policies
 
@@ -295,20 +305,27 @@ async def update_policies(request: Request):
 def list_controls(request: Request):
     """Return the control registry with last-run status from this workspace's most recent evidence."""
     user = current_user(request)
+    workspace = store.get("workspaces", user.workspace_id)
+    verified_target = _verified_target(workspace)
     evidence_by_control: dict[str, list] = {}
     for ev in store.list("evidence"):
-        if ev.workspace_id == user.workspace_id:
+        if ev.workspace_id == user.workspace_id and verified_target and ev.project == verified_target:
             evidence_by_control.setdefault(ev.control_id, []).append(ev)
+
+    reviews = [
+        review for review in store.list("reviews")
+        if review.workspace_id == user.workspace_id and verified_target and review.target_project_id == verified_target
+    ]
+    latest_review = max(reviews, key=lambda review: review.updated_at, default=None)
+    latest_status = {
+        question.control_id: str(question.status)
+        for question in (latest_review.questions if latest_review else [])
+        if question.control_id and question.status
+    }
 
     result = []
     for control_id, definition in REGISTRY.items():
-        # Look up last result for this workspace
-        result_key_prefix = f"review-demo-{user.workspace_id.removeprefix('workspace-')}:"
-        last_status = None
-        for key in store.list("control_results"):
-            if str(getattr(key, 'control_id', '')) == control_id:
-                last_status = str(getattr(key, 'status', ''))
-                break
+        last_status = latest_status.get(control_id)
 
         result.append({
             "id": control_id,
@@ -316,10 +333,7 @@ def list_controls(request: Request):
             "description": definition.description,
             "risk": definition.risk,
             "evidence_count": len(evidence_by_control.get(control_id, [])),
-            "last_status": last_status or ("FAILED" if any(
-                e.relevant_properties.get("public_principals") or e.relevant_properties.get("all_users_invoker") or e.relevant_properties.get("exposed_admin_ports")
-                for e in evidence_by_control.get(control_id, [])
-            ) else "VERIFIED" if evidence_by_control.get(control_id) else None),
+            "last_status": last_status,
         })
     return result
 
@@ -358,10 +372,11 @@ def current_demo_review(request: Request):
 def start_review(review_id: str, request: Request):
     user = current_user(request)
     workspace = store.get("workspaces", user.workspace_id)
-    _require_verified_target(workspace)
+    target_project = _require_verified_target(workspace)
     review = store.get("reviews", review_id)
     if not review or review.workspace_id != user.workspace_id:
         raise HTTPException(404, "Review not found")
+    review.target_project_id = target_project
     job = Job(workspace_id=user.workspace_id, review_id=review_id, kind="SCAN")
     review.status = "Queued"
     store.put("reviews", review.id, review)
@@ -447,11 +462,14 @@ def command_center(request: Request):
     verified_target = _verified_target(workspace)
     connection_status = "VERIFIED" if verified_target else "VERIFICATION_REQUIRED" if _workspace_target(workspace) else "NOT_CONFIGURED"
     evidence_items = [item for item in store.list("evidence") if item.workspace_id == user.workspace_id and item.project == verified_target] if verified_target else []
-    plans = [item for item in store.list("remediation_plans") if item.workspace_id == user.workspace_id]
-    approvals = [item for item in store.list("approvals") if item.workspace_id == user.workspace_id]
-    jobs = [item for item in store.list("jobs") if item.workspace_id == user.workspace_id]
-    events = [item for item in store.list("activity_events") if item.workspace_id == user.workspace_id]
-    latest_review = max(reviews, key=lambda item: item.updated_at, default=None) if verified_target else None
+    plans = [item for item in store.list("remediation_plans") if item.workspace_id == user.workspace_id and verified_target and item.target_project_id == verified_target]
+    current_reviews = [item for item in reviews if item.target_project_id == verified_target] if verified_target else []
+    current_review_ids = {item.id for item in current_reviews}
+    plan_ids = {item.id for item in plans}
+    approvals = [item for item in store.list("approvals") if item.workspace_id == user.workspace_id and item.plan_id in plan_ids]
+    jobs = [item for item in store.list("jobs") if item.workspace_id == user.workspace_id and item.review_id in current_review_ids]
+    events = [item for item in store.list("activity_events") if item.workspace_id == user.workspace_id and item.review_id in current_review_ids]
+    latest_review = max(current_reviews, key=lambda item: item.updated_at, default=None)
     questions = latest_review.questions if latest_review else []
     verified = sum(1 for item in questions if str(item.status) == "VERIFIED")
     failed = sum(1 for item in questions if str(item.status) == "FAILED")
@@ -552,7 +570,9 @@ def evidence(request: Request):
 @app.get("/api/remediations")
 def remediations(request: Request):
     user = current_user(request)
-    plans = [p for p in store.list("remediation_plans") if p.workspace_id == user.workspace_id]
+    workspace = store.get("workspaces", user.workspace_id)
+    target_project = _require_verified_target(workspace)
+    plans = [p for p in store.list("remediation_plans") if p.workspace_id == user.workspace_id and p.target_project_id == target_project]
     return sorted(plans, key=lambda plan: plan.created_at, reverse=True)
 
 

@@ -7,7 +7,7 @@ from app.store import MemoryStore
 def _workspace(memory: MemoryStore):
     user = AuthenticatedUser(id="user-1", email="owner@example.com", display_name="Owner", workspace_id="workspace-1", role=Role.OWNER)
     workspace = Workspace(id=user.workspace_id, name="Acme workspace", target_project_id="trustfix-demo-target", target_verified_project_id="trustfix-demo-target", target_verified_at=now(), onboarding_complete=True)
-    review = Review(id="review-1", workspace_id=user.workspace_id, name="Customer review", questions=[
+    review = Review(id="review-1", workspace_id=user.workspace_id, target_project_id="trustfix-demo-target", name="Customer review", questions=[
         ReviewQuestion(question="Is storage private?", status=ControlStatus.VERIFIED),
         ReviewQuestion(question="Is Cloud Run private?", status=ControlStatus.FAILED),
     ])

@@ -75,3 +75,7 @@ html[data-theme="light"] .proof-window>footer{color:#69778c;background:#f8fafe;b
 /* One persistent theme across onboarding and the authenticated workspace */
 .onboarding-header-actions{display:flex;align-items:center;gap:10px}.onboarding-header-actions .theme-toggle{color:var(--ink);background:var(--surface-soft)}
 @media(max-width:430px){.onboarding-card>header{align-items:flex-start;gap:12px}.onboarding-header-actions{flex-direction:column-reverse;align-items:flex-end}.onboarding-header-actions .theme-toggle{width:36px}}
+
+/* Live data confidence */
+.live-sync{display:inline-flex;align-items:center;gap:7px;color:var(--muted);font:600 9px var(--font-mono);white-space:nowrap}.live-sync>span{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 0 4px color-mix(in srgb,var(--green) 14%,transparent)}
+@media(max-width:700px){.command-actions .live-sync{width:100%;justify-content:flex-end;order:-1}}

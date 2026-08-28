@@ -23,8 +23,8 @@ def test_storage_evaluator_is_deterministic():
     assert plan.decision == PolicyDecision.REQUIRE_APPROVAL
 
 
-def test_firewall_always_requires_approval():
-    assert PolicyEngine().decide("GCP_FIREWALL_ADMIN_EXPOSURE", risk="HIGH") == PolicyDecision.REQUIRE_APPROVAL
+def test_firewall_stays_manual_without_a_production_executor():
+    assert PolicyEngine().decide("GCP_FIREWALL_ADMIN_EXPOSURE", risk="HIGH") == PolicyDecision.MANUAL_ONLY
 
 
 def test_plan_targets_the_failing_resource():

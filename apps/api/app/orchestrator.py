@@ -1,7 +1,7 @@
 from .config import Settings
 from .controls import REGISTRY, evaluate, map_question, plan_for
 from .gcp import GcpControlAdapter, PermissionGap, preview_evidence
-from .models import ActivityEvent, ControlResult, ControlStatus, Interpretation, Review
+from .models import ActivityEvent, ControlResult, ControlStatus, Interpretation, PolicySettings, Review
 from .policy import PolicyEngine
 from .store import store
 
@@ -30,6 +30,9 @@ class ReviewOrchestrator:
         return adapter.collect_firewall(workspace_id)
 
     def run(self, review: Review, strict_permissions: bool = False) -> Review:
+        review.target_project_id = None if self.settings.preview_mode else self.target_project_id
+        workspace_policy = store.get("policy_settings", review.workspace_id) or PolicySettings(workspace_id=review.workspace_id)
+        self.policy = PolicyEngine(workspace_policy)
         review.status = "Scanning"
         store.put("reviews", review.id, review)
         for item in review.questions:
