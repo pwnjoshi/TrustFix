@@ -7,9 +7,9 @@
 | Platform project | `trustfix-506602` |
 | Current verified target | `trustfix-demo-target` |
 | Region | `us-central1` |
-| Public site | `trustfix-app-00014-chw` |
-| Public legacy alias | `trustfix-web-00015-bnv` |
-| Protected workspace | `trustfix-workspace-00012-dlw` |
+| Public site | `trustfix-app-00015-6cl` |
+| Public legacy alias | `trustfix-web-00016-trw` |
+| Protected workspace | `trustfix-workspace-00013-wfl` |
 | API | `trustfix-api-00014-ktl` |
 | Scanner worker | `trustfix-scanner-worker-00012-p8g` |
 | Remediator worker | `trustfix-remediator-worker-00012-tfw` |
@@ -37,6 +37,8 @@ The private API and workers return 403 to anonymous requests. Pub/Sub uses `trus
 ## Authentication status
 
 The IAP OAuth client is configured and interactive Google login is operational. The marketing site remains public while the workspace remains protected.
+
+The public domain serves the stable-gradient interactive-demo CTA and mobile-first touch refinements from the same verified image deployed to all three web services. Anonymous workspace access still redirects through IAP, and the protected service retains `minScale=1`.
 
 ## Customer project onboarding
 
