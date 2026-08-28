@@ -20,6 +20,7 @@ Updated: 2026-08-26
 - Public demo links are canonical to `thetrustfix.xyz`, workspace entry is the only IAP handoff, signed-out CTAs use `Start for free`, and authenticated workspace pages use `Open workspace`.
 - Persistent system-aware light and dark themes cover the marketing site, mobile navigation, onboarding, and authenticated product workspace.
 - Command Center now exposes verified-boundary freshness, supported-control coverage, real-data operator shortcuts, manual refresh, responsive action hierarchy, and theme-correct operational panels.
+- Homepage light mode now has a dedicated hero palette across the atmosphere, kinetic headline, CTAs, trust signals, and complete evidence-preview console.
 - Cinematic mobile-first public site, responsive Command Center, assurance score, Agent Mission Control, mobile bottom navigation, and portable Proof Packs.
 - Gemini 3.5 Flash migration with ten-case evidence, safety, unsupported-control, and prompt-injection evaluation at 5.0/5.0.
 - Poison-message protection: unsupported mutations are refused, recorded as failed safely, and acknowledged without an infinite Pub/Sub retry loop.
@@ -27,9 +28,9 @@ Updated: 2026-08-26
 
 ## Deployed
 
-- Public site: `trustfix-app-00013-pbm`
-- Public legacy alias: `trustfix-web-00014-x7m`
-- Protected workspace: `trustfix-workspace-00011-xsm`
+- Public site: `trustfix-app-00014-chw`
+- Public legacy alias: `trustfix-web-00015-bnv`
+- Protected workspace: `trustfix-workspace-00012-dlw`
 - API: `trustfix-api-00014-ktl`
 - Scanner worker: `trustfix-scanner-worker-00012-p8g`
 - Remediator worker: `trustfix-remediator-worker-00012-tfw`
