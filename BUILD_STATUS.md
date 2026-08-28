@@ -19,6 +19,7 @@ Updated: 2026-08-26
 - Production onboarding now explains the exact customer IAM setup, generates a project-specific read-only grant, tests live API access, and blocks completion until that exact project is verified.
 - Public demo links are canonical to `thetrustfix.xyz`, workspace entry is the only IAP handoff, signed-out CTAs use `Start for free`, and authenticated workspace pages use `Open workspace`.
 - Persistent system-aware light and dark themes cover the marketing site, mobile navigation, onboarding, and authenticated product workspace.
+- Theme preference now synchronizes across routes and tabs, survives the public-site to IAP-workspace origin handoff, initializes before paint, and is directly controllable from onboarding.
 - Command Center now exposes verified-boundary freshness, supported-control coverage, real-data operator shortcuts, manual refresh, responsive action hierarchy, and theme-correct operational panels.
 - Homepage light mode now has a dedicated hero palette across the atmosphere, kinetic headline, CTAs, trust signals, and complete evidence-preview console.
 - The interactive-demo CTA now keeps a stable gradient through hover and press states without flashing, while touch devices receive motion-free interactions and mobile-first navigation, content, proof-preview, footer, demo, and workspace layouts.
@@ -29,9 +30,9 @@ Updated: 2026-08-26
 
 ## Deployed
 
-- Public site: `trustfix-app-00015-6cl`
-- Public legacy alias: `trustfix-web-00016-trw`
-- Protected workspace: `trustfix-workspace-00013-wfl`
+- Public site: `trustfix-app-00016-ppm`
+- Public legacy alias: `trustfix-web-00017-t8g`
+- Protected workspace: `trustfix-workspace-00014-x6g`
 - API: `trustfix-api-00014-ktl`
 - Scanner worker: `trustfix-scanner-worker-00012-p8g`
 - Remediator worker: `trustfix-remediator-worker-00012-tfw`

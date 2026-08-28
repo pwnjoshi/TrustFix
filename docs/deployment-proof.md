@@ -7,9 +7,9 @@
 | Platform project | `trustfix-506602` |
 | Current verified target | `trustfix-demo-target` |
 | Region | `us-central1` |
-| Public site | `trustfix-app-00015-6cl` |
-| Public legacy alias | `trustfix-web-00016-trw` |
-| Protected workspace | `trustfix-workspace-00013-wfl` |
+| Public site | `trustfix-app-00016-ppm` |
+| Public legacy alias | `trustfix-web-00017-t8g` |
+| Protected workspace | `trustfix-workspace-00014-x6g` |
 | API | `trustfix-api-00014-ktl` |
 | Scanner worker | `trustfix-scanner-worker-00012-p8g` |
 | Remediator worker | `trustfix-remediator-worker-00012-tfw` |
@@ -39,6 +39,8 @@ The private API and workers return 403 to anonymous requests. Pub/Sub uses `trus
 The IAP OAuth client is configured and interactive Google login is operational. The marketing site remains public while the workspace remains protected.
 
 The public domain serves the stable-gradient interactive-demo CTA and mobile-first touch refinements from the same verified image deployed to all three web services. Anonymous workspace access still redirects through IAP, and the protected service retains `minScale=1`.
+
+Light/dark preference is applied before first paint, synchronized across same-origin tabs, and transferred as a non-sensitive one-time query value when the public domain hands the user to the IAP-protected workspace. Onboarding consumes and removes that value, persists the preference on the workspace origin, and exposes the same accessible theme control as the rest of the product.
 
 ## Customer project onboarding
 

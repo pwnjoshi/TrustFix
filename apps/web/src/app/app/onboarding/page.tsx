@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowSquareOut, Check, CheckCircle, CloudCheck, Copy, Key, LockKey, ShieldCheck } from "@phosphor-icons/react";
 import { Mark } from "@/components/brand";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const api = "/api/trustfix/api";
 type Setup = { organization_name?: string; primary_use_case?: string; target_boundary_confirmed: boolean; onboarding_complete: boolean; target_project?: string; platform_project?: string; connection_ready: boolean; connection_status?: string; last_verified?: string; scanner_principal?: string };
@@ -87,7 +88,7 @@ export default function OnboardingPage() {
   if (!setup) return <main className="onboarding"><div className="onboarding-card"><Mark/><p>{error || "Loading your protected workspace…"}</p></div></main>;
 
   return <main className="onboarding"><div className="onboarding-card onboarding-card-wide">
-    <header><Mark/><span className="status verified">Protected by Google IAP</span></header>
+    <header><Mark/><div className="onboarding-header-actions"><ThemeToggle compact/><span className="status verified">Protected by Google IAP</span></div></header>
     <div className="onboarding-intro"><span className="section-index">WORKSPACE SETUP</span><h1>Connect TrustFix to your Google Cloud environment.</h1><p>Configure a real, project-scoped inspection boundary. TrustFix uses a dedicated keyless scanner identity—never your personal credentials.</p></div>
     <form onSubmit={finish}>
       <section className="onboarding-step"><span className="step-number">01</span><div><h2>Create your TrustFix workspace</h2><p>These details personalize the workspace, reports, evidence exports, and security-review records.</p><label>Organization name<input value={organization} onChange={event => setOrganization(event.target.value)} required minLength={2} placeholder="Acme Security"/></label><label>Primary use case<select value={useCase} onChange={event => setUseCase(event.target.value)}><option>Customer security reviews</option><option>Continuous cloud assurance</option><option>Compliance evidence operations</option><option>Other</option></select></label></div></section>

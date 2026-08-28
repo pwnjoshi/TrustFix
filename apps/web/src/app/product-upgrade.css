@@ -71,3 +71,7 @@ html[data-theme="light"] .proof-window>footer{color:#69778c;background:#f8fafe;b
   .experience-choice article{padding:20px}.command-actions{grid-template-columns:1fr}.command-actions .button:last-child{grid-column:auto}.onboarding-card{padding-inline:16px}.setup-actions .button{width:100%}
 }
 @media(hover:none){.hero-v3 .button.primary.luminous:hover{box-shadow:0 12px 35px rgba(48,92,230,.32);filter:none;transform:none}.quick-action-grid>a:hover,.capability-cards article:hover,.experience-choice article:hover,.detail-grid article:hover{transform:none}}
+
+/* One persistent theme across onboarding and the authenticated workspace */
+.onboarding-header-actions{display:flex;align-items:center;gap:10px}.onboarding-header-actions .theme-toggle{color:var(--ink);background:var(--surface-soft)}
+@media(max-width:430px){.onboarding-card>header{align-items:flex-start;gap:12px}.onboarding-header-actions{flex-direction:column-reverse;align-items:flex-end}.onboarding-header-actions .theme-toggle{width:36px}}
