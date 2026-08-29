@@ -106,8 +106,6 @@ export function AssuranceHero() {
   const [outcomeIndex, setOutcomeIndex] = useState(0);
   const [activeStep, setActiveStep] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
-  const [scrollProgress, setScrollProgress] = useState(0);
-  const windowRef = useRef<HTMLDivElement>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -128,30 +126,12 @@ export function AssuranceHero() {
     };
   }, [isPlaying, activeStep]);
 
-  // Parallax zoom effect on scroll
-  useEffect(() => {
-    const handleScroll = () => {
-      const scrollY = window.scrollY;
-      const progress = Math.min(scrollY / 500, 1);
-      setScrollProgress(progress);
-    };
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    handleScroll();
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
   const current = heroSteps[activeStep];
   const isVerified = current.status === "VERIFIED";
 
-  // Interpolate smooth 3D scale and tilt based on scroll
-  const scale = 0.95 + scrollProgress * 0.05;
-  const translateY = (1 - scrollProgress) * 20;
-  const rotateX = (1 - scrollProgress) * 3.5;
-  const glowOpacity = 0.6 + scrollProgress * 0.4;
-
   return (
     <section className="hero-v3">
-      <div className="hero-v3-glow" style={{ opacity: glowOpacity }} />
+      <div className="hero-v3-glow" />
       <div className="hero-v3-grid" />
       <div className="hero-v3-copy">
         <h1 aria-label="Turn cloud risk into verified evidence.">
@@ -179,19 +159,12 @@ export function AssuranceHero() {
       </div>
 
       <div
-        ref={windowRef}
-        className="proof-window parallax-zoom-window"
+        className="proof-window"
         aria-label="TrustFix live assurance simulation console"
         style={{
           width: "100%",
           maxWidth: "1040px",
-          minWidth: "min(100%, 1040px)",
-          alignSelf: "stretch",
-          marginLeft: "auto",
-          marginRight: "auto",
-          transform: `perspective(1200px) scale(${scale}) translateY(${translateY}px) rotateX(${rotateX}deg)`,
-          transformOrigin: "center top",
-          transition: "transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease",
+          margin: "0 auto",
           boxSizing: "border-box",
         }}
       >

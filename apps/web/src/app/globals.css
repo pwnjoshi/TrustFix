@@ -1446,15 +1446,18 @@ code {
 .proof-window {
   position: relative;
   z-index: 2;
-  width: 100%;
-  max-width: 1060px;
-  margin: 0 auto;
+  width: 1040px !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  margin: 0 auto !important;
   background: var(--tf-surface-sunken);
   border: 1px solid var(--tf-line-strong);
   border-radius: 16px;
   box-shadow: 0 30px 80px -20px rgba(0, 0, 0, 0.75), 0 0 50px rgba(59, 130, 246, 0.12);
   overflow: hidden;
   text-align: left;
+  box-sizing: border-box !important;
+  flex-shrink: 0 !important;
 }
 
 /* ── Trust Marquee Ribbon ────────────────────────────────────────── */
