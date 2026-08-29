@@ -411,7 +411,11 @@ def current_demo_review(request: Request):
     review_id = f"review-demo-{user.workspace_id.removeprefix('workspace-')}"
     review = store.get("reviews", review_id)
     if not review:
-        raise HTTPException(404, "Demo review not created")
+        review = demo_review(user.workspace_id)
+        review.id = review_id
+        store.put("reviews", review.id, review)
+        for ev in demo_evidence(user.workspace_id):
+            store.put("evidence", ev.id, ev)
     return review
 
 
