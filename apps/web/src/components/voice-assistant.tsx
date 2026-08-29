@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useRef, useState } from "react";
 import {
@@ -188,27 +188,17 @@ export function VoiceAssistant({ onRefresh }: Props) {
           right: "24px",
           zIndex: 999,
           borderRadius: "999px",
-          padding: "12px 20px",
-          boxShadow: "0 8px 30px rgba(37, 99, 235, 0.4), 0 0 0 1px rgba(255,255,255,0.2)",
+          padding: "10px 16px",
+          boxShadow: "0 8px 24px rgba(37, 99, 235, 0.35), inset 0 1px 0 rgba(255,255,255,0.3)",
           display: "inline-flex",
           alignItems: "center",
-          gap: "10px",
-          fontWeight: 700,
+          gap: "8px",
+          fontWeight: 650,
           fontSize: "13px",
         }}
       >
-        <span
-          style={{
-            width: "8px",
-            height: "8px",
-            borderRadius: "50%",
-            background: "#10b981",
-            boxShadow: "0 0 8px #10b981",
-            display: "inline-block",
-          }}
-        />
-        <Microphone size={18} weight="fill" />
-        <span>Voice Audit AI</span>
+        <Microphone size={16} weight="fill" />
+        <span>Voice Assistant</span>
       </button>
 
       {isOpen && (

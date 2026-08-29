@@ -133,9 +133,21 @@ export default function Dashboard() {
     </header>
 
     <section className="boundary-status" aria-label="Verified Google Cloud boundary">
-      <div><span className="boundary-icon"><Cloud weight="duotone"/></span><p><small>VERIFIED TARGET</small><strong>{center.target_project}</strong></p></div>
-      <div><small>LAST LIVE VERIFICATION</small><strong>{evidenceFreshness}</strong></div>
-      <div><small>CONTROL COVERAGE</small><strong>{supportedQuestions.length}/{questions.length || 0} · {coverage}%</strong></div>
+      <div>
+        <span className="boundary-icon"><Cloud weight="duotone"/></span>
+        <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+          <small style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.06em", color: "var(--tf-ink-muted)" }}>VERIFIED TARGET</small>
+          <strong style={{ fontSize: "13px", fontFamily: "var(--font-mono)", fontWeight: 700, color: "var(--tf-ink)" }}>{center.target_project}</strong>
+        </div>
+      </div>
+      <div>
+        <small style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.06em", color: "var(--tf-ink-muted)" }}>LAST LIVE VERIFICATION</small>
+        <strong style={{ fontSize: "13px", fontWeight: 700, color: "var(--tf-ink)" }}>{evidenceFreshness}</strong>
+      </div>
+      <div>
+        <small style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.06em", color: "var(--tf-ink-muted)" }}>CONTROL COVERAGE</small>
+        <strong style={{ fontSize: "13px", fontWeight: 700, color: "var(--tf-ink)" }}>{supportedQuestions.length}/{questions.length || 0} · {coverage}%</strong>
+      </div>
       <span className="status verified"><CheckCircle weight="fill"/> Live boundary</span>
     </section>
 
@@ -145,13 +157,44 @@ export default function Dashboard() {
     </section>
 
     <section className="quick-action-grid" aria-label="Workspace shortcuts">
-      <Link href="/app/reviews"><span><ListChecks/></span><div><strong>Review controls</strong><small>{needsAttention.length} items need attention</small></div><ArrowRight/></Link>
-      <Link href="/app/findings"><span><Warning/></span><div><strong>Govern findings</strong><small>{center.pending_approvals} approvals waiting</small></div><ArrowRight/></Link>
-      <Link href="/app/evidence"><span><Stack/></span><div><strong>Inspect evidence</strong><small>{center.live_evidence_count} live records</small></div><ArrowRight/></Link>
-      <Link href="/app/integrations"><span><Cloud/></span><div><strong>Manage boundary</strong><small>{center.target_project}</small></div><ArrowRight/></Link>
+      <Link href="/app/reviews"><span><ListChecks/></span><div style={{ display: "flex", flexDirection: "column", gap: "4px", minWidth: 0 }}><strong style={{ display: "block", fontSize: "13px", fontWeight: 700, color: "var(--tf-ink)" }}>Review controls</strong><small style={{ display: "block", fontSize: "11px", color: "var(--tf-ink-muted)" }}>{needsAttention.length} items need attention</small></div><ArrowRight/></Link>
+      <Link href="/app/findings"><span><Warning/></span><div style={{ display: "flex", flexDirection: "column", gap: "4px", minWidth: 0 }}><strong style={{ display: "block", fontSize: "13px", fontWeight: 700, color: "var(--tf-ink)" }}>Govern findings</strong><small style={{ display: "block", fontSize: "11px", color: "var(--tf-ink-muted)" }}>{center.pending_approvals} approvals waiting</small></div><ArrowRight/></Link>
+      <Link href="/app/evidence"><span><Stack/></span><div style={{ display: "flex", flexDirection: "column", gap: "4px", minWidth: 0 }}><strong style={{ display: "block", fontSize: "13px", fontWeight: 700, color: "var(--tf-ink)" }}>Inspect evidence</strong><small style={{ display: "block", fontSize: "11px", color: "var(--tf-ink-muted)" }}>{center.live_evidence_count} live records</small></div><ArrowRight/></Link>
+      <Link href="/app/integrations"><span><Cloud/></span><div style={{ display: "flex", flexDirection: "column", gap: "4px", minWidth: 0 }}><strong style={{ display: "block", fontSize: "13px", fontWeight: 700, color: "var(--tf-ink)" }}>Manage boundary</strong><small style={{ display: "block", fontSize: "11px", color: "var(--tf-ink-muted)" }}>{center.target_project}</small></div><ArrowRight/></Link>
     </section>
 
-    <section className="mission-panel"><div className="mission-heading"><div><span className="overline">AGENT MISSION CONTROL</span><h2>Observe every autonomous step</h2></div><span className={`live-pill ${activeJob ? "active" : ""}`}><span/>{activeJob ? "Agent active" : "Standing by"}</span></div><div className="mission-grid"><div className="agent-core"><div className="agent-orbit"><Brain weight="duotone"/><span className="orbit-dot one"/><span className="orbit-dot two"/></div><strong>TrustFix Orchestrator</strong><small>{center.model} · Google ADK</small><div className="target-chip"><Cloud/> {center.target_project}</div></div><div className="mission-stream">{(center.jobs.length ? center.jobs.slice(0, 5) : [{ id: "idle", kind: "READY", status: "READY", phase: "Ready for the next assurance run", progress: 0, updated_at: new Date().toISOString() }]).map((job, index) => <article key={job.id} className={index === 0 ? "current" : ""}><span className={`mission-state ${job.status.toLowerCase()}`}>{job.status === "SUCCEEDED" ? <CheckCircle weight="fill"/> : job.status === "FAILED" ? <Warning weight="fill"/> : <Pulse/>}</span><div><strong>{job.phase}</strong><small>{job.kind} · {relativeTime(job.updated_at)}</small>{job.status === "RUNNING" && <div className="mission-progress"><span style={{ width: `${job.progress}%` }}/></div>}</div><code>{job.id.slice(0, 8)}</code></article>)}</div></div></section>
+    <section className="mission-panel">
+      <div className="mission-heading">
+        <div>
+          <span className="overline">AGENT MISSION CONTROL</span>
+          <h2 style={{ fontSize: "16px", margin: "4px 0 0" }}>Observe every autonomous step</h2>
+        </div>
+        <span className={`live-pill ${activeJob ? "active" : ""}`}><span/>{activeJob ? "Agent active" : "Standing by"}</span>
+      </div>
+      <div className="mission-grid">
+        <div className="agent-core">
+          <div className="agent-orbit"><Brain weight="duotone"/><span className="orbit-dot one"/><span className="orbit-dot two"/></div>
+          <strong>TrustFix Orchestrator</strong>
+          <small>{center.model} · Google ADK</small>
+          <div className="target-chip"><Cloud/> {center.target_project}</div>
+        </div>
+        <div className="mission-stream">
+          {(center.jobs.length ? center.jobs.slice(0, 5) : [{ id: "idle", kind: "READY", status: "READY", phase: "Ready for the next assurance run", progress: 0, updated_at: new Date().toISOString() }]).map((job, index) => (
+            <article key={job.id} className={index === 0 ? "current" : ""}>
+              <span className={`mission-state ${job.status.toLowerCase()}`}>
+                {job.status === "SUCCEEDED" ? <CheckCircle weight="fill"/> : job.status === "FAILED" ? <Warning weight="fill"/> : <Pulse/>}
+              </span>
+              <div style={{ display: "flex", flexDirection: "column", gap: "4px", minWidth: 0 }}>
+                <strong style={{ fontSize: "13px", color: "var(--tf-ink)", fontWeight: 700 }}>{job.phase}</strong>
+                <small style={{ fontSize: "11px", fontFamily: "var(--font-mono)", color: "var(--tf-ink-muted)" }}>{job.kind} · {relativeTime(job.updated_at)}</small>
+                {job.status === "RUNNING" && <div className="mission-progress"><span style={{ width: `${job.progress}%` }}/></div>}
+              </div>
+              <code style={{ fontSize: "11px", fontFamily: "var(--font-mono)", background: "var(--tf-surface-sunken)", padding: "4px 8px", borderRadius: "4px", border: "1px solid var(--tf-line)", color: "var(--tf-ink-muted)" }}>{job.id.slice(0, 8)}</code>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
 
     <div className="command-lower-grid"><section className="panel attention-panel"><div className="panel-heading"><div><span className="overline">PRIORITIZED NEXT ACTIONS</span><h2>What needs attention</h2></div><span className="count">{needsAttention.length}</span></div>{needsAttention.length ? needsAttention.slice(0, 4).map((item) => <Link href="/app/reviews" className="action-row" key={item.question}><span className="severity-dot"/><div><strong>{item.question}</strong><small>{item.control_id || "Manual evidence required"}</small></div><ArrowRight/></Link>) : <div className="celebration-empty"><Sparkle weight="duotone"/><strong>No urgent control failures</strong><p>Run assurance again to refresh the evidence boundary.</p></div>}</section><section className="panel audit-panel"><div className="panel-heading"><div><span className="overline">EVIDENCE LINEAGE</span><h2>Recent verified activity</h2></div><Link href="/app/activity">Full audit <ArrowRight/></Link></div>{center.activity.length ? center.activity.slice(0, 5).map((event) => <article key={event.id}><span className="audit-node"><Lightning/></span><div><strong>{event.action}</strong><small>{event.actor} · {event.resource}</small></div><time>{relativeTime(event.timestamp)}</time></article>) : <div className="celebration-empty compact"><Pulse/><strong>Activity appears after the first run</strong></div>}</section></div>
   </main>;
