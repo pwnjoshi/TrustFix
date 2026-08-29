@@ -1226,26 +1226,39 @@ code {
 /* ── Hero Section (Grounded in Technical Infrastructure) ─────────── */
 .hero-v3 {
   position: relative;
-  max-width: 1240px;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 72px 24px 60px;
-  display: grid;
-  grid-template-columns: 1.05fr 0.95fr;
+  padding: 88px 24px 72px;
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 48px;
-  overflow: hidden;
+  text-align: center;
+  overflow: visible;
+}
+
+.hero-v3-glow {
+  position: absolute;
+  top: -40px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 900px;
+  height: 520px;
+  background: radial-gradient(circle at 50% 30%, rgba(59, 130, 246, 0.18) 0%, rgba(16, 185, 129, 0.1) 40%, transparent 70%);
+  filter: blur(70px);
+  pointer-events: none;
+  z-index: 0;
 }
 
 .hero-v3-grid {
   position: absolute;
-  inset: 0;
+  inset: -100px -200px;
   background-image:
     linear-gradient(var(--tf-line-subtle) 1px, transparent 1px),
     linear-gradient(90deg, var(--tf-line-subtle) 1px, transparent 1px);
-  background-size: 48px 48px;
-  mask-image: radial-gradient(ellipse at 50% 30%, black 20%, transparent 75%);
+  background-size: 54px 54px;
+  mask-image: radial-gradient(ellipse at 50% 35%, black 25%, transparent 75%);
   pointer-events: none;
-  opacity: 0.6;
+  opacity: 0.55;
 }
 
 .hero-v3-copy {
@@ -1253,31 +1266,35 @@ code {
   z-index: 2;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
+  text-align: center;
+  max-width: 860px;
+  margin: 0 auto 52px;
 }
 
 .hero-v3-badge {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 5px 12px;
+  padding: 6px 16px;
   border-radius: var(--radius-full);
   background: var(--tf-surface-raised);
   border: 1px solid var(--tf-line);
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.08em;
   color: var(--tf-ink-secondary);
-  margin-bottom: 20px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
 }
 
 .hero-v3-badge span {
-  width: 6px;
-  height: 6px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   background: var(--tf-verified);
-  box-shadow: 0 0 8px var(--tf-verified);
+  box-shadow: 0 0 10px var(--tf-verified);
 }
 
 .hero-v3-badge small {
@@ -1288,43 +1305,50 @@ code {
 }
 
 .hero-v3-copy h1 {
-  font-size: clamp(38px, 4.2vw, 56px);
-  line-height: 1.08;
+  font-size: clamp(42px, 5.8vw, 70px);
+  line-height: 1.06;
   letter-spacing: -0.045em;
-  margin-bottom: 18px;
+  font-weight: 850;
+  margin-bottom: 22px;
+  color: var(--tf-ink);
 }
 
 .hero-v3-outcome {
   display: block;
-  color: var(--tf-cipher-text);
+  margin-top: 4px;
 }
 
 .hero-v3-outcome em {
   font-style: normal;
-  color: var(--tf-verified-text);
-  border-bottom: 2px solid var(--tf-verified-line);
+  background: linear-gradient(135deg, #10b981 0%, #38bdf8 50%, #818cf8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: inline-block;
 }
 
 .hero-v3-copy p {
-  font-size: 16px;
+  font-size: 18px;
   line-height: 1.6;
   color: var(--tf-ink-muted);
-  max-width: 520px;
-  margin-bottom: 28px;
+  max-width: 660px;
+  margin: 0 auto 32px;
 }
 
 .hero-v3-copy .hero-actions {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 28px;
+  justify-content: center;
+  gap: 14px;
+  margin-bottom: 30px;
 }
 
 .hero-v3-trust {
   display: flex;
   align-items: center;
-  gap: 20px;
-  font-size: 11px;
+  justify-content: center;
+  gap: 32px;
+  font-size: 12px;
+  font-weight: 600;
   color: var(--tf-ink-muted);
   flex-wrap: wrap;
 }
@@ -1332,11 +1356,26 @@ code {
 .hero-v3-trust span {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
 }
 
 .hero-v3-trust svg {
   color: var(--tf-verified);
+}
+
+/* ── Full-Width Grand Proof Showcase Window ── */
+.proof-window {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 1060px;
+  margin: 0 auto;
+  background: var(--tf-surface-sunken);
+  border: 1px solid var(--tf-line-strong);
+  border-radius: 16px;
+  box-shadow: 0 30px 80px -20px rgba(0, 0, 0, 0.75), 0 0 50px rgba(59, 130, 246, 0.12);
+  overflow: hidden;
+  text-align: left;
 }
 
 /* ── Trust Marquee Ribbon ────────────────────────────────────────── */
