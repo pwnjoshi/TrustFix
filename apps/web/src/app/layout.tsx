@@ -11,6 +11,11 @@ export const metadata: Metadata = {
   description:
     "Verify security requirements against live cloud infrastructure, fix gaps safely, and prove the result.",
   metadataBase: new URL("https://trustfix.app"),
+  icons: {
+    icon: "/logo.png",
+    shortcut: "/logo.png",
+    apple: "/logo.png",
+  },
   openGraph: {
     title: "TrustFix — Verified security reviews",
     description: "Security reviews backed by live Google Cloud evidence.",
