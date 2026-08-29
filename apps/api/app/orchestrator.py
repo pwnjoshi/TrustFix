@@ -1,6 +1,6 @@
 from .config import Settings
 from .controls import REGISTRY, evaluate, map_question, plan_for
-from .gcp import GcpControlAdapter, PermissionGap, preview_evidence
+from .gcp import ASSET_INSPECTIONS, GcpControlAdapter, PermissionGap, preview_evidence
 from .models import ActivityEvent, ControlResult, ControlStatus, Interpretation, PolicySettings, Review
 from .policy import PolicyEngine
 from .store import store
@@ -27,7 +27,11 @@ class ReviewOrchestrator:
             return adapter.collect_storage(workspace_id)
         if control_id == "GCP_RUN_PUBLIC_INVOKER":
             return adapter.collect_run(workspace_id, self.settings.google_cloud_region)
-        return adapter.collect_firewall(workspace_id)
+        if control_id == "GCP_FIREWALL_ADMIN_EXPOSURE":
+            return adapter.collect_firewall(workspace_id)
+        if control_id in ASSET_INSPECTIONS:
+            return adapter.collect_asset_control(workspace_id, control_id)
+        raise ValueError(f"No collector registered for {control_id}")
 
     def run(self, review: Review, strict_permissions: bool = False) -> Review:
         review.target_project_id = self.target_project_id
@@ -36,12 +40,13 @@ class ReviewOrchestrator:
         review.status = "Scanning"
         store.put("reviews", review.id, review)
         for item in review.questions:
-            interpretation = self.interpret(item.question)
-            if not interpretation.controls:
+            interpretation = None if item.control_id in REGISTRY else self.interpret(item.question)
+            control_id = item.control_id if item.control_id in REGISTRY else interpretation.controls[0] if interpretation and interpretation.controls else None
+            if not control_id:
                 item.status = ControlStatus.UNSUPPORTED
                 item.answer = "Needs review — TrustFix cannot verify this requirement from the currently connected Google Cloud environment."
                 continue
-            item.control_id = interpretation.controls[0]
+            item.control_id = control_id
             self.activity(review, "TrustFix orchestrator", "Question mapped", item.control_id, "Completed")
             try:
                 evidence = self._collect(review.workspace_id, item.control_id)
@@ -56,10 +61,14 @@ class ReviewOrchestrator:
                 store.put("evidence", ev.id, ev)
             store.put("control_results", f"{review.id}:{item.id}", result)
             if result.status == ControlStatus.FAILED:
-                plan = plan_for(review.workspace_id, result, self.policy)
-                plan.review_id = review.id
-                store.put("remediation_plans", plan.id, plan)
-                self.activity(review, "TrustFix evaluator", "Control failed", result.evidence[0].resource, "Remediation proposed")
+                if item.control_id in {"GCP_STORAGE_PUBLIC_ACCESS", "GCP_RUN_PUBLIC_INVOKER", "GCP_FIREWALL_ADMIN_EXPOSURE"}:
+                    plan = plan_for(review.workspace_id, result, self.policy)
+                    plan.review_id = review.id
+                    store.put("remediation_plans", plan.id, plan)
+                    activity_result = "Remediation proposed"
+                else:
+                    activity_result = "Manual remediation required"
+                self.activity(review, "TrustFix evaluator", "Control failed", result.evidence[0].resource, activity_result)
             elif result.status == ControlStatus.VERIFIED:
                 item.answer = f"Yes — {result.summary} Verified against live infrastructure." if all(e.live for e in result.evidence) else "Preview result only — connect the isolated demo project to generate a verified answer."
         failed = any(q.status == ControlStatus.FAILED for q in review.questions)

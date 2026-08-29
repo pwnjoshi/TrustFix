@@ -29,7 +29,7 @@ TrustFix never marks an unsupported requirement as verified and never treats a s
 - First-login workspace provisioning and role-based access.
 - Per-workspace disposable Google Cloud target selection.
 - CSV and XLSX questionnaire import/export.
-- Live Storage IAM, Cloud Run IAM, and firewall inspection.
+- 20 deterministic controls across 20 Google Cloud service domains, combining direct APIs with Cloud Asset Inventory.
 - Approval-gated public-storage remediation.
 - Drift fingerprint and idempotent execution.
 - Anonymous post-change access verification.

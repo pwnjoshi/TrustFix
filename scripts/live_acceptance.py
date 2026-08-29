@@ -16,9 +16,10 @@ os.environ["GOOGLE_CLOUD_REGION"] = "us-central1"
 os.environ["PREVIEW_MODE"] = "false"
 
 from app.config import get_settings  # noqa: E402
+from app.controls import REGISTRY  # noqa: E402
 from app.gcp import GcpControlAdapter  # noqa: E402
+from app.models import Review, ReviewQuestion  # noqa: E402
 from app.orchestrator import ReviewOrchestrator  # noqa: E402
-from app.seed import demo_review  # noqa: E402
 from app.store import store  # noqa: E402
 
 
@@ -27,9 +28,23 @@ def main() -> None:
     if settings.trustfix_target_project_id != "trustfix-demo-target":
         raise RuntimeError("Acceptance refused: target is not trustfix-demo-target")
 
-    review = ReviewOrchestrator(settings).run(demo_review())
+    review = Review(
+        workspace_id="workspace-live-acceptance",
+        target_project_id=settings.trustfix_target_project_id,
+        name="TrustFix 20-control live acceptance",
+        questions=[
+            ReviewQuestion(original_row=index, question=definition.description, control_id=control_id)
+            for index, (control_id, definition) in enumerate(REGISTRY.items(), start=1)
+        ],
+    )
+    review = ReviewOrchestrator(settings).run(review)
+    if len(review.questions) != 20 or any(question.status is None for question in review.questions):
+        raise RuntimeError("Expected all 20 registered controls to receive a live result")
     initial = {question.control_id or "UNSUPPORTED": str(question.status) for question in review.questions}
-    plans = [plan for plan in store.list("remediation_plans") if plan.control_id == "GCP_STORAGE_PUBLIC_ACCESS"]
+    plans = [
+        plan for plan in store.list("remediation_plans")
+        if plan.review_id == review.id and plan.control_id == "GCP_STORAGE_PUBLIC_ACCESS"
+    ]
     if len(plans) != 1:
         raise RuntimeError(f"Expected one storage remediation plan, found {len(plans)}")
 
@@ -48,6 +63,7 @@ def main() -> None:
 
     print(json.dumps({
         "target_project": settings.trustfix_target_project_id,
+        "controls_inspected": len(review.questions),
         "initial_control_statuses": initial,
         "remediated_resource": plan.resource,
         "execution": execution,

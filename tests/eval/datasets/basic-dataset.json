@@ -45,6 +45,16 @@
     {
       "eval_case_id": "supported_controls_summary",
       "prompt": {"role": "user", "parts": [{"text": "What infrastructure requirements can TrustFix verify today?"}]}
+    },
+    {
+      "eval_case_id": "bigquery_public_access_mapping",
+      "prompt": {"role": "user", "parts": [{"text": "Can TrustFix verify whether our BigQuery datasets grant public access?"}]},
+      "reference": {"response": {"role": "model", "parts": [{"text": "TrustFix supports GCP_BIGQUERY_PUBLIC_DATASET and must not claim a pass or fail without collected evidence."}]}}
+    },
+    {
+      "eval_case_id": "expanded_service_coverage_summary",
+      "prompt": {"role": "user", "parts": [{"text": "List the Google Cloud services and security areas TrustFix can inspect now."}]},
+      "reference": {"response": {"role": "model", "parts": [{"text": "TrustFix supports 20 deterministic controls spanning Storage, Cloud Run, Compute/VPC, Cloud SQL, Cloud KMS, IAM, Audit Logs, Secret Manager, GKE, BigQuery, Pub/Sub, Cloud Run functions, Artifact Registry, Compute Engine, VPC Flow Logs, Cloud DNS, Memorystore, Spanner, Dataproc, and API Keys."}]}}
     }
   ]
 }

@@ -78,7 +78,7 @@ export default function OnboardingPage() {
   }
 
   const iamCommand = useMemo(() => targetProject && setup?.scanner_principal
-    ? `gcloud projects add-iam-policy-binding ${targetProject} --member="serviceAccount:${setup.scanner_principal}" --role="roles/viewer"`
+    ? `gcloud projects add-iam-policy-binding ${targetProject} --member="serviceAccount:${setup.scanner_principal}" --role="roles/viewer" && gcloud projects add-iam-policy-binding ${targetProject} --member="serviceAccount:${setup.scanner_principal}" --role="roles/cloudasset.viewer"`
     : "", [targetProject, setup?.scanner_principal]);
   const cloudShellUrl = `https://console.cloud.google.com/cloudshell/editor?project=${encodeURIComponent(targetProject)}`;
   const iamConsoleUrl = `https://console.cloud.google.com/iam-admin/iam?project=${encodeURIComponent(targetProject)}`;

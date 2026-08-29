@@ -7,5 +7,12 @@ TrustFix requires two different projects: a platform project and a disposable ta
 3. Run `infra/provision.ps1` to configure cloud infrastructure and service identities.
 4. Build and deploy with `infra/deploy.ps1` after OAuth and Cloud Run service identities are configured.
 
-The API, scanner, and remediator identities are separate. The provisioner grants the scanner read-only metadata roles and restricts target mutations to the dedicated remediator identity. Review all IAM commands before using them.
+Before a judge rehearsal, reseed the single controlled public Storage finding:
 
+```powershell
+.\infra\reset-demo.ps1 -ConfirmReset
+```
+
+The reset script refuses to run unless the platform and target projects differ and the target is clearly named as a TrustFix demo/sandbox project. See `JUDGE_DEMO.md` for the timed walkthrough and acceptance checklist.
+
+The API, scanner, and remediator identities are separate. The provisioner grants the scanner read-only metadata roles and restricts target mutations to the dedicated remediator identity. Review all IAM commands before using them.

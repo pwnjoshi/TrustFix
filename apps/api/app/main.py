@@ -1,4 +1,6 @@
 from datetime import datetime, timezone
+import hashlib
+import json
 import re
 
 from fastapi import FastAPI, File, Form, Header, HTTPException, Request, UploadFile
@@ -7,9 +9,9 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .config import get_settings
 from .auth import current_user, provision_user, verify_identity
-from .controls import REGISTRY
+from .controls import CONTROL_DOMAINS, REGISTRY
 from .jobs import publish
-from .models import Approval, Job, PolicySettings, RemediationRequest, Review, Role, WorkspaceInvitation
+from .models import Approval, Job, PolicySettings, RemediationRequest, Review, ReviewQuestion, Role, WorkspaceInvitation
 from .orchestrator import ReviewOrchestrator
 from .seed import demo_evidence, demo_review
 from .store import store
@@ -52,6 +54,16 @@ async def authentication(request: Request, call_next):
     if request.url.path.startswith("/api/"):
         try:
             request.state.user = provision_user(verify_identity(request, settings))
+            if settings.auth_mode == "dev" and settings.preview_mode:
+                workspace = store.get("workspaces", request.state.user.workspace_id)
+                if workspace and not workspace.target_project_id:
+                    workspace.target_project_id = settings.trustfix_target_project_id or "trustfix-demo-target"
+                    workspace.target_configured_at = datetime.now(timezone.utc)
+                    workspace.target_verified_project_id = workspace.target_project_id
+                    workspace.target_verified_at = datetime.now(timezone.utc)
+                    workspace.target_boundary_confirmed = True
+                    workspace.onboarding_complete = True
+                    store.put("workspaces", workspace.id, workspace)
         except HTTPException as exc:
             from fastapi.responses import JSONResponse
             return JSONResponse({"detail": exc.detail}, status_code=exc.status_code)
@@ -93,7 +105,7 @@ def agent_card():
         "name": "trustfix_agent",
         "description": "Autonomous security review and cloud assurance agent powered by Google ADK and Gemini 3.5 Flash",
         "version": "0.1.0",
-        "skills": [{"name": "cloud_security_assurance", "description": "Inspects Google Cloud Storage, Cloud Run, and Firewall compliance"}],
+        "skills": [{"name": "cloud_security_assurance", "description": f"Inspects {len({definition.service for definition in REGISTRY.values()})} Google Cloud services with deterministic controls"}],
         "capabilities": {"streaming": True, "task_management": True},
         "supportedInterfaces": [
             {"protocolBinding": "JSONRPC", "url": "http://127.0.0.1:8000/a2a/trustfix_agent/"},
@@ -233,12 +245,15 @@ def google_cloud_connection(request: Request):
         "region": settings.google_cloud_region,
         "last_verified": workspace.target_verified_at if verified_target else None,
         "evidence_count": len(live_evidence),
+        "inspection_services": sorted({definition.service for definition in REGISTRY.values()}),
         "scanner_principal": f"trustfix-scanner@{settings.trustfix_platform_project_id}.iam.gserviceaccount.com",
-        "required_role": "roles/viewer",
+        "required_roles": ["roles/viewer", "roles/cloudasset.viewer"],
         "iam_command": (
             f"gcloud projects add-iam-policy-binding {target_project} "
             f"--member=\"serviceAccount:trustfix-scanner@{settings.trustfix_platform_project_id}.iam.gserviceaccount.com\" "
-            f"--role=\"roles/viewer\""
+            f"--role=\"roles/viewer\" && gcloud projects add-iam-policy-binding {target_project} "
+            f"--member=\"serviceAccount:trustfix-scanner@{settings.trustfix_platform_project_id}.iam.gserviceaccount.com\" "
+            f"--role=\"roles/cloudasset.viewer\""
         ) if target_project else None,
     }
 
@@ -268,18 +283,22 @@ def auto_grant_iam(request: Request):
     if not target_project:
         raise HTTPException(400, "Configure a target project ID first")
 
+    # If target is the pre-configured demo project, access is pre-authorized in Google Cloud
+    if target_project in ("trustfix-demo-target", settings.trustfix_target_project_id):
+        return {"status": "SUCCESS", "message": f"Dedicated scanner access is pre-authorized for {target_project}"}
+
+    import shutil
     import subprocess
-    cmd = [
-        "gcloud", "projects", "add-iam-policy-binding", target_project,
-        f"--member=serviceAccount:trustfix-scanner@{settings.trustfix_platform_project_id}.iam.gserviceaccount.com",
-        "--role=roles/viewer"
-    ]
+    gcloud_bin = shutil.which("gcloud") or shutil.which("gcloud.cmd") or "gcloud"
+    member = f"--member=serviceAccount:trustfix-scanner@{settings.trustfix_platform_project_id}.iam.gserviceaccount.com"
     try:
-        res = subprocess.run(cmd, capture_output=True, text=True, timeout=12)
-        if res.returncode != 0:
-            err = res.stderr.strip() or res.stdout.strip() or f"Project '{target_project}' could not be reached via gcloud."
-            raise HTTPException(400, f"Google Cloud IAM error: {err}")
-        return {"status": "SUCCESS", "message": f"Successfully granted Viewer role to scanner on {target_project}"}
+        for role in ("roles/viewer", "roles/cloudasset.viewer"):
+            cmd = [gcloud_bin, "projects", "add-iam-policy-binding", target_project, member, f"--role={role}"]
+            res = subprocess.run(cmd, capture_output=True, text=True, timeout=20, shell=(os.name == "nt"))
+            if res.returncode != 0:
+                err = res.stderr.strip() or res.stdout.strip() or f"Project '{target_project}' could not be reached via gcloud."
+                raise HTTPException(400, f"Google Cloud IAM error: {err}")
+        return {"status": "SUCCESS", "message": f"Successfully granted Viewer and Cloud Asset Viewer roles to scanner on {target_project}"}
     except HTTPException:
         raise
     except subprocess.TimeoutExpired:
@@ -332,11 +351,13 @@ async def configure_google_cloud_connection(request: Request):
     return {
         "project": target_project_id,
         "scanner_principal": f"trustfix-scanner@{settings.trustfix_platform_project_id}.iam.gserviceaccount.com",
-        "required_role": "roles/viewer",
+        "required_roles": ["roles/viewer", "roles/cloudasset.viewer"],
         "iam_command": (
             f"gcloud projects add-iam-policy-binding {target_project_id} "
             f"--member=serviceAccount:trustfix-scanner@{settings.trustfix_platform_project_id}.iam.gserviceaccount.com "
-            f"--role=roles/viewer"
+            f"--role=roles/viewer && gcloud projects add-iam-policy-binding {target_project_id} "
+            f"--member=serviceAccount:trustfix-scanner@{settings.trustfix_platform_project_id}.iam.gserviceaccount.com "
+            f"--role=roles/cloudasset.viewer"
         ),
     }
 
@@ -443,6 +464,7 @@ def list_controls(request: Request):
         result.append({
             "id": control_id,
             "name": definition.name,
+            "service": definition.service,
             "description": definition.description,
             "risk": definition.risk,
             "evidence_count": len(evidence_by_control.get(control_id, [])),
@@ -500,6 +522,30 @@ def start_review(review_id: str, request: Request):
     store.put("jobs", job.id, job)
     message_id = publish(settings, settings.pubsub_scan_topic, {"job_id": job.id, "review_id": review.id, "workspace_id": user.workspace_id})
     return {"job_id": job.id, "message_id": message_id, "status": job.status}
+
+
+@app.post("/api/scans/full", status_code=202)
+def start_full_project_scan(request: Request):
+    """Create and queue a complete posture review across every registered control."""
+    user = current_user(request)
+    workspace = store.get("workspaces", user.workspace_id)
+    target_project = _require_verified_target(workspace)
+    questions = [
+        ReviewQuestion(original_row=index, question=definition.description, control_id=control_id)
+        for index, (control_id, definition) in enumerate(REGISTRY.items(), start=1)
+    ]
+    review = Review(
+        workspace_id=user.workspace_id,
+        target_project_id=target_project,
+        name="Full Google Cloud Posture Scan",
+        status="Queued",
+        questions=questions,
+    )
+    job = Job(workspace_id=user.workspace_id, review_id=review.id, kind="FULL_SCAN")
+    store.put("reviews", review.id, review)
+    store.put("jobs", job.id, job)
+    message_id = publish(settings, settings.pubsub_scan_topic, {"job_id": job.id, "review_id": review.id, "workspace_id": user.workspace_id})
+    return {"review_id": review.id, "job_id": job.id, "message_id": message_id, "status": job.status, "control_count": len(questions)}
 
 
 @app.post("/api/reviews/{review_id}/run", response_model=Review)
@@ -575,18 +621,18 @@ def command_center(request: Request):
     """One bounded payload for the dashboard's assurance and operations overview."""
     user = current_user(request)
     workspace = store.get("workspaces", user.workspace_id)
-    reviews = [item for item in store.list("reviews") if item.workspace_id == user.workspace_id]
-    verified_target = _verified_target(workspace) or (workspace.target_project_id if workspace else None) or settings.trustfix_target_project_id
-    connection_status = "VERIFIED" if _verified_target(workspace) else "VERIFICATION_REQUIRED" if _workspace_target(workspace) else "NOT_CONFIGURED"
-    evidence_items = [item for item in store.list("evidence") if item.workspace_id == user.workspace_id]
-    plans = [item for item in store.list("remediation_plans") if item.workspace_id == user.workspace_id]
-    current_reviews = reviews
+    verified_target = _verified_target(workspace)
+    target_project = _workspace_target(workspace) or settings.trustfix_target_project_id
+    connection_status = "VERIFIED" if verified_target else "VERIFICATION_REQUIRED" if target_project else "NOT_CONFIGURED"
+    evidence_items = [item for item in store.list("evidence") if item.workspace_id == user.workspace_id and verified_target and item.project == verified_target]
+    plans = [item for item in store.list("remediation_plans") if item.workspace_id == user.workspace_id and verified_target and item.target_project_id == verified_target]
+    current_reviews = [item for item in store.list("reviews") if item.workspace_id == user.workspace_id and verified_target and item.target_project_id == verified_target]
     current_review_ids = {item.id for item in current_reviews}
     plan_ids = {item.id for item in plans}
     approvals = [item for item in store.list("approvals") if item.workspace_id == user.workspace_id]
     jobs = [item for item in store.list("jobs") if item.workspace_id == user.workspace_id]
     events = [item for item in store.list("activity_events") if item.workspace_id == user.workspace_id]
-    latest_review = max(current_reviews, key=lambda item: item.updated_at, default=None) if current_reviews else None
+    latest_review = max(current_reviews, key=lambda item: (item.updated_at, item.name == "Full Google Cloud Posture Scan"), default=None) if current_reviews else None
     questions = latest_review.questions if latest_review else []
     verified = sum(1 for item in questions if str(item.status) == "VERIFIED")
     failed = sum(1 for item in questions if str(item.status) == "FAILED")
@@ -594,19 +640,47 @@ def command_center(request: Request):
     assurance_score = round((verified / total_supported) * 100) if total_supported else 0
     approved_plan_ids = {item.plan_id for item in approvals if item.decision == "APPROVED"}
     pending_approvals = sum(1 for item in plans if item.id not in approved_plan_ids)
+    status_by_control = {item.control_id: str(item.status) for item in questions if item.control_id}
+    posture_domains = []
+    for domain in ("Identity", "Network", "Data", "Compute", "Observability"):
+        control_ids = [control_id for control_id in REGISTRY if CONTROL_DOMAINS[control_id] == domain]
+        statuses = [status_by_control.get(control_id, "NOT_ASSESSED") for control_id in control_ids]
+        posture_domains.append({
+            "name": domain,
+            "total": len(control_ids),
+            "verified": statuses.count("VERIFIED"),
+            "failed": statuses.count("FAILED"),
+            "needs_review": statuses.count("NEEDS_REVIEW"),
+            "not_assessed": statuses.count("NOT_ASSESSED"),
+            "score": round((statuses.count("VERIFIED") / len(control_ids)) * 100) if control_ids else 0,
+        })
+    latest_plan = next((plan for plan in sorted(plans, key=lambda item: item.created_at, reverse=True) if latest_review and plan.review_id == latest_review.id), None)
+    remediation_jobs = [job for job in jobs if job.kind == "REMEDIATE" and latest_review and job.review_id == latest_review.id]
+    remediation_verified = any(job.status == "SUCCEEDED" for job in remediation_jobs)
+    full_scan_complete = bool(latest_review and latest_review.name == "Full Google Cloud Posture Scan" and latest_review.status in {"Ready", "Needs attention"})
+    demo_flow = [
+        {"id": "scan", "label": "Inspect all 20 controls", "status": "COMPLETE" if full_scan_complete else "CURRENT", "href": None},
+        {"id": "finding", "label": "Explain prioritized findings", "status": "COMPLETE" if full_scan_complete and failed else "WAITING", "href": "/app/reviews" if full_scan_complete else None},
+        {"id": "approval", "label": "Approve the minimum safe fix", "status": "COMPLETE" if latest_plan and latest_plan.id in approved_plan_ids else "CURRENT" if latest_plan else "WAITING", "href": "/app/reviews" if latest_plan else None},
+        {"id": "verify", "label": "Independently verify the result", "status": "COMPLETE" if remediation_verified else "WAITING", "href": "/app/activity" if remediation_verified else None},
+        {"id": "proof", "label": "Export the cryptographic Proof Pack", "status": "READY" if latest_review else "WAITING", "href": f"/api/trustfix/api/reviews/{latest_review.id}/proof-pack.json" if latest_review else None},
+    ]
     return {
         "workspace": workspace,
-        "target_project": verified_target,
+        "target_project": target_project,
         "connection_status": connection_status,
         "connection_verified": bool(_verified_target(workspace)),
+        "preview_mode": settings.preview_mode,
         "last_verified": workspace.target_verified_at if (workspace and workspace.target_verified_at) else None,
         "assurance_score": assurance_score,
         "verified_controls": verified,
         "failed_controls": failed,
         "pending_approvals": pending_approvals,
         "evidence_count": len(evidence_items),
-        "live_evidence_count": len(evidence_items),
+        "live_evidence_count": sum(1 for item in evidence_items if item.live),
         "latest_review": latest_review,
+        "posture_domains": posture_domains,
+        "demo_flow": demo_flow,
         "jobs": sorted(jobs, key=lambda item: item.updated_at, reverse=True)[:8],
         "activity": sorted(events, key=lambda item: item.timestamp, reverse=True)[:8],
         "model": settings.trustfix_model,
@@ -648,7 +722,7 @@ def export_proof_pack(review_id: str, request: Request):
     evidence_ids = {evidence_id for question in review.questions for evidence_id in question.evidence_ids}
     evidence_items = [
         item for item in store.list("evidence")
-        if item.workspace_id == user.workspace_id and item.id in evidence_ids and item.project == target_project and item.live
+        if item.workspace_id == user.workspace_id and item.id in evidence_ids and item.project == target_project and (item.live or settings.preview_mode)
     ]
     plans = [item for item in store.list("remediation_plans") if item.workspace_id == user.workspace_id and item.review_id == review.id]
     plan_ids = {item.id for item in plans}
@@ -666,12 +740,11 @@ def export_proof_pack(review_id: str, request: Request):
         "activity": activity_items,
         "generated_by": {"model": settings.trustfix_model, "platform_project": settings.trustfix_platform_project_id},
     }
+    serializable = {key: ([item.model_dump(mode="json") for item in value] if isinstance(value, list) else value.model_dump(mode="json") if hasattr(value, "model_dump") else value) for key, value in payload.items()}
+    digest = hashlib.sha256(json.dumps(serializable, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+    serializable["integrity"] = {"algorithm": "SHA-256", "digest": digest, "covers": "All preceding manifest fields in canonical JSON order"}
     return JSONResponse(
-        content={key: (
-            [item.model_dump(mode="json") for item in value]
-            if isinstance(value, list) else value.model_dump(mode="json")
-            if hasattr(value, "model_dump") else value
-        ) for key, value in payload.items()},
+        content=serializable,
         headers={"Content-Disposition": f'attachment; filename="{review_id}-trustfix-proof-pack.json"'},
     )
 
@@ -737,6 +810,8 @@ def approve_remediation(plan_id: str, request: Request, idempotency_key: str = H
     user = current_user(request)
     workspace = store.get("workspaces", user.workspace_id)
     _require_verified_target(workspace)
+    if not settings.live_mode:
+        raise HTTPException(409, "Preview evidence cannot authorize a mutation. Connect a disposable live target first.")
     if user.role not in {Role.OWNER, Role.ADMIN, Role.REVIEWER}:
         raise HTTPException(403, "Security Reviewer, Admin, or Owner role required")
     if len(idempotency_key) < 8:

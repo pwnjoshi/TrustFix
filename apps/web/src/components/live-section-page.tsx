@@ -135,9 +135,11 @@ export function IntegrationsPage() {
   }
 
   const scannerPrincipal = String(connection?.scanner_principal || "");
-  const iamCommand = project && scannerPrincipal
-    ? `gcloud projects add-iam-policy-binding ${project} --member="serviceAccount:${scannerPrincipal}" --role="roles/viewer"`
-    : "";
+  const iamCommand = project === connection?.project && connection?.iam_command
+    ? String(connection.iam_command)
+    : project && scannerPrincipal
+      ? `gcloud projects add-iam-policy-binding ${project} --member="serviceAccount:${scannerPrincipal}" --role="roles/viewer" && gcloud projects add-iam-policy-binding ${project} --member="serviceAccount:${scannerPrincipal}" --role="roles/cloudasset.viewer"`
+      : "";
 
   return (
     <main className="page section-page">
@@ -161,6 +163,7 @@ export function IntegrationsPage() {
               <div><dt>Authentication</dt><dd>{String(connection.authentication)}</dd></div>
               <div><dt>Region</dt><dd>{String(connection.region)}</dd></div>
               <div><dt>Live evidence</dt><dd>{String(connection.evidence_count)} items</dd></div>
+              <div><dt>Services inspected</dt><dd>{Array.isArray(connection.inspection_services) ? connection.inspection_services.length : 0}</dd></div>
               <div>
                 <dt>Last verified</dt>
                 <dd>
@@ -170,6 +173,12 @@ export function IntegrationsPage() {
                 </dd>
               </div>
             </dl>
+            {Array.isArray(connection.inspection_services) && (
+              <div className="connection-explainer">
+                <strong>Inspection coverage</strong>
+                <p>{connection.inspection_services.map(String).join(" · ")}</p>
+              </div>
+            )}
             <div className="connection-explainer">
               <strong>How this connection works</strong>
               <p>Saving a project ID only selects the inspection boundary. TrustFix becomes operational after its dedicated scanner service account successfully reads that exact project. Your Google login authenticates this workspace; it does not grant cloud access.</p>
@@ -185,7 +194,7 @@ export function IntegrationsPage() {
                 aria-label="Workspace target project"
               />
             </label>
-            {project && <div className="connection-iam-guide"><div><strong>1. Grant scanner access in the target project</strong><span>Run as a Project Owner or IAM administrator. This grants read-only Viewer access to the dedicated keyless scanner.</span></div><div className="cloud-command"><header><span>Google Cloud Shell</span><button type="button" onClick={async () => { await navigator.clipboard.writeText(iamCommand); setCopied(true); window.setTimeout(() => setCopied(false), 1800); }}>{copied ? <Check/> : <Copy/>}{copied ? "Copied" : "Copy command"}</button></header><code>{iamCommand}</code></div><a className="button secondary" href={`https://console.cloud.google.com/iam-admin/iam?project=${encodeURIComponent(project)}`} target="_blank" rel="noreferrer">Open project IAM <ArrowSquareOut/></a><div><strong>2. Verify live API access</strong><span>TrustFix tests Storage, Cloud Run, and Firewall visibility before marking this project verified.</span></div></div>}
+            {project && <div className="connection-iam-guide"><div><strong>1. Grant scanner access in the target project</strong><span>Run as a Project Owner or IAM administrator. This grants read-only Viewer and Cloud Asset Viewer access to the dedicated keyless scanner.</span></div><div className="cloud-command"><header><span>Google Cloud Shell</span><button type="button" onClick={async () => { await navigator.clipboard.writeText(iamCommand); setCopied(true); window.setTimeout(() => setCopied(false), 1800); }}>{copied ? <Check/> : <Copy/>}{copied ? "Copied" : "Copy command"}</button></header><code>{iamCommand}</code></div><a className="button secondary" href={`https://console.cloud.google.com/iam-admin/iam?project=${encodeURIComponent(project)}`} target="_blank" rel="noreferrer">Open project IAM <ArrowSquareOut/></a><div><strong>2. Verify live API access</strong><span>TrustFix tests direct service APIs and Cloud Asset Inventory before marking this project verified.</span></div></div>}
             <button
               className="button primary"
               onClick={verify}
@@ -535,7 +544,7 @@ export function ControlsPage() {
               <span className="control-icon"><LockKey /></span>
               <div>
                 <h3>{String(control.name)}</h3>
-                <code>{String(control.id)}</code>
+                <code>{String(control.id)} · {String(control.service || "Google Cloud")}</code>
                 <p>{String(control.description)}</p>
               </div>
               <span className={`status ${statusClass(String(control.last_status || ""))}`}>

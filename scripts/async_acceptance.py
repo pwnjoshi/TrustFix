@@ -4,6 +4,7 @@ import json
 import os
 import sys
 import time
+from datetime import datetime, timezone
 from pathlib import Path
 
 
@@ -19,7 +20,7 @@ os.environ.update({
 
 from app.config import get_settings  # noqa: E402
 from app.jobs import publish  # noqa: E402
-from app.models import Approval, Job  # noqa: E402
+from app.models import Approval, Job, Workspace  # noqa: E402
 from app.seed import demo_review  # noqa: E402
 from app.store import store  # noqa: E402
 
@@ -39,6 +40,17 @@ def main() -> None:
     if settings.trustfix_target_project_id != "trustfix-demo-target":
         raise RuntimeError("Acceptance refused outside trustfix-demo-target")
     workspace_id = "workspace-deployed-acceptance"
+    workspace = Workspace(
+        id=workspace_id,
+        name="Deployed acceptance",
+        target_project_id=settings.trustfix_target_project_id,
+        target_configured_at=datetime.now(timezone.utc),
+        target_verified_project_id=settings.trustfix_target_project_id,
+        target_verified_at=datetime.now(timezone.utc),
+        target_boundary_confirmed=True,
+        onboarding_complete=True,
+    )
+    store.put("workspaces", workspace.id, workspace)
     review = demo_review()
     review.id = "review-deployed-acceptance"
     review.workspace_id = workspace_id

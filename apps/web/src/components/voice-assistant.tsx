@@ -2,8 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import {
-  CheckCircle, Microphone, MicrophoneSlash, SpeakerHigh,
-  Sparkle, Warning, X, ArrowRight, Play, Pulse
+  Microphone, MicrophoneSlash, Sparkle, X,
 } from "@phosphor-icons/react";
 import { useToast } from "./toast";
 
@@ -13,6 +12,22 @@ type Props = {
   onRefresh?: () => void;
 };
 
+type SpeechResult = { 0: { transcript: string } };
+type SpeechEvent = { results: ArrayLike<SpeechResult> };
+type SpeechError = { error: string };
+type SpeechRecognizer = {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  onstart: () => void;
+  onresult: (event: SpeechEvent) => void;
+  onend: () => void;
+  onerror: (event: SpeechError) => void;
+  start: () => void;
+  stop: () => void;
+};
+type SpeechRecognizerConstructor = new () => SpeechRecognizer;
+
 export function VoiceAssistant({ onRefresh }: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const [isListening, setIsListening] = useState(false);
@@ -21,12 +36,15 @@ export function VoiceAssistant({ onRefresh }: Props) {
   const [transcript, setTranscript] = useState("");
   const [lastResponse, setLastResponse] = useState("Hello! I am your TrustFix Voice Assistant. Say 'Run audit', 'Fix storage bucket', or 'Verify controls'.");
   const [log, setLog] = useState<string[]>([]);
-  const recognitionRef = useRef<any>(null);
+  const recognitionRef = useRef<SpeechRecognizer | null>(null);
   const { show } = useToast();
 
   useEffect(() => {
-    const SpeechRecognition =
-      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const speechWindow = window as Window & {
+      SpeechRecognition?: SpeechRecognizerConstructor;
+      webkitSpeechRecognition?: SpeechRecognizerConstructor;
+    };
+    const SpeechRecognition = speechWindow.SpeechRecognition || speechWindow.webkitSpeechRecognition;
 
     if (SpeechRecognition) {
       const recognition = new SpeechRecognition();
@@ -39,9 +57,9 @@ export function VoiceAssistant({ onRefresh }: Props) {
         setTranscript("");
       };
 
-      recognition.onresult = (event: any) => {
+      recognition.onresult = (event: SpeechEvent) => {
         const text = Array.from(event.results)
-          .map((result: any) => result[0].transcript)
+          .map((result) => result[0].transcript)
           .join("");
         setTranscript(text);
       };
@@ -50,7 +68,7 @@ export function VoiceAssistant({ onRefresh }: Props) {
         setIsListening(false);
       };
 
-      recognition.onerror = (event: any) => {
+      recognition.onerror = (event: SpeechError) => {
         console.warn("Speech recognition error:", event.error);
         setIsListening(false);
       };
@@ -124,7 +142,7 @@ export function VoiceAssistant({ onRefresh }: Props) {
         setLastResponse(msg);
         speak(msg);
       }
-    } catch (err) {
+    } catch {
       const msg = "Processed voice command against TrustFix control plane.";
       setLastResponse(msg);
       speak(msg);
@@ -318,7 +336,7 @@ export function VoiceAssistant({ onRefresh }: Props) {
               <div style={{ background: "var(--tf-surface-sunken)", border: "1px solid var(--tf-line)", borderRadius: "12px", padding: "16px 20px", width: "100%", textAlign: "left", marginBottom: "20px" }}>
                 {transcript && (
                   <p style={{ fontSize: "12px", color: "var(--tf-ink-muted)", marginBottom: "8px", fontStyle: "italic" }}>
-                    "{transcript}"
+                    &ldquo;{transcript}&rdquo;
                   </p>
                 )}
                 <p style={{ fontSize: "14px", lineHeight: "1.5", color: "var(--tf-ink)", fontWeight: 500, margin: 0 }}>

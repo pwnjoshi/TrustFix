@@ -16,11 +16,14 @@ type Question = { status?: string; question: string; control_id?: string };
 type Review = { id: string; name: string; status: string; questions: Question[]; updated_at: string };
 type Job = { id: string; kind: string; status: string; phase: string; progress: number; updated_at: string };
 type Activity = { id: string; actor: string; action: string; resource: string; result: string; timestamp: string };
+type PostureDomain = { name: string; total: number; verified: number; failed: number; needs_review: number; not_assessed: number; score: number };
+type DemoStep = { id: string; label: string; status: "COMPLETE" | "CURRENT" | "READY" | "WAITING"; href?: string };
 type Center = {
   workspace?: { name?: string; organization_name?: string };
   target_project?: string;
   connection_status: "NOT_CONFIGURED" | "VERIFICATION_REQUIRED" | "VERIFIED";
   connection_verified: boolean;
+  preview_mode: boolean;
   last_verified?: string;
   assurance_score: number;
   verified_controls: number;
@@ -29,6 +32,8 @@ type Center = {
   evidence_count: number;
   live_evidence_count: number;
   latest_review?: Review;
+  posture_domains: PostureDomain[];
+  demo_flow: DemoStep[];
   jobs: Job[];
   activity: Activity[];
   model: string;
@@ -84,25 +89,24 @@ export default function Dashboard() {
     };
   }, [load]);
 
-  async function runReview() {
-    if (!center?.latest_review) return;
+  async function runFullScan() {
     setRunning(true);
     try {
-      const response = await fetch(`${api}/reviews/${center.latest_review.id}/start`, { method: "POST" });
+      const response = await fetch(`${api}/scans/full`, { method: "POST" });
       const queued = await response.json();
-      if (!response.ok) throw new Error(queued.detail || "Could not start assurance run");
-      show("Autonomous assurance scan initiated across live target", "info");
+      if (!response.ok) throw new Error(queued.detail || "Could not start full-project scan");
+      show(`Inspecting ${queued.control_count} controls across the verified project`, "info");
       for (let attempt = 0; attempt < 90; attempt++) {
         await new Promise((resolve) => setTimeout(resolve, 2000));
         await load();
         const jobResponse = await fetch(`${api}/jobs/${queued.job_id}`, { cache: "no-store" });
         const job = await jobResponse.json();
-        if (job.status === "SUCCEEDED") { await load(); show("Live evidence collected and posture verified", "success"); return; }
+        if (job.status === "SUCCEEDED") { await load(); show("Full-project posture scan complete", "success"); return; }
         if (job.status === "FAILED") throw new Error(job.error || "Assurance scan failed");
       }
       throw new Error("The run is continuing in the background. Mission Control will keep its status.");
     } catch (error) {
-      show(error instanceof Error ? error.message : "Assurance run failed", "error");
+      show(error instanceof Error ? error.message : "Full-project scan failed", "error");
     } finally {
       setRunning(false);
     }
@@ -129,7 +133,7 @@ export default function Dashboard() {
   return <main className="page command-center">
     <header className="command-hero">
       <div><span className="breadcrumb">{center.workspace?.organization_name || center.workspace?.name || "TRUSTFIX"} / COMMAND CENTER</span><h1>Cloud assurance, continuously proven.</h1><p>See live posture, agent work, governed decisions, and evidence from one operational view.</p></div>
-      <div className="command-actions"><span className="live-sync" title={lastSynced?.toLocaleString()}><span/>Live · {lastSynced ? relativeTime(lastSynced.toISOString()) : "connecting"}</span><button className="button secondary" onClick={() => load(true)} disabled={refreshing}><ArrowClockwise className={refreshing ? "spin" : ""}/>{refreshing ? "Refreshing…" : "Refresh"}</button>{proofPackUrl && <a className="button secondary" href={proofPackUrl}><DownloadSimple/> Proof Pack</a>}<button className="button primary glow" onClick={runReview} disabled={running || !center.latest_review}><Play weight="fill"/>{running ? "Inspecting live target…" : "Run assurance"}</button></div>
+      <div className="command-actions"><span className="live-sync" title={lastSynced?.toLocaleString()}><span/>Live · {lastSynced ? relativeTime(lastSynced.toISOString()) : "connecting"}</span><button className="button secondary" onClick={() => load(true)} disabled={refreshing}><ArrowClockwise className={refreshing ? "spin" : ""}/>{refreshing ? "Refreshing…" : "Refresh"}</button>{proofPackUrl && <a className="button secondary" href={proofPackUrl}><DownloadSimple/> Proof Pack</a>}<button className="button primary glow" onClick={runFullScan} disabled={running}><Play weight="fill"/>{running ? "Inspecting 20 controls…" : "Scan entire project"}</button></div>
     </header>
 
     <section className="boundary-status" aria-label="Verified Google Cloud boundary">
@@ -148,12 +152,38 @@ export default function Dashboard() {
         <small style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.06em", color: "var(--tf-ink-muted)" }}>CONTROL COVERAGE</small>
         <strong style={{ fontSize: "13px", fontWeight: 700, color: "var(--tf-ink)" }}>{supportedQuestions.length}/{questions.length || 0} · {coverage}%</strong>
       </div>
-      <span className="status verified"><CheckCircle weight="fill"/> Live boundary</span>
+      <span className={`status ${center.preview_mode ? "neutral" : "verified"}`}><CheckCircle weight="fill"/> {center.preview_mode ? "Preview boundary" : "Live boundary"}</span>
     </section>
 
     <section className="assurance-overview">
       <article className="assurance-score-card"><div className="score-ring" style={{ "--score": `${score * 3.6}deg` } as React.CSSProperties}><div><strong>{score}</strong><span>/100</span></div></div><div><span className="overline">ASSURANCE SCORE</span><h2>{scoreLabel(score)}</h2><p>Calculated only from supported, evidence-backed controls.</p><div className="coverage-track" aria-label={`${coverage}% control coverage`}><span style={{ width: `${coverage}%` }}/></div><small>{coverage}% of imported questions map to supported controls</small></div></article>
       <div className="command-metrics"><article><CheckCircle/><span>Verified</span><strong>{center.verified_controls}</strong><small>Live controls passing</small></article><article><Warning/><span>Failed</span><strong>{center.failed_controls}</strong><small>Require attention</small></article><article><ShieldCheck/><span>Approvals</span><strong>{center.pending_approvals}</strong><small>Governed actions waiting</small></article><article><Fingerprint/><span>Evidence</span><strong>{center.evidence_count}</strong><small>{center.live_evidence_count} live records</small></article></div>
+    </section>
+
+    {center.preview_mode && <section className="preview-disclosure"><Warning/><div><strong>Safe preview mode</strong><p>Results below are clearly labeled sample evidence. Connect a disposable Google Cloud project for live inspection and executable verification.</p></div><Link href="/app/integrations">Connect live target <ArrowRight/></Link></section>}
+
+    <section className="posture-section" aria-label="Google Cloud posture by security domain">
+      <div className="section-heading-row"><div><span className="overline">FULL-PROJECT POSTURE</span><h2>Five security domains. One evidence boundary.</h2></div><span className="status verified">{center.posture_domains.reduce((sum, domain) => sum + domain.total, 0)} controls</span></div>
+      <div className="posture-domain-grid">
+        {center.posture_domains.map((domain) => (
+          <article key={domain.name}>
+            <div><strong>{domain.name}</strong><span>{domain.verified}/{domain.total} verified</span></div>
+            <div className="domain-score"><strong>{domain.score}</strong><small>/100</small></div>
+            <div className="domain-track"><span style={{ width: `${domain.score}%` }}/></div>
+            <footer><span className="verified-dot">{domain.verified} pass</span><span className="failed-dot">{domain.failed} fail</span><span>{domain.not_assessed + domain.needs_review} unassessed</span></footer>
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <section className="judge-flow" aria-label="TrustFix end-to-end proof flow">
+      <div className="section-heading-row"><div><span className="overline">JUDGE DEMO PATH</span><h2>From exposure to cryptographic proof</h2><p>Every step is backed by persisted evidence, approval, execution, and verification state.</p></div></div>
+      <div className="judge-flow-steps">
+        {center.demo_flow.map((step, index) => {
+          const content = <><span className={`flow-index ${step.status.toLowerCase()}`}>{step.status === "COMPLETE" ? <CheckCircle weight="fill"/> : String(index + 1).padStart(2, "0")}</span><div><strong>{step.label}</strong><small>{step.status === "COMPLETE" ? "Completed with persisted proof" : step.status === "CURRENT" ? "Ready for the operator" : step.status === "READY" ? "Available now" : "Unlocked by the previous step"}</small></div>{step.href && <ArrowRight/>}</>;
+          return step.href ? <a key={step.id} href={step.href} className={`flow-step ${step.status.toLowerCase()}`}>{content}</a> : <article key={step.id} className={`flow-step ${step.status.toLowerCase()}`}>{content}</article>;
+        })}
+      </div>
     </section>
 
     <section className="quick-action-grid" aria-label="Workspace shortcuts">

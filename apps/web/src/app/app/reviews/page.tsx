@@ -18,6 +18,7 @@ type Question = {
 type Review = { id: string; name: string; status: string; questions: Question[] };
 type Plan = {
   id: string;
+  review_id?: string;
   control_id: string;
   resource: string;
   proposed_change: string;
@@ -25,6 +26,7 @@ type Plan = {
   potential_impact: string;
   rollback: string;
   risk: string;
+  decision: "REQUIRE_APPROVAL" | "MANUAL_ONLY" | "AUTO_REMEDIATE";
   dependencies_checked: number;
 };
 type Job = { id: string; status: string; error?: string };
@@ -61,12 +63,8 @@ export default function Reviews() {
   const { show } = useToast();
 
   const refresh = useCallback(async () => {
-    let current: Review;
-    try {
-      current = await apiFetch<Review>(`${api}/reviews/demo/current`);
-    } catch {
-      current = await apiFetch<Review>(`${api}/reviews/demo`, { method: "POST" });
-    }
+    const reviews = await apiFetch<Review[]>(`${api}/reviews`);
+    const current = reviews[0] || await apiFetch<Review>(`${api}/reviews/demo`, { method: "POST" });
     const planList = await apiFetch<Plan[]>(`${api}/remediations`);
     setReview(current);
     setPlans(planList);
@@ -133,7 +131,7 @@ export default function Reviews() {
     }
   }
 
-  const activePlan = plans.find((p) => p.control_id === selected?.control_id);
+  const activePlan = plans.find((p) => p.review_id === review?.id && p.control_id === selected?.control_id);
 
   async function approve() {
     if (!activePlan) return;
@@ -411,7 +409,7 @@ export default function Reviews() {
               {/* Remediation button */}
               {selected.status === "FAILED" && activePlan && (
                 <button className="button primary wide" onClick={() => setModal(true)}>
-                  Review remediation <ArrowRight size={15} />
+                  {activePlan.decision === "MANUAL_ONLY" ? "Review manual remediation" : "Review remediation"} <ArrowRight size={15} />
                 </button>
               )}
 
@@ -452,7 +450,7 @@ export default function Reviews() {
               <span className={`risk ${activePlan.risk.toLowerCase()}`}>
                 {activePlan.risk} RISK
               </span>
-              <p>Execution is queued only after your signed-in approval.</p>
+              <p>{activePlan.decision === "MANUAL_ONLY" ? "This finding is inspection-only; execution remains outside TrustFix's mutation boundary." : "Execution is queued only after your signed-in approval."}</p>
             </div>
             <div className="remediation-grid">
               <div className="full">
@@ -485,8 +483,8 @@ export default function Reviews() {
               <button className="button secondary" onClick={() => setModal(false)}>
                 Reject
               </button>
-              <button className="button primary" disabled={busy} onClick={approve}>
-                {busy ? "Applying & verifying…" : "Approve & remediate"}
+              <button className="button primary" disabled={busy || activePlan.decision === "MANUAL_ONLY"} onClick={approve}>
+                {activePlan.decision === "MANUAL_ONLY" ? "Manual action required" : busy ? "Applying & verifying…" : "Approve & remediate"}
               </button>
             </footer>
           </section>

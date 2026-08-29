@@ -54,6 +54,8 @@ def execute_scan(data: dict) -> None:
             or not workspace.target_verified_at
         ):
             raise RuntimeError("Google Cloud target is not verified. Verify the exact project in Integrations before running assurance.")
+        if is_connection_check:
+            GcpControlAdapter(target_project_id).verify_asset_inventory()
         ReviewOrchestrator(settings, target_project_id).run(review, strict_permissions=is_connection_check)
         if is_connection_check and workspace:
             workspace.target_verified_project_id = target_project_id
