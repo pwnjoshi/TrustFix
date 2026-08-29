@@ -135,7 +135,6 @@ const telemetryBadges = [
 
 export function AssuranceHero() {
   const [outcomeIndex, setOutcomeIndex] = useState(0);
-  const [telemetryIndex, setTelemetryIndex] = useState(0);
   const [activeStep, setActiveStep] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
   const [scrollProgress, setScrollProgress] = useState(0);
@@ -147,14 +146,7 @@ export function AssuranceHero() {
       () => setOutcomeIndex((current) => (current + 1) % proofOutcomes.length),
       2800
     );
-    const telemetryTimer = window.setInterval(
-      () => setTelemetryIndex((current) => (current + 1) % telemetryBadges.length),
-      3400
-    );
-    return () => {
-      window.clearInterval(outcomeTimer);
-      window.clearInterval(telemetryTimer);
-    };
+    return () => window.clearInterval(outcomeTimer);
   }, []);
 
   useEffect(() => {
@@ -180,7 +172,6 @@ export function AssuranceHero() {
   }, []);
 
   const current = heroSteps[activeStep];
-  const activeTelemetry = telemetryBadges[telemetryIndex];
   const isVerified = current.status === "VERIFIED";
 
   // Interpolate smooth 3D scale and tilt based on scroll
@@ -195,14 +186,17 @@ export function AssuranceHero() {
       <div className="hero-v3-grid" />
       <div className="hero-v3-copy">
         <Link
-          href={activeTelemetry.href}
-          className="hero-v3-badge interactive-telemetry-badge"
-          title="Click to explore this capability & architecture"
+          href="/security"
+          className="hero-v3-badge"
+          title="View autonomous assurance architecture and zero-trust safety case"
         >
-          <span style={{ background: activeTelemetry.color, boxShadow: `0 0 10px ${activeTelemetry.color}` }} />
-          <strong>{activeTelemetry.tag}</strong>
-          <small>{activeTelemetry.detail}</small>
-          <span className="badge-tag-extra">{activeTelemetry.sub}</span>
+          <span className="pulse-dot-wrapper">
+            <span className="pulse-dot-ping" />
+            <span className="pulse-dot-core" />
+          </span>
+          <span className="badge-tech">Google ADK & Gemini 3.5 Flash</span>
+          <span className="badge-divider" />
+          <span className="badge-label">Autonomous Cloud Assurance</span>
           <ArrowRight size={11} className="badge-arrow" />
         </Link>
         <h1 aria-label="Turn cloud risk into verified evidence.">
@@ -234,12 +228,15 @@ export function AssuranceHero() {
         className="proof-window parallax-zoom-window"
         aria-label="TrustFix live assurance simulation console"
         style={{
+          width: "100%",
+          maxWidth: "1040px",
           transform: `perspective(1200px) scale(${scale}) translateY(${translateY}px) rotateX(${rotateX}deg)`,
           transformOrigin: "center top",
           transition: "transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease",
+          boxSizing: "border-box",
         }}
       >
-        <header>
+        <header style={{ height: "42px", minHeight: "42px", maxHeight: "42px", boxSizing: "border-box" }}>
           <div className="window-dots"><i /><i /><i /></div>
           <strong>TRUSTFIX · AUTONOMOUS ASSURANCE ENGINE</strong>
           <button
@@ -265,8 +262,19 @@ export function AssuranceHero() {
           </button>
         </header>
 
-        <div className="proof-window-body" style={{ minHeight: "410px" }}>
-          <aside style={{ width: "160px", flexShrink: 0 }}>
+        <div
+          className="proof-window-body"
+          style={{
+            display: "grid",
+            gridTemplateColumns: "150px minmax(0, 1fr)",
+            height: "410px",
+            minHeight: "410px",
+            maxHeight: "410px",
+            boxSizing: "border-box",
+            overflow: "hidden",
+          }}
+        >
+          <aside style={{ width: "150px", flexShrink: 0, boxSizing: "border-box", overflowY: "auto" }}>
             {heroSteps.map((s, idx) => (
               <button
                 key={s.step}
@@ -288,25 +296,39 @@ export function AssuranceHero() {
             ))}
           </aside>
 
-          <main style={{ flex: 1, minWidth: 0 }}>
-            <div className="proof-question" style={{ minHeight: "56px", alignItems: "flex-start" }}>
-              <div style={{ flex: 1, minWidth: 0 }}>
+          <main
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "space-between",
+              height: "100%",
+              width: "100%",
+              minWidth: 0,
+              padding: "20px 24px",
+              boxSizing: "border-box",
+              overflow: "hidden",
+            }}
+          >
+            <div className="proof-question" style={{ height: "60px", minHeight: "60px", maxHeight: "60px", display: "flex", justifyContent: "space-between", alignItems: "flex-start", width: "100%", minWidth: 0, boxSizing: "border-box" }}>
+              <div style={{ flex: 1, minWidth: 0, paddingRight: "12px" }}>
                 <span className="micro">{current.badge}</span>
-                <h2 style={{ fontSize: "15px", lineHeight: "1.3", margin: "4px 0 0" }}>{current.title}</h2>
+                <h2 style={{ fontSize: "15px", lineHeight: "1.35", margin: "4px 0 0", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                  {current.title}
+                </h2>
               </div>
               <span
                 className={`status ${isVerified ? "verified" : current.status === "FAILED" ? "failed" : "needs-review"}`}
-                style={{ flexShrink: 0, marginLeft: "12px" }}
+                style={{ flexShrink: 0, whiteSpace: "nowrap" }}
               >
                 {isVerified ? <CheckCircle weight="fill" /> : <Warning weight="fill" />} {current.statusText}
               </span>
             </div>
 
-            <div className="proof-resource" style={{ minHeight: "52px", alignItems: "center" }}>
-              <span className="proof-resource-icon">
+            <div className="proof-resource" style={{ height: "52px", minHeight: "52px", maxHeight: "52px", display: "flex", alignItems: "center", width: "100%", minWidth: 0, boxSizing: "border-box" }}>
+              <span className="proof-resource-icon" style={{ flexShrink: 0 }}>
                 {isVerified ? <LockKey size={20} /> : <Cloud size={20} />}
               </span>
-              <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ flex: 1, minWidth: 0, paddingRight: "12px" }}>
                 <strong style={{ display: "block", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>
                   {current.resource}
                 </strong>
@@ -314,16 +336,16 @@ export function AssuranceHero() {
                   {current.resourceSub}
                 </small>
               </div>
-              <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.06em", marginLeft: "12px", flexShrink: 0 }}>
+              <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.06em", flexShrink: 0, whiteSpace: "nowrap" }}>
                 {current.risk}
               </span>
             </div>
 
-            <div className="proof-flow" style={{ minHeight: "72px" }}>
+            <div className="proof-flow" style={{ height: "76px", minHeight: "76px", maxHeight: "76px", display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "10px", width: "100%", minWidth: 0, boxSizing: "border-box" }}>
               {current.flow.map((f, i) => (
-                <div key={f.num} className={isVerified && i === 2 ? "flow-success" : ""} style={{ flex: 1, minWidth: 0 }}>
+                <div key={f.num} className={isVerified && i === 2 ? "flow-success" : ""} style={{ minWidth: 0, overflow: "hidden", boxSizing: "border-box" }}>
                   <span className="flow-number">{f.num}</span>
-                  <p>
+                  <p style={{ minWidth: 0, overflow: "hidden" }}>
                     <small>{f.label}</small>
                     <strong style={{ display: "block", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>
                       {f.text}
@@ -333,22 +355,22 @@ export function AssuranceHero() {
               ))}
             </div>
 
-            <div className="proof-decision" style={{ minHeight: "52px", alignItems: "center" }}>
+            <div className="proof-decision" style={{ height: "54px", minHeight: "54px", maxHeight: "54px", display: "flex", alignItems: "center", width: "100%", minWidth: 0, boxSizing: "border-box" }}>
               <span style={{ flexShrink: 0 }}><Lightning weight="fill" /></span>
-              <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ flex: 1, minWidth: 0, paddingRight: "12px" }}>
                 <small>TRUSTFIX OPERATIONAL ASSURANCE DECISION</small>
                 <strong style={{ display: "block", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>
                   {current.decision}
                 </strong>
               </div>
-              <span className="proof-awaiting" style={{ flexShrink: 0, marginLeft: "12px" }}>
+              <span className="proof-awaiting" style={{ flexShrink: 0, whiteSpace: "nowrap" }}>
                 {current.statusBadge}
               </span>
             </div>
           </main>
         </div>
 
-        <footer>
+        <footer style={{ height: "38px", minHeight: "38px", maxHeight: "38px", boxSizing: "border-box" }}>
           <span><i /> Keyless scanner IAM</span>
           <span>Drift fingerprint locked</span>
           <span>Gemini 3.5 Flash · Google ADK</span>

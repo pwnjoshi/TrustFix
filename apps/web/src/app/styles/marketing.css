@@ -168,62 +168,89 @@
 .hero-v3-badge {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   padding: 6px 16px;
   border-radius: var(--radius-full);
-  background: var(--tf-surface-raised);
-  border: 1px solid var(--tf-line);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  color: var(--tf-ink);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--tf-ink-secondary);
   margin-bottom: 24px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.08);
   text-decoration: none;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .hero-v3-badge:hover {
-  border-color: var(--tf-line-strong);
-  background: var(--tf-surface);
+  border-color: rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.07);
   transform: translateY(-1px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35), 0 0 20px rgba(56, 189, 248, 0.15);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35), 0 0 25px rgba(16, 185, 129, 0.15);
 }
 
-.hero-v3-badge strong {
-  font-weight: 800;
-  color: var(--tf-ink);
+.pulse-dot-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 10px;
+  height: 10px;
 }
 
-.hero-v3-badge span {
-  width: 7px;
-  height: 7px;
+.pulse-dot-core {
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
-  transition: all 0.3s ease;
+  background: #10b981;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.9);
+  position: relative;
+  z-index: 2;
 }
 
-.hero-v3-badge small {
+.pulse-dot-ping {
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  background: rgba(16, 185, 129, 0.5);
+  animation: radar-ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+@keyframes radar-ping {
+  0% {
+    transform: scale(0.95);
+    opacity: 0.8;
+  }
+  70%, 100% {
+    transform: scale(2.6);
+    opacity: 0;
+  }
+}
+
+.hero-v3-badge .badge-tech {
+  font-weight: 600;
+  color: var(--tf-ink);
+  letter-spacing: -0.01em;
+}
+
+.hero-v3-badge .badge-divider {
+  width: 1px;
+  height: 12px;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.hero-v3-badge .badge-label {
   color: var(--tf-ink-muted);
-  border-left: 1px solid var(--tf-line);
-  padding-left: 8px;
   font-weight: 500;
-}
-
-.hero-v3-badge .badge-tag-extra {
-  font-size: 10px;
-  color: var(--tf-verified-text);
-  background: rgba(16, 185, 129, 0.12);
-  border: 1px solid rgba(16, 185, 129, 0.25);
-  padding: 1px 7px;
-  border-radius: var(--radius-full);
-  font-weight: 700;
-  margin-left: 4px;
 }
 
 .hero-v3-badge .badge-arrow {
   color: var(--tf-ink-faint);
+  margin-left: 2px;
   transition: transform 0.2s ease, color 0.2s ease;
 }
 
