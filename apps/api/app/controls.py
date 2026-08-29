@@ -19,6 +19,7 @@ class ControlDefinition:
     question_patterns: tuple[str, ...]
     risk: Risk
     evaluator: Evaluator
+    service: str = "Google Cloud"
 
 
 def _storage_evaluator(evidence: list[Evidence]) -> tuple[ControlStatus, str]:
@@ -43,24 +44,52 @@ def _firewall_evaluator(evidence: list[Evidence]) -> tuple[ControlStatus, str]:
 
 
 def _sql_evaluator(evidence: list[Evidence]) -> tuple[ControlStatus, str]:
-    public = [e for e in evidence if e.relevant_properties.get("has_public_ip")]
+    public = [e for e in evidence if e.relevant_properties.get("violation", e.relevant_properties.get("has_public_ip", False))]
     if public:
         return ControlStatus.FAILED, f"Public IPv4 exposure detected on {len(public)} database instance(s)."
     return ControlStatus.VERIFIED, "Cloud SQL instances enforce private IP and require TLS encryption."
 
 
 def _kms_evaluator(evidence: list[Evidence]) -> tuple[ControlStatus, str]:
-    unrotated = [e for e in evidence if not e.relevant_properties.get("auto_rotation")]
+    unrotated = [e for e in evidence if e.relevant_properties.get("violation", not e.relevant_properties.get("auto_rotation", False))]
     if unrotated:
         return ControlStatus.FAILED, f"Automatic 90-day rotation is missing on {len(unrotated)} KMS crypto key(s)."
     return ControlStatus.VERIFIED, "All customer-managed encryption keys have active 90-day automatic rotation."
 
 
 def _iam_keyless_evaluator(evidence: list[Evidence]) -> tuple[ControlStatus, str]:
-    user_keys = [e for e in evidence if e.relevant_properties.get("user_managed_keys_count", 0) > 0]
+    user_keys = [e for e in evidence if e.relevant_properties.get("violation", e.relevant_properties.get("user_managed_keys_count", 0) > 0)]
     if user_keys:
         return ControlStatus.FAILED, f"Exportable user-managed JSON service account keys detected on {len(user_keys)} account(s)."
     return ControlStatus.VERIFIED, "All service accounts adhere to keyless Workload Identity federation."
+
+
+def _logging_evaluator(evidence: list[Evidence]) -> tuple[ControlStatus, str]:
+    missing = [e for e in evidence if e.relevant_properties.get("violation", not e.relevant_properties.get("audit_logs_enabled", False))]
+    if missing:
+        return ControlStatus.FAILED, f"Cloud Audit logging is disabled on {len(missing)} monitored service(s)."
+    return ControlStatus.VERIFIED, "Admin Activity and Data Access audit logging are active across project services."
+
+
+def _secret_evaluator(evidence: list[Evidence]) -> tuple[ControlStatus, str]:
+    public_secrets = [e for e in evidence if e.relevant_properties.get("violation", e.relevant_properties.get("public_access", False))]
+    if public_secrets:
+        return ControlStatus.FAILED, f"Unauthenticated access allowed on {len(public_secrets)} secret(s)."
+    return ControlStatus.VERIFIED, "Secret Manager access requires IAM authorization with automated version rotation."
+
+
+def _gke_evaluator(evidence: list[Evidence]) -> tuple[ControlStatus, str]:
+    public_clusters = [e for e in evidence if e.relevant_properties.get("violation", e.relevant_properties.get("public_endpoint", False))]
+    if public_clusters:
+        return ControlStatus.FAILED, f"Public Kubernetes API endpoint enabled on {len(public_clusters)} GKE cluster(s)."
+    return ControlStatus.VERIFIED, "GKE clusters enforce private endpoints and authorized master networks."
+
+
+def _asset_evaluator(evidence: list[Evidence]) -> tuple[ControlStatus, str]:
+    violations = [e for e in evidence if e.relevant_properties.get("violation")]
+    if violations:
+        return ControlStatus.FAILED, f"Security configuration gaps detected on {len(violations)} resource(s)."
+    return ControlStatus.VERIFIED, "No violating resources were found in the inspected project boundary."
 
 
 REGISTRY = {
@@ -74,6 +103,7 @@ REGISTRY = {
              r"(public|anonymous|internet).{0,60}(storage|bucket|object)",),
             Risk.MEDIUM,
             _storage_evaluator,
+            "Cloud Storage",
         ),
         ControlDefinition(
             "GCP_RUN_PUBLIC_INVOKER",
@@ -83,6 +113,7 @@ REGISTRY = {
              r"(unauthenticated|publicly\s+invokable).{0,60}(service|api|endpoint)",),
             Risk.HIGH,
             _run_evaluator,
+            "Cloud Run",
         ),
         ControlDefinition(
             "GCP_FIREWALL_ADMIN_EXPOSURE",
@@ -93,6 +124,7 @@ REGISTRY = {
              r"(network|internet).{0,60}(administrat|ssh|rdp)",),
             Risk.HIGH,
             _firewall_evaluator,
+            "Compute Engine / VPC",
         ),
         ControlDefinition(
             "GCP_SQL_PUBLIC_IP",
@@ -102,6 +134,7 @@ REGISTRY = {
              r"(private|isolate).{0,60}(database|sql|rds|postgres)",),
             Risk.HIGH,
             _sql_evaluator,
+            "Cloud SQL",
         ),
         ControlDefinition(
             "GCP_KMS_KEY_ROTATION",
@@ -111,6 +144,7 @@ REGISTRY = {
              r"(rotat|cycle).{0,60}(key|kms|secret)",),
             Risk.MEDIUM,
             _kms_evaluator,
+            "Cloud KMS",
         ),
         ControlDefinition(
             "GCP_IAM_KEYLESS_WORKLOADS",
@@ -120,8 +154,164 @@ REGISTRY = {
              r"(credential|key).{0,60}(service\s+account|keyless|iam)",),
             Risk.HIGH,
             _iam_keyless_evaluator,
+            "Cloud IAM",
+        ),
+        ControlDefinition(
+            "GCP_LOGGING_ADMIN_AUDIT",
+            "Cloud audit trail logging",
+            "Admin Activity and Data Access audit logging are active for compliance.",
+            (r"(cloud\s+audit|audit\s+trail|admin\s+activity|data\s+access).{0,60}(log|enable|track|retention)",
+             r"(log|track).{0,60}(admin\s+activity|data\s+access)",),
+            Risk.MEDIUM,
+            _logging_evaluator,
+            "Cloud Audit Logs",
+        ),
+        ControlDefinition(
+            "GCP_SECRET_MANAGER_ROTATION_IAM",
+            "Secret Manager access gating",
+            "Production secrets and API credentials restrict public accessor IAM.",
+            (r"(secret|token|credential|password).{0,60}(secret\s+manager|vault|access|restrict|leak)",
+             r"(secret\s+manager|vault).{0,60}(iam|access|public)",),
+            Risk.HIGH,
+            _secret_evaluator,
+            "Secret Manager",
+        ),
+        ControlDefinition(
+            "GCP_GKE_PRIVATE_CLUSTER",
+            "GKE private cluster isolation",
+            "Kubernetes clusters disable public master endpoints and isolate worker nodes.",
+            (r"(gke|kubernetes|cluster|k8s).{0,60}(private|endpoint|master|public\s+ip|node)",
+             r"(kubernetes|k8s|gke).{0,60}(isolate|restrict)",),
+            Risk.HIGH,
+            _gke_evaluator,
+            "Google Kubernetes Engine",
+        ),
+        ControlDefinition(
+            "GCP_BIGQUERY_PUBLIC_DATASET",
+            "BigQuery dataset access",
+            "BigQuery datasets do not grant access to public principals.",
+            (r"(bigquery|data\s*warehouse|dataset).{0,60}(public|anonymous|iam|access|expos)",),
+            Risk.HIGH,
+            _asset_evaluator,
+            "BigQuery",
+        ),
+        ControlDefinition(
+            "GCP_PUBSUB_PUBLIC_ACCESS",
+            "Pub/Sub messaging access",
+            "Pub/Sub topics and subscriptions do not grant access to public principals.",
+            (r"(pub/?sub|topic|subscription|message\s+bus).{0,60}(public|anonymous|iam|access)",
+             r"(public|anonymous).{0,60}(pub/?sub|topic|subscription|message\s+bus)",),
+            Risk.HIGH,
+            _asset_evaluator,
+            "Pub/Sub",
+        ),
+        ControlDefinition(
+            "GCP_FUNCTIONS_PUBLIC_INVOKER",
+            "Cloud Run functions authentication",
+            "Cloud Run functions do not grant invocation access to public principals.",
+            (r"(cloud\s+function|serverless\s+function|function).{0,60}(public|anonymous|unauthenticated|invok)",),
+            Risk.HIGH,
+            _asset_evaluator,
+            "Cloud Run functions",
+        ),
+        ControlDefinition(
+            "GCP_ARTIFACT_REGISTRY_PUBLIC_ACCESS",
+            "Artifact Registry access",
+            "Artifact repositories do not grant access to public principals.",
+            (r"(artifact\s+registry|container\s+registry|image\s+repository|artifact).{0,60}(public|anonymous|iam|access)",),
+            Risk.HIGH,
+            _asset_evaluator,
+            "Artifact Registry",
+        ),
+        ControlDefinition(
+            "GCP_COMPUTE_PUBLIC_IP",
+            "Compute Engine external IP exposure",
+            "Compute Engine virtual machines avoid direct external IP addresses.",
+            (r"(compute|virtual\s+machine|\bvm\b|instance).{0,60}(external|public|internet).{0,30}(ip|address|expos)?",),
+            Risk.HIGH,
+            _asset_evaluator,
+            "Compute Engine",
+        ),
+        ControlDefinition(
+            "GCP_VPC_FLOW_LOGS",
+            "VPC Flow Logs coverage",
+            "VPC subnetworks enable flow logs for network visibility.",
+            (r"(vpc|subnet|subnetwork|network).{0,60}(flow\s+log|traffic\s+log|network\s+telemetry)",),
+            Risk.MEDIUM,
+            _asset_evaluator,
+            "Virtual Private Cloud",
+        ),
+        ControlDefinition(
+            "GCP_DNS_DNSSEC",
+            "Cloud DNS DNSSEC",
+            "Public Cloud DNS managed zones enable DNSSEC.",
+            (r"(cloud\s+dns|dns|managed\s+zone).{0,60}(dnssec|sign|spoof|integrity)",
+             r"dnssec.{0,60}(cloud\s+dns|dns|managed\s+zone)",),
+            Risk.MEDIUM,
+            _asset_evaluator,
+            "Cloud DNS",
+        ),
+        ControlDefinition(
+            "GCP_REDIS_TRANSIT_ENCRYPTION",
+            "Memorystore transport encryption",
+            "Memorystore for Redis requires in-transit encryption.",
+            (r"(memorystore|redis|cache).{0,60}(tls|encrypt|transit|transport)",),
+            Risk.HIGH,
+            _asset_evaluator,
+            "Memorystore for Redis",
+        ),
+        ControlDefinition(
+            "GCP_SPANNER_PUBLIC_ACCESS",
+            "Cloud Spanner public access",
+            "Cloud Spanner instances and databases do not grant access to public principals.",
+            (r"(spanner|distributed\s+database).{0,60}(public|anonymous|iam|access)",),
+            Risk.HIGH,
+            _asset_evaluator,
+            "Cloud Spanner",
+        ),
+        ControlDefinition(
+            "GCP_DATAPROC_PRIVATE_NODES",
+            "Dataproc private nodes",
+            "Dataproc clusters use internal-only node IP addresses.",
+            (r"(dataproc|spark|hadoop).{0,60}(private|internal|public|external|ip)",),
+            Risk.HIGH,
+            _asset_evaluator,
+            "Dataproc",
+        ),
+        ControlDefinition(
+            "GCP_API_KEYS_RESTRICTED",
+            "API key restrictions",
+            "Google Cloud API keys have explicit application and API restrictions.",
+            (r"(api\s+key|apikey).{0,60}(restrict|unrestrict|application|service|leak)",),
+            Risk.HIGH,
+            _asset_evaluator,
+            "API Keys",
         ),
     )
+}
+
+
+CONTROL_DOMAINS = {
+    "GCP_IAM_KEYLESS_WORKLOADS": "Identity",
+    "GCP_API_KEYS_RESTRICTED": "Identity",
+    "GCP_FIREWALL_ADMIN_EXPOSURE": "Network",
+    "GCP_VPC_FLOW_LOGS": "Network",
+    "GCP_DNS_DNSSEC": "Network",
+    "GCP_STORAGE_PUBLIC_ACCESS": "Data",
+    "GCP_SQL_PUBLIC_IP": "Data",
+    "GCP_KMS_KEY_ROTATION": "Data",
+    "GCP_SECRET_MANAGER_ROTATION_IAM": "Data",
+    "GCP_BIGQUERY_PUBLIC_DATASET": "Data",
+    "GCP_REDIS_TRANSIT_ENCRYPTION": "Data",
+    "GCP_SPANNER_PUBLIC_ACCESS": "Data",
+    "GCP_RUN_PUBLIC_INVOKER": "Compute",
+    "GCP_GKE_PRIVATE_CLUSTER": "Compute",
+    "GCP_FUNCTIONS_PUBLIC_INVOKER": "Compute",
+    "GCP_ARTIFACT_REGISTRY_PUBLIC_ACCESS": "Compute",
+    "GCP_COMPUTE_PUBLIC_IP": "Compute",
+    "GCP_DATAPROC_PRIVATE_NODES": "Compute",
+    "GCP_LOGGING_ADMIN_AUDIT": "Observability",
+    "GCP_PUBSUB_PUBLIC_ACCESS": "Observability",
 }
 
 
