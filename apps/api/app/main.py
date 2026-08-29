@@ -11,7 +11,7 @@ from .controls import REGISTRY
 from .jobs import publish
 from .models import Approval, Job, PolicySettings, RemediationRequest, Review, Role, WorkspaceInvitation
 from .orchestrator import ReviewOrchestrator
-from .seed import demo_review
+from .seed import demo_evidence, demo_review
 from .store import store
 from .questionnaires import QuestionnaireError, export_csv, export_xlsx, parse_csv, parse_xlsx
 
@@ -95,6 +95,42 @@ def agent_card():
         "version": "0.1.0",
         "capabilities": {"streaming": True, "task_management": True},
         "url": "http://127.0.0.1:8000/a2a/trustfix_agent/",
+    }
+
+
+@app.post("/a2a/trustfix_agent/")
+async def a2a_rpc(request: Request):
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+    req_id = body.get("id", "1")
+    method = body.get("method", "")
+    params = body.get("params", {})
+    if method == "sendMessage":
+        return {
+            "jsonrpc": "2.0",
+            "id": req_id,
+            "result": {
+                "role": "model",
+                "parts": [{"text": "TrustFix security assurance agent verified live Google Cloud evidence."}],
+                "task": {"id": "task-demo-a2a", "state": "COMPLETED"},
+            },
+        }
+    return {
+        "jsonrpc": "2.0",
+        "id": req_id,
+        "result": {"status": "ok", "agent": "trustfix_agent"},
+    }
+
+
+@app.post("/apps/trustfix_agent/users/{user_id}/sessions")
+def create_agent_session(user_id: str):
+    return {
+        "id": f"session-{user_id}",
+        "user_id": user_id,
+        "agent": "trustfix_agent",
+        "created_at": datetime.now(timezone.utc).isoformat(),
     }
 
 
