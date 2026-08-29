@@ -87,6 +87,17 @@ def system():
     }
 
 
+@app.get("/a2a/trustfix_agent/.well-known/agent-card.json")
+def agent_card():
+    return {
+        "name": "trustfix_agent",
+        "description": "Autonomous security review and cloud assurance agent powered by Google ADK and Gemini 3.5 Flash",
+        "version": "0.1.0",
+        "capabilities": {"streaming": True, "task_management": True},
+        "url": "http://127.0.0.1:8000/a2a/trustfix_agent/",
+    }
+
+
 @app.get("/api/auth/me")
 def me(request: Request):
     return current_user(request)

@@ -1,0 +1,204 @@
+/* ==========================================================================
+   TrustFix Design System — Core Tokens
+   ========================================================================== */
+
+:root {
+  /* Fonts */
+  --font-sans: var(--font-sans, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+  --font-mono: var(--font-mono, ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace);
+
+  /* Geometry & Radii */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-full: 9999px;
+
+  /* Transitions */
+  --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-smooth: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --duration-fast: 150ms;
+  --duration-normal: 250ms;
+}
+
+/* ── Dark Theme (Default) ───────────────────────────────────────── */
+html[data-theme="dark"],
+:root {
+  /* Canvas & Base Surfaces */
+  --tf-canvas: #090d15;
+  --tf-canvas-subtle: #0d131f;
+  --tf-surface: #121927;
+  --tf-surface-raised: #182235;
+  --tf-surface-overlay: #1e2b42;
+  --tf-surface-hover: rgba(255, 255, 255, 0.04);
+  --tf-surface-sunken: #06090e;
+
+  /* Ink & Typography */
+  --tf-ink: #f1f5f9;
+  --tf-ink-secondary: #cbd5e1;
+  --tf-ink-muted: #94a3b8;
+  --tf-ink-faint: #64748b;
+  --tf-ink-inverse: #090d15;
+
+  /* Structural Lines & Borders */
+  --tf-line: #1e293b;
+  --tf-line-strong: #334155;
+  --tf-line-subtle: rgba(255, 255, 255, 0.07);
+
+  /* Semantic Ontological Palette */
+  /* 1. Verified Fact (Green) */
+  --tf-verified: #10b981;
+  --tf-verified-soft: rgba(16, 185, 129, 0.12);
+  --tf-verified-line: rgba(16, 185, 129, 0.35);
+  --tf-verified-glow: rgba(16, 185, 129, 0.20);
+  --tf-verified-text: #34d399;
+
+  /* 2. Unverified Claim / Human Gate / Pending (Amber) */
+  --tf-claim: #f59e0b;
+  --tf-claim-soft: rgba(245, 158, 11, 0.12);
+  --tf-claim-line: rgba(245, 158, 11, 0.35);
+  --tf-claim-glow: rgba(245, 158, 11, 0.20);
+  --tf-claim-text: #fbbf24;
+
+  /* 3. Assurance Gap / Failed Control (Crimson) */
+  --tf-gap: #f43f5e;
+  --tf-gap-soft: rgba(244, 63, 94, 0.12);
+  --tf-gap-line: rgba(244, 63, 94, 0.35);
+  --tf-gap-glow: rgba(244, 63, 94, 0.20);
+  --tf-gap-text: #fb7185;
+
+  /* 4. Active Scanner / Orchestrator / Cipher (Cyan/Blue) */
+  --tf-cipher: #38bdf8;
+  --tf-cipher-soft: rgba(56, 189, 248, 0.10);
+  --tf-cipher-line: rgba(56, 189, 248, 0.30);
+  --tf-cipher-glow: rgba(56, 189, 248, 0.20);
+  --tf-cipher-text: #7dd3fc;
+
+  /* Sidebar Tokens */
+  --tf-sidebar-bg: #0b0f19;
+  --tf-sidebar-border: #1a2333;
+  --tf-sidebar-active: #182235;
+
+  /* Shadows */
+  --tf-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --tf-shadow-md: 0 4px 20px rgba(0, 0, 0, 0.5);
+  --tf-shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.6);
+  --tf-shadow-modal: 0 24px 60px rgba(0, 0, 0, 0.8), 0 0 0 1px var(--tf-line);
+
+  /* Legacy variable mappings for seamless compatibility */
+  --ink: var(--tf-ink);
+  --muted: var(--tf-ink-muted);
+  --line: var(--tf-line);
+  --soft: var(--tf-surface-raised);
+  --blue: var(--tf-cipher);
+  --blue-soft: var(--tf-cipher-soft);
+  --blue-line: var(--tf-cipher-line);
+  --green: var(--tf-verified);
+  --green-soft: var(--tf-verified-soft);
+  --green-line: var(--tf-verified-line);
+  --red: var(--tf-gap);
+  --red-soft: var(--tf-gap-soft);
+  --red-line: var(--tf-gap-line);
+  --amber: var(--tf-claim);
+  --amber-soft: var(--tf-claim-soft);
+  --amber-line: var(--tf-claim-line);
+  --canvas: var(--tf-canvas);
+  --surface: var(--tf-surface);
+  --surface-soft: var(--tf-surface-raised);
+  --surface-strong: #080c14;
+  --surface-strong-2: #050810;
+  --strong-text: #f1f5f9;
+  --strong-muted: #94a3b8;
+  --sidebar: var(--tf-sidebar-bg);
+}
+
+/* ── Light Theme ────────────────────────────────────────────────── */
+html[data-theme="light"] {
+  /* Canvas & Base Surfaces */
+  --tf-canvas: #f8fafc;
+  --tf-canvas-subtle: #f1f5f9;
+  --tf-surface: #ffffff;
+  --tf-surface-raised: #f8fafc;
+  --tf-surface-overlay: #ffffff;
+  --tf-surface-hover: rgba(15, 23, 42, 0.03);
+  --tf-surface-sunken: #e2e8f0;
+
+  /* Ink & Typography */
+  --tf-ink: #0f172a;
+  --tf-ink-secondary: #334155;
+  --tf-ink-muted: #64748b;
+  --tf-ink-faint: #94a3b8;
+  --tf-ink-inverse: #ffffff;
+
+  /* Structural Lines & Borders */
+  --tf-line: #e2e8f0;
+  --tf-line-strong: #cbd5e1;
+  --tf-line-subtle: rgba(15, 23, 42, 0.06);
+
+  /* Semantic Ontological Palette (Light Optimized) */
+  /* 1. Verified Fact */
+  --tf-verified: #059669;
+  --tf-verified-soft: #ecfdf5;
+  --tf-verified-line: #a7f3d0;
+  --tf-verified-glow: rgba(5, 150, 105, 0.15);
+  --tf-verified-text: #065f46;
+
+  /* 2. Unverified Claim / Pending */
+  --tf-claim: #d97706;
+  --tf-claim-soft: #fffbeb;
+  --tf-claim-line: #fde68a;
+  --tf-claim-glow: rgba(217, 119, 6, 0.15);
+  --tf-claim-text: #92400e;
+
+  /* 3. Assurance Gap / Failed */
+  --tf-gap: #e11d48;
+  --tf-gap-soft: #fff1f2;
+  --tf-gap-line: #fecdd3;
+  --tf-gap-glow: rgba(225, 29, 72, 0.15);
+  --tf-gap-text: #9f1239;
+
+  /* 4. Active Scanner / Orchestrator */
+  --tf-cipher: #0284c7;
+  --tf-cipher-soft: #f0f9ff;
+  --tf-cipher-line: #bae6fd;
+  --tf-cipher-glow: rgba(2, 132, 199, 0.15);
+  --tf-cipher-text: #0369a1;
+
+  /* Sidebar Tokens */
+  --tf-sidebar-bg: #0f172a;
+  --tf-sidebar-border: #1e293b;
+  --tf-sidebar-active: #1e293b;
+
+  /* Shadows */
+  --tf-shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.06);
+  --tf-shadow-md: 0 4px 16px rgba(15, 23, 42, 0.08);
+  --tf-shadow-lg: 0 12px 32px rgba(15, 23, 42, 0.10);
+  --tf-shadow-modal: 0 24px 60px rgba(15, 23, 42, 0.20), 0 0 0 1px var(--tf-line);
+
+  /* Legacy variable mappings for light mode */
+  --ink: var(--tf-ink);
+  --muted: var(--tf-ink-muted);
+  --line: var(--tf-line);
+  --soft: var(--tf-surface-raised);
+  --blue: var(--tf-cipher);
+  --blue-soft: var(--tf-cipher-soft);
+  --blue-line: var(--tf-cipher-line);
+  --green: var(--tf-verified);
+  --green-soft: var(--tf-verified-soft);
+  --green-line: var(--tf-verified-line);
+  --red: var(--tf-gap);
+  --red-soft: var(--tf-gap-soft);
+  --red-line: var(--tf-gap-line);
+  --amber: var(--tf-claim);
+  --amber-soft: var(--tf-claim-soft);
+  --amber-line: var(--tf-claim-line);
+  --canvas: var(--tf-canvas);
+  --surface: var(--tf-surface);
+  --surface-soft: var(--tf-surface-raised);
+  --surface-strong: #0f172a;
+  --surface-strong-2: #020617;
+  --strong-text: #f8fafc;
+  --strong-muted: #94a3b8;
+  --sidebar: var(--tf-sidebar-bg);
+}

@@ -10,9 +10,6 @@
     "test": "pnpm --filter @trustfix/web test && pnpm api:test",
     "api:dev": "uv run uvicorn app.main:app --reload --app-dir apps/api --port 8000",
     "api:test": "uv run pytest apps/api/tests -q",
-    "quality": "pnpm lint && pnpm typecheck && pnpm test && pnpm build",
-    "demo:setup": "powershell -ExecutionPolicy Bypass -File scripts/demo/setup_demo_environment.ps1",
-    "demo:reset": "powershell -ExecutionPolicy Bypass -File scripts/demo/reset_demo_environment.ps1",
-    "demo:destroy": "powershell -ExecutionPolicy Bypass -File scripts/demo/destroy_demo_environment.ps1"
+    "quality": "pnpm lint && pnpm typecheck && pnpm test && pnpm build"
   }
 }

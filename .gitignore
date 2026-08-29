@@ -158,6 +158,8 @@ tmp*
 *.tsbuildinfo
 npm-debug.log
 yarn-error.log
+test-results/
+**/test-results/
 
 # IDEs and editors
 .idea/

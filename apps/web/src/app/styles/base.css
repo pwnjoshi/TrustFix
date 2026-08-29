@@ -1,0 +1,437 @@
+/* ==========================================================================
+   TrustFix Design System — Base Primitives & Shared Components
+   ========================================================================== */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  color: var(--tf-ink);
+  background-color: var(--tf-canvas);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.55;
+  transition: background-color var(--duration-fast) ease, color var(--duration-fast) ease;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button, input, select, textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+  border: 0;
+  background: transparent;
+}
+
+svg {
+  flex: none;
+  vertical-align: middle;
+}
+
+/* ── Accessible Focus Visible ────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--tf-cipher);
+  outline-offset: 2px;
+  border-radius: var(--radius-xs);
+}
+
+/* ── Typography & Receipts ───────────────────────────────────────── */
+h1, h2, h3, h4, h5, h6 {
+  color: var(--tf-ink);
+  font-weight: 650;
+  letter-spacing: -0.035em;
+  margin: 0;
+}
+
+p {
+  color: var(--tf-ink-muted);
+  margin: 0;
+}
+
+code, kbd, samp, pre, .mono {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+}
+
+code {
+  background: var(--tf-surface-sunken);
+  color: var(--tf-cipher-text);
+  border: 1px solid var(--tf-line);
+  padding: 1px 5px;
+  border-radius: var(--radius-xs);
+}
+
+.overline, .micro, .breadcrumb, .section-index {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--tf-ink-faint);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--tf-ink);
+}
+
+.brand svg {
+  color: var(--tf-cipher);
+}
+
+/* ── Buttons ─────────────────────────────────────────────────────── */
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  background: var(--tf-surface-raised);
+  color: var(--tf-ink);
+  transition: all var(--duration-fast) ease;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.button:hover {
+  background: var(--tf-surface-overlay);
+  border-color: var(--tf-line-strong);
+}
+
+.button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.button.primary {
+  background: var(--tf-cipher);
+  color: var(--tf-ink-inverse);
+  border-color: var(--tf-cipher);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.button.primary:hover:not(:disabled) {
+  filter: brightness(1.1);
+  box-shadow: 0 2px 10px var(--tf-cipher-glow);
+}
+
+.button.primary.glow {
+  box-shadow: 0 0 16px var(--tf-cipher-glow);
+}
+
+.button.secondary {
+  background: var(--tf-surface);
+  border-color: var(--tf-line);
+  color: var(--tf-ink);
+}
+
+.button.secondary:hover:not(:disabled) {
+  background: var(--tf-surface-raised);
+  border-color: var(--tf-line-strong);
+}
+
+.button.dark-outline {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--tf-line-strong);
+  color: var(--tf-ink);
+}
+
+.button.dark-outline:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.button.luminous {
+  background: linear-gradient(135deg, var(--tf-cipher), #6366f1);
+  color: #ffffff;
+  border: 0;
+  box-shadow: 0 4px 18px rgba(56, 189, 248, 0.35);
+}
+
+.button.luminous:hover:not(:disabled) {
+  box-shadow: 0 6px 24px rgba(56, 189, 248, 0.5);
+  transform: translateY(-1px);
+}
+
+.button.wide {
+  width: 100%;
+}
+
+.icon-button {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-sm);
+  background: var(--tf-surface);
+  border: 1px solid var(--tf-line);
+  color: var(--tf-ink-muted);
+  transition: all var(--duration-fast) ease;
+}
+
+.icon-button:hover {
+  background: var(--tf-surface-raised);
+  color: var(--tf-ink);
+  border-color: var(--tf-line-strong);
+}
+
+/* ── Status Badges (Ontological Truth States) ────────────────────── */
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: var(--radius-xs);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border: 1px solid transparent;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+/* 1. Verified Fact */
+.status.verified {
+  color: var(--tf-verified-text);
+  background: var(--tf-verified-soft);
+  border-color: var(--tf-verified-line);
+}
+
+/* 2. Unverified Claim / Pending Human Gate / Needs Review */
+.status.needs-review,
+.status.pending,
+.status.claim {
+  color: var(--tf-claim-text);
+  background: var(--tf-claim-soft);
+  border-color: var(--tf-claim-line);
+}
+
+/* 3. Assurance Gap / Failed */
+.status.failed,
+.status.gap {
+  color: var(--tf-gap-text);
+  background: var(--tf-gap-soft);
+  border-color: var(--tf-gap-line);
+}
+
+/* 4. Neutral / Roadmap */
+.status.neutral {
+  color: var(--tf-ink-muted);
+  background: var(--tf-surface-raised);
+  border-color: var(--tf-line);
+}
+
+/* ── Toast Notifications ─────────────────────────────────────────── */
+.toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 100;
+  pointer-events: none;
+}
+
+.toast {
+  pointer-events: all;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--tf-surface-raised);
+  color: var(--tf-ink);
+  border: 1px solid var(--tf-line-strong);
+  border-radius: var(--radius-md);
+  padding: 11px 16px;
+  font-size: 12px;
+  font-weight: 500;
+  max-width: 360px;
+  box-shadow: var(--tf-shadow-lg);
+  animation: toast-in 0.2s var(--ease-spring);
+}
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.toast.success {
+  border-left: 3px solid var(--tf-verified);
+}
+
+.toast.error {
+  border-left: 3px solid var(--tf-gap);
+}
+
+.toast.info {
+  border-left: 3px solid var(--tf-cipher);
+}
+
+.toast-close {
+  margin-left: auto;
+  color: var(--tf-ink-muted);
+  padding: 4px;
+  border-radius: var(--radius-xs);
+}
+
+.toast-close:hover {
+  color: var(--tf-ink);
+  background: var(--tf-surface-hover);
+}
+
+/* ── Banners (Definite & Actionable) ─────────────────────────────── */
+.error-banner {
+  background: var(--tf-gap-soft);
+  border: 1px solid var(--tf-gap-line);
+  color: var(--tf-gap-text);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  margin-bottom: 16px;
+  font-size: 12px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.info-banner {
+  background: var(--tf-cipher-soft);
+  border: 1px solid var(--tf-cipher-line);
+  color: var(--tf-cipher-text);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  margin-bottom: 16px;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.preview-banner {
+  background: var(--tf-claim-soft);
+  border: 1px solid var(--tf-claim-line);
+  color: var(--tf-claim-text);
+  border-radius: var(--radius-sm);
+  padding: 9px 14px;
+  margin-bottom: 18px;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.preview-tag {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--tf-claim-text);
+  background: var(--tf-claim-soft);
+  border: 1px solid var(--tf-claim-line);
+  padding: 2px 6px;
+  border-radius: var(--radius-xs);
+  text-transform: uppercase;
+}
+
+/* ── Skeleton Loaders ────────────────────────────────────────────── */
+@keyframes shimmer {
+  0% { background-position: -600px 0; }
+  100% { background-position: 600px 0; }
+}
+
+.skeleton {
+  border-radius: var(--radius-xs);
+  background: linear-gradient(90deg, var(--tf-surface-raised) 25%, var(--tf-surface-overlay) 50%, var(--tf-surface-raised) 75%);
+  background-size: 1200px 100%;
+  animation: shimmer 1.4s infinite linear;
+}
+
+.skeleton-text {
+  height: 12px;
+  margin: 5px 0;
+}
+
+.skeleton-heading {
+  height: 22px;
+  margin: 8px 0;
+  width: 50%;
+}
+
+.skeleton-metric {
+  height: 56px;
+  border-radius: var(--radius-sm);
+}
+
+.skeleton-row {
+  height: 48px;
+  border-bottom: 1px solid var(--tf-line);
+  border-radius: 0;
+}
+
+/* ── Empty State ─────────────────────────────────────────────────── */
+.empty-state {
+  text-align: center;
+  padding: 64px 24px;
+  background: var(--tf-surface);
+  border: 1px solid var(--tf-line);
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.empty-state h2 {
+  font-size: 16px;
+  margin: 4px 0 0;
+}
+
+.empty-state p {
+  color: var(--tf-ink-muted);
+  font-size: 12px;
+  max-width: 420px;
+  line-height: 1.6;
+}
+
+.empty-state svg {
+  color: var(--tf-ink-faint);
+}
+
+/* ── Motion & Reduced Motion ─────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    transition: none !important;
+    animation: none !important;
+  }
+}

@@ -1,0 +1,452 @@
+/* ==========================================================================
+   TrustFix Design System — Proof Ledger & Signature Motifs
+   ========================================================================== */
+
+/* ── Proof Window / Ledger Console ──────────────────────────────── */
+.proof-window {
+  background: var(--tf-surface-sunken);
+  border: 1px solid var(--tf-line-strong);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--tf-shadow-lg);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.proof-window header {
+  height: 42px;
+  background: var(--tf-surface);
+  border-bottom: 1px solid var(--tf-line);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 16px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--tf-ink-muted);
+}
+
+.window-dots {
+  display: flex;
+  gap: 6px;
+}
+
+.window-dots i {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--tf-line-strong);
+  display: inline-block;
+}
+
+.proof-window-body {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  min-height: 380px;
+}
+
+.proof-window-body aside {
+  background: var(--tf-surface-sunken);
+  border-right: 1px solid var(--tf-line);
+  padding: 12px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.proof-window-body aside button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: var(--radius-xs);
+  color: var(--tf-ink-muted);
+  font-size: 11px;
+  font-weight: 600;
+  transition: all var(--duration-fast) ease;
+}
+
+.proof-window-body aside button:hover {
+  background: var(--tf-surface-hover);
+  color: var(--tf-ink);
+}
+
+.proof-window-body aside button.rail-active {
+  background: var(--tf-surface-raised);
+  color: var(--tf-cipher-text);
+  border: 1px solid var(--tf-line);
+}
+
+.proof-window-body aside button i {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-style: normal;
+  color: var(--tf-ink-faint);
+}
+
+.proof-window-body main {
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: var(--tf-surface);
+}
+
+.proof-question {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.proof-question h2 {
+  font-size: 14px;
+  line-height: 1.4;
+  margin-top: 4px;
+}
+
+.proof-resource {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--tf-surface-raised);
+  border: 1px solid var(--tf-line);
+  border-radius: var(--radius-sm);
+}
+
+.proof-resource-icon {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-xs);
+  background: var(--tf-surface-sunken);
+  color: var(--tf-cipher);
+  border: 1px solid var(--tf-line);
+}
+
+.proof-resource div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.proof-resource strong {
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.proof-resource small {
+  color: var(--tf-ink-muted);
+  font-size: 10px;
+}
+
+.proof-flow {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.proof-flow>div {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  background: var(--tf-surface-raised);
+  border: 1px solid var(--tf-line);
+  border-radius: var(--radius-sm);
+}
+
+.proof-flow .flow-number {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--tf-ink-faint);
+  width: 18px;
+  height: 18px;
+  border-radius: var(--radius-xs);
+  background: var(--tf-surface-sunken);
+  border: 1px solid var(--tf-line);
+  display: grid;
+  place-items: center;
+}
+
+.proof-flow p {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.proof-flow small {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.05em;
+  color: var(--tf-ink-faint);
+}
+
+.proof-flow strong {
+  font-size: 11px;
+  color: var(--tf-ink-secondary);
+}
+
+.flow-success {
+  border-color: var(--tf-verified-line) !important;
+  background: var(--tf-verified-soft) !important;
+}
+
+.flow-success strong {
+  color: var(--tf-verified-text) !important;
+}
+
+.proof-decision {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--tf-surface-raised);
+  border: 1px solid var(--tf-line);
+  border-radius: var(--radius-sm);
+  margin-top: auto;
+}
+
+.proof-decision span:first-child {
+  color: var(--tf-claim);
+}
+
+.proof-decision div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.proof-decision small {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--tf-ink-faint);
+  letter-spacing: 0.08em;
+}
+
+.proof-decision strong {
+  font-size: 11px;
+  color: var(--tf-ink-secondary);
+}
+
+.proof-awaiting {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--tf-claim-text);
+  background: var(--tf-claim-soft);
+  border: 1px solid var(--tf-claim-line);
+  padding: 3px 8px;
+  border-radius: var(--radius-xs);
+}
+
+.proof-window footer {
+  height: 38px;
+  background: var(--tf-surface-sunken);
+  border-top: 1px solid var(--tf-line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--tf-ink-muted);
+}
+
+.proof-window footer span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.proof-window footer i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--tf-verified);
+  display: inline-block;
+}
+
+/* ── Cloud Command Terminal Block ────────────────────────────────── */
+.cloud-command {
+  border: 1px solid var(--tf-line);
+  border-radius: var(--radius-sm);
+  background: var(--tf-surface-sunken);
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+
+.cloud-command header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 14px;
+  background: var(--tf-surface);
+  border-bottom: 1px solid var(--tf-line);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--tf-ink-muted);
+}
+
+.cloud-command header button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: var(--radius-xs);
+  font-size: 10px;
+  font-weight: 600;
+  background: var(--tf-surface-raised);
+  border: 1px solid var(--tf-line);
+  color: var(--tf-ink-secondary);
+  transition: all var(--duration-fast) ease;
+}
+
+.cloud-command header button:hover {
+  background: var(--tf-surface-overlay);
+  color: var(--tf-ink);
+}
+
+.cloud-command code {
+  display: block;
+  padding: 14px 16px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--tf-cipher-text);
+  background: transparent;
+  border: 0;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* ── Assurance Score Ring ────────────────────────────────────────── */
+.score-ring {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  position: relative;
+  display: grid;
+  place-items: center;
+  background: conic-gradient(var(--tf-verified) var(--score, 0deg), var(--tf-surface-raised) 0deg);
+  box-shadow: 0 0 20px var(--tf-verified-glow);
+  flex: none;
+}
+
+.score-ring::after {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  border-radius: 50%;
+  background: var(--tf-surface);
+}
+
+.score-ring>div {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1;
+}
+
+.score-ring strong {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  color: var(--tf-ink);
+}
+
+.score-ring span {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--tf-ink-muted);
+  margin-top: 2px;
+}
+
+.coverage-track {
+  width: min(280px, 100%);
+  height: 6px;
+  margin: 10px 0 6px;
+  border-radius: var(--radius-full);
+  background: var(--tf-surface-raised);
+  border: 1px solid var(--tf-line);
+  overflow: hidden;
+}
+
+.coverage-track span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--tf-cipher), var(--tf-verified));
+  transition: width 0.5s var(--ease-smooth);
+}
+
+/* ── Stepper Component ───────────────────────────────────────────── */
+.onboarding-stepper {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin: 18px 0 24px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--tf-line);
+}
+
+.step-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--tf-ink-muted);
+  background: var(--tf-surface-raised);
+  border: 1px solid var(--tf-line);
+  transition: all var(--duration-fast) ease;
+}
+
+.step-pill span {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  padding: 2px 6px;
+  border-radius: var(--radius-xs);
+  background: var(--tf-surface);
+  border: 1px solid var(--tf-line);
+}
+
+.step-pill.active {
+  color: var(--tf-cipher-text);
+  background: var(--tf-cipher-soft);
+  border-color: var(--tf-cipher-line);
+}
+
+.step-pill.active span {
+  color: var(--tf-cipher-text);
+  border-color: var(--tf-cipher-line);
+}
+
+.step-pill.done {
+  color: var(--tf-verified-text);
+  background: var(--tf-verified-soft);
+  border-color: var(--tf-verified-line);
+}
+
+.step-pill.done span {
+  color: var(--tf-verified-text);
+  border-color: var(--tf-verified-line);
+}
+
+/* ── Spin Animation ──────────────────────────────────────────────── */
+.spin {
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

@@ -243,7 +243,7 @@ export default function Reviews() {
             <FileXls /> Export XLSX
           </a>
           <button className="button primary" disabled={busy} onClick={runReview}>
-            {busy ? "Working…" : "Run live review"}
+            {busy ? "Scanning target…" : "Run live review"}
           </button>
         </div>
       </div>
@@ -486,7 +486,7 @@ export default function Reviews() {
                 Reject
               </button>
               <button className="button primary" disabled={busy} onClick={approve}>
-                {busy ? "Applying…" : "Approve & remediate"}
+                {busy ? "Applying & verifying…" : "Approve & remediate"}
               </button>
             </footer>
           </section>
@@ -564,7 +564,7 @@ export default function Reviews() {
                   className="button primary"
                   disabled={importing || !importFile || !importName.trim()}
                 >
-                  {importing ? "Importing…" : "Import & map questions"}
+                  {importing ? "Mapping questions…" : "Import & map questions"}
                 </button>
               </footer>
             </form>

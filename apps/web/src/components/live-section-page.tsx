@@ -27,7 +27,7 @@ function Loading() {
     <div className="empty-state">
       <Info size={28} />
       <h2>Loading live workspace data</h2>
-      <p>Reading from TrustFix.</p>
+      <p>Reading live control and evidence state from Google Cloud.</p>
     </div>
   );
 }
@@ -35,11 +35,11 @@ function Loading() {
 function Failure({ message, retry }: { message: string; retry?: () => void }) {
   return (
     <div className="empty-state" role="alert">
-      <Warning size={28} color="var(--red)" />
+      <Warning size={28} />
       <h2>Could not load this page</h2>
       <p>{message}</p>
       {retry && (
-        <button className="button secondary" onClick={retry}>Retry</button>
+        <button className="button secondary" onClick={retry}>Retry connection</button>
       )}
     </div>
   );
@@ -299,8 +299,8 @@ export function TeamPage() {
             {data.members.length === 0 && data.invitations.length === 0 && (
               <div className="empty-state">
                 <Info size={28} />
-                <h2>No team members yet</h2>
-                <p>Invite security reviewers using the form below.</p>
+                <h2>No team members invited yet</h2>
+                <p>Add security reviewers below to share assurance review duties and governance oversight.</p>
               </div>
             )}
           </div>
@@ -420,8 +420,8 @@ export function EvidencePage({ kind }: { kind: "evidence" | "activity" | "findin
             {items.length === 0 ? (
               <div className="empty-state">
                 <Pulse size={28} />
-                <h2>No activity yet</h2>
-                <p>Run a live review to generate workspace activity.</p>
+                <h2>No activity recorded yet</h2>
+                <p>Run an assurance review to start generating verified workspace events and audit logs.</p>
               </div>
             ) : (
               <div className="activity-panel">
@@ -465,8 +465,8 @@ export function EvidencePage({ kind }: { kind: "evidence" | "activity" | "findin
           {items.length === 0 ? (
             <div className="empty-state">
               <Info size={28} />
-              <h2>No records yet</h2>
-              <p>Run a live review to create workspace {kind}.</p>
+              <h2>No {kind} records yet</h2>
+              <p>Run an assurance review to inspect the target project and collect fresh {kind} data.</p>
             </div>
           ) : (
             items.map((item, i) => {

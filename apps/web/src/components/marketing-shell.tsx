@@ -1,12 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { ArrowRight, List, X } from "@phosphor-icons/react";
 import { Mark } from "./brand";
 import { ThemeToggle } from "./theme-toggle";
 
 export function MarketingHeader() {
+  const pathname = usePathname();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [insideWorkspace, setInsideWorkspace] = useState(false);
   const drawerRef = useRef<HTMLDivElement>(null);
@@ -27,58 +29,12 @@ export function MarketingHeader() {
     return () => { document.body.style.overflow = ""; };
   }, [drawerOpen]);
 
-  // Shared, lightweight motion treatment for every public marketing route.
-  useEffect(() => {
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reducedMotion) return;
-
-    const sections = document.querySelectorAll<HTMLElement>(
-      ".home-choice,.statement-section,.comparison-v2,.workflow-v2,.capability-stage,.architecture-v2>header,.architecture-rail,.final-cta-v2,.inner-hero,.demo-hero,.detail-grid,.product-workflow,.security-principles,.boundary-table,.demo-console,.split-cta",
-    );
-    const items = document.querySelectorAll<HTMLElement>(
-      ".experience-choice article,.capability-cards article,.architecture-rail div,.detail-grid article,.security-principles article,.demo-steps li",
-    );
-    sections.forEach((element) => element.classList.add("motion-reveal"));
-    items.forEach((element, index) => {
-      element.classList.add("motion-item");
-      element.style.setProperty("--motion-order", String(index % 6));
-    });
-
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add("in-view");
-          observer.unobserve(entry.target);
-        }
-      });
-    }, { rootMargin: "0px 0px -10%", threshold: 0.08 });
-    sections.forEach((element) => observer.observe(element));
-    items.forEach((element) => observer.observe(element));
-
-    let frame = 0;
-    const updateParallax = () => {
-      frame = 0;
-      const distance = Math.min(window.scrollY, 1400);
-      document.documentElement.style.setProperty("--marketing-parallax", `${distance * 0.075}px`);
-      document.documentElement.style.setProperty("--marketing-parallax-soft", `${distance * 0.035}px`);
-      document.documentElement.style.setProperty("--marketing-proof", `${distance * -0.006}px`);
-    };
-    const onScroll = () => {
-      if (!frame) frame = window.requestAnimationFrame(updateParallax);
-    };
-    updateParallax();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => {
-      observer.disconnect();
-      window.removeEventListener("scroll", onScroll);
-      if (frame) window.cancelAnimationFrame(frame);
-      document.documentElement.style.removeProperty("--marketing-parallax");
-      document.documentElement.style.removeProperty("--marketing-parallax-soft");
-      document.documentElement.style.removeProperty("--marketing-proof");
-    };
-  }, []);
-
   const close = () => setDrawerOpen(false);
+
+  const isLinkActive = (href: string) => {
+    if (href === "/") return pathname === "/";
+    return pathname.startsWith(href);
+  };
 
   return (
     <>
@@ -87,11 +43,29 @@ export function MarketingHeader() {
           <Mark />
         </Link>
         <div className="nav-links">
-          <Link href="/product">Product</Link>
+          <Link
+            href="/product"
+            className={isLinkActive("/product") ? "active" : ""}
+            aria-current={isLinkActive("/product") ? "page" : undefined}
+          >
+            Product
+          </Link>
           <Link href="/#controls">Controls</Link>
-          <Link href="/security">Security</Link>
-          <Link href="/demo">Public demo</Link>
-          <ThemeToggle compact/>
+          <Link
+            href="/security"
+            className={isLinkActive("/security") ? "active" : ""}
+            aria-current={isLinkActive("/security") ? "page" : undefined}
+          >
+            Security
+          </Link>
+          <Link
+            href="/demo"
+            className={isLinkActive("/demo") ? "active" : ""}
+            aria-current={isLinkActive("/demo") ? "page" : undefined}
+          >
+            Public demo
+          </Link>
+          <ThemeToggle compact />
           <a className="button primary" href="/app">
             {insideWorkspace ? "Open workspace" : "Start for free"} <ArrowRight size={14} />
           </a>
@@ -124,11 +98,34 @@ export function MarketingHeader() {
           <X size={20} />
         </button>
         <div style={{ marginTop: 48 }}>
-          <Link href="/product" onClick={close}>Product</Link>
+          <Link
+            href="/product"
+            onClick={close}
+            className={isLinkActive("/product") ? "active" : ""}
+            aria-current={isLinkActive("/product") ? "page" : undefined}
+          >
+            Product
+          </Link>
           <Link href="/#controls" onClick={close}>Controls</Link>
-          <Link href="/security" onClick={close}>Security</Link>
-          <Link href="/demo" onClick={close}>Public demo</Link>
-          <ThemeToggle/>
+          <Link
+            href="/security"
+            onClick={close}
+            className={isLinkActive("/security") ? "active" : ""}
+            aria-current={isLinkActive("/security") ? "page" : undefined}
+          >
+            Security
+          </Link>
+          <Link
+            href="/demo"
+            onClick={close}
+            className={isLinkActive("/demo") ? "active" : ""}
+            aria-current={isLinkActive("/demo") ? "page" : undefined}
+          >
+            Public demo
+          </Link>
+          <div style={{ padding: "12px 0", borderBottom: "1px solid var(--tf-line)" }}>
+            <ThemeToggle />
+          </div>
           <a href="/app" style={{ borderBottom: "none", paddingTop: 20, display: "flex", flexDirection: "column", gap: 10 }}>
             <span className="button primary wide" style={{ display: "flex" }}>
               {insideWorkspace ? "Open workspace" : "Start for free"} <ArrowRight size={14} />

@@ -1,0 +1,1174 @@
+/* ==========================================================================
+   TrustFix Design System — Marketing Experience
+   ========================================================================== */
+
+.landing, .marketing-page {
+  background-color: var(--tf-canvas);
+  color: var(--tf-ink);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Marketing Header ────────────────────────────────────────────── */
+.marketing-nav {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1240px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 24px;
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: var(--tf-canvas);
+  border-bottom: 1px solid var(--tf-line-subtle);
+  backdrop-filter: blur(12px);
+}
+
+.marketing-nav .nav-links {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--tf-ink-muted);
+}
+
+.marketing-nav .nav-links a:not(.button):hover {
+  color: var(--tf-ink);
+  transition: color var(--duration-fast) ease;
+}
+
+.marketing-hamburger {
+  display: none;
+  border: 0;
+  background: transparent;
+  color: var(--tf-ink-muted);
+  padding: 6px;
+  border-radius: var(--radius-xs);
+}
+
+.marketing-hamburger:hover {
+  color: var(--tf-ink);
+  background: var(--tf-surface-hover);
+}
+
+/* ── Mobile Drawer ───────────────────────────────────────────────── */
+.marketing-drawer-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(4px);
+  z-index: 50;
+}
+
+.marketing-drawer-backdrop.open {
+  display: block;
+}
+
+.marketing-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 280px;
+  background: var(--tf-surface);
+  border-left: 1px solid var(--tf-line);
+  z-index: 55;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transform: translateX(100%);
+  transition: transform 0.25s var(--ease-spring);
+  box-shadow: var(--tf-shadow-modal);
+}
+
+.marketing-drawer.open {
+  transform: translateX(0);
+}
+
+.marketing-drawer a, .marketing-drawer button {
+  display: block;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--tf-line);
+  text-align: left;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--tf-ink);
+}
+
+.marketing-drawer a:hover {
+  color: var(--tf-cipher-text);
+}
+
+.marketing-drawer-close {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  border: 0;
+  background: transparent;
+  color: var(--tf-ink-muted);
+  padding: 4px;
+}
+
+/* ── Hero Section (Grounded in Technical Infrastructure) ─────────── */
+.hero-v3 {
+  position: relative;
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 72px 24px 60px;
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+  align-items: center;
+  gap: 48px;
+  overflow: hidden;
+}
+
+.hero-v3-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--tf-line-subtle) 1px, transparent 1px),
+    linear-gradient(90deg, var(--tf-line-subtle) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse at 50% 30%, black 20%, transparent 75%);
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+.hero-v3-copy {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.hero-v3-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 12px;
+  border-radius: var(--radius-full);
+  background: var(--tf-surface-raised);
+  border: 1px solid var(--tf-line);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--tf-ink-secondary);
+  margin-bottom: 20px;
+}
+
+.hero-v3-badge span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--tf-verified);
+  box-shadow: 0 0 8px var(--tf-verified);
+}
+
+.hero-v3-badge small {
+  color: var(--tf-ink-faint);
+  border-left: 1px solid var(--tf-line);
+  padding-left: 8px;
+  font-weight: 500;
+}
+
+.hero-v3-copy h1 {
+  font-size: clamp(38px, 4.2vw, 56px);
+  line-height: 1.08;
+  letter-spacing: -0.045em;
+  margin-bottom: 18px;
+}
+
+.hero-v3-outcome {
+  display: block;
+  color: var(--tf-cipher-text);
+}
+
+.hero-v3-outcome em {
+  font-style: normal;
+  color: var(--tf-verified-text);
+  border-bottom: 2px solid var(--tf-verified-line);
+}
+
+.hero-v3-copy p {
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--tf-ink-muted);
+  max-width: 520px;
+  margin-bottom: 28px;
+}
+
+.hero-v3-copy .hero-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+.hero-v3-trust {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  font-size: 11px;
+  color: var(--tf-ink-muted);
+  flex-wrap: wrap;
+}
+
+.hero-v3-trust span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.hero-v3-trust svg {
+  color: var(--tf-verified);
+}
+
+/* ── Trust Marquee Ribbon ────────────────────────────────────────── */
+.trust-marquee {
+  border-top: 1px solid var(--tf-line);
+  border-bottom: 1px solid var(--tf-line);
+  background: var(--tf-surface-sunken);
+  padding: 14px 24px;
+}
+
+.trust-marquee>div {
+  max-width: 1240px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--tf-ink-faint);
+  overflow-x: auto;
+}
+
+.trust-marquee span {
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--tf-ink-muted);
+}
+
+.trust-marquee strong {
+  color: var(--tf-ink-secondary);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* ── Choice Cards (Demo vs Real Workspace) ───────────────────────── */
+.experience-choice {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  max-width: 1120px;
+  margin: 64px auto 0;
+  padding: 0 24px;
+  width: 100%;
+}
+
+.experience-choice article {
+  background: var(--tf-surface);
+  border: 1px solid var(--tf-line);
+  border-radius: var(--radius-md);
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: border-color var(--duration-fast) ease, transform var(--duration-fast) ease;
+}
+
+.experience-choice article:hover {
+  border-color: var(--tf-line-strong);
+  transform: translateY(-2px);
+}
+
+.experience-choice h3 {
+  font-size: 17px;
+  margin-top: 4px;
+}
+
+.experience-choice p {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--tf-ink-muted);
+  margin-bottom: 12px;
+}
+
+.experience-choice a {
+  margin-top: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--tf-cipher-text);
+}
+
+.experience-choice a:hover {
+  text-decoration: underline;
+}
+
+/* ── Problem Statement Section ───────────────────────────────────── */
+.statement-section {
+  max-width: 860px;
+  margin: 96px auto 0;
+  padding: 0 24px;
+  text-align: center;
+}
+
+.statement-section h2 {
+  font-size: clamp(28px, 3.2vw, 40px);
+  line-height: 1.2;
+  letter-spacing: -0.04em;
+  margin: 16px 0 14px;
+}
+
+.statement-section h2 em {
+  font-style: normal;
+  color: var(--tf-gap-text);
+}
+
+.statement-section p {
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--tf-ink-muted);
+}
+
+/* ── Comparison Section (Old Way vs TrustFix Way) ────────────────── */
+.comparison-v2 {
+  display: grid;
+  grid-template-columns: 1fr 48px 1fr;
+  align-items: center;
+  max-width: 1120px;
+  margin: 54px auto 0;
+  padding: 0 24px;
+  width: 100%;
+}
+
+.old-way, .trustfix-way {
+  background: var(--tf-surface);
+  border: 1px solid var(--tf-line);
+  border-radius: var(--radius-md);
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.old-way span, .trustfix-way span {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+
+.old-way span { color: var(--tf-gap-text); }
+.trustfix-way span { color: var(--tf-verified-text); }
+
+.old-way h3, .trustfix-way h3 {
+  font-size: 16px;
+  margin-bottom: 6px;
+}
+
+.old-way p, .trustfix-way p {
+  font-size: 12px;
+  color: var(--tf-ink-muted);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.trustfix-way p {
+  color: var(--tf-ink);
+}
+
+.trustfix-way p svg {
+  color: var(--tf-verified);
+}
+
+.versus {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--tf-ink-faint);
+  text-align: center;
+}
+
+/* ── Operating Loop Section ──────────────────────────────────────── */
+.workflow-v2 {
+  max-width: 1120px;
+  margin: 100px auto 0;
+  padding: 0 24px;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 0.8fr 1.2fr;
+  gap: 64px;
+}
+
+.workflow-v2 header h2 {
+  font-size: 32px;
+  margin: 12px 0 10px;
+}
+
+.workflow-v2 header p {
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.workflow-v2 ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--tf-line);
+}
+
+.workflow-v2 li {
+  display: grid;
+  grid-template-columns: 36px 1fr;
+  gap: 16px;
+  padding: 20px 0;
+  border-bottom: 1px solid var(--tf-line);
+}
+
+.workflow-v2 li span {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--tf-cipher-text);
+}
+
+.workflow-v2 li strong {
+  font-size: 14px;
+  color: var(--tf-ink);
+}
+
+.workflow-v2 li p {
+  font-size: 12px;
+  color: var(--tf-ink-muted);
+  margin-top: 4px;
+}
+
+/* ── Capability Stage ────────────────────────────────────────────── */
+.capability-stage {
+  max-width: 1120px;
+  margin: 100px auto 0;
+  padding: 0 24px;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 0.85fr 1.15fr;
+  gap: 56px;
+  align-items: start;
+}
+
+.capability-copy h2 {
+  font-size: 32px;
+  margin: 12px 0 10px;
+}
+
+.capability-copy p {
+  font-size: 14px;
+  line-height: 1.65;
+  margin-bottom: 20px;
+}
+
+.capability-copy a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  color: var(--tf-cipher-text);
+  font-size: 12px;
+}
+
+.capability-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.capability-cards article {
+  background: var(--tf-surface);
+  border: 1px solid var(--tf-line);
+  border-radius: var(--radius-sm);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.capability-cards article svg {
+  color: var(--tf-cipher);
+}
+
+.capability-cards h3 {
+  font-size: 13px;
+}
+
+.capability-cards p {
+  font-size: 11px;
+  line-height: 1.55;
+  color: var(--tf-ink-muted);
+}
+
+/* ── Production Architecture Section ─────────────────────────────── */
+.architecture-v2 {
+  max-width: 1120px;
+  margin: 100px auto 0;
+  padding: 0 24px;
+  width: 100%;
+}
+
+.architecture-v2 header h2 {
+  font-size: 32px;
+  margin: 12px 0 28px;
+}
+
+.architecture-rail {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 10px;
+}
+
+.architecture-rail div {
+  background: var(--tf-surface);
+  border: 1px solid var(--tf-line);
+  border-radius: var(--radius-sm);
+  padding: 16px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.architecture-rail span {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--tf-cipher-text);
+}
+
+.architecture-rail strong {
+  font-size: 12px;
+  color: var(--tf-ink);
+}
+
+.architecture-rail small {
+  font-size: 10px;
+  color: var(--tf-ink-muted);
+}
+
+/* ── Final Call to Action ────────────────────────────────────────── */
+.final-cta-v2 {
+  max-width: 1120px;
+  margin: 100px auto 60px;
+  padding: 64px 24px;
+  background: var(--tf-surface);
+  border: 1px solid var(--tf-line);
+  border-radius: var(--radius-lg);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: calc(100% - 48px);
+}
+
+.final-cta-v2 svg {
+  color: var(--tf-cipher);
+}
+
+.final-cta-v2 h2 {
+  font-size: 32px;
+}
+
+.final-cta-v2 p {
+  font-size: 14px;
+  max-width: 540px;
+  line-height: 1.6;
+}
+
+.final-cta-v2 .hero-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+/* ── Marketing Footer ────────────────────────────────────────────── */
+footer {
+  margin-top: auto;
+  border-top: 1px solid var(--tf-line);
+  background: var(--tf-canvas);
+  padding: 24px 0;
+}
+
+footer>div:not(.footer-links), footer {
+  max-width: 1240px;
+  width: 100%;
+  margin: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  font-size: 12px;
+  color: var(--tf-ink-muted);
+}
+
+.footer-links {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.footer-links a:hover {
+  color: var(--tf-ink);
+}
+
+/* ── Inner Marketing Pages (Product / Security / Demo / 404) ─────── */
+.inner-hero, .demo-hero {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 64px 24px 48px;
+  text-align: center;
+}
+
+.inner-hero h1, .demo-hero h1 {
+  font-size: clamp(32px, 3.8vw, 44px);
+  margin: 14px 0 12px;
+}
+
+.inner-hero p, .demo-hero p {
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--tf-ink-muted);
+  max-width: 680px;
+  margin: 0 auto;
+}
+
+.inner-hero .hero-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 24px;
+  gap: 14px;
+}
+
+.detail-grid article {
+  background: var(--tf-surface);
+  border: 1px solid var(--tf-line);
+  border-radius: var(--radius-md);
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.detail-grid article svg {
+  color: var(--tf-cipher);
+}
+
+.detail-grid h2 {
+  font-size: 15px;
+}
+
+.detail-grid p {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--tf-ink-muted);
+}
+
+.product-workflow, .boundary-table {
+  max-width: 1120px;
+  margin: 80px auto;
+  padding: 0 24px;
+  display: grid;
+  grid-template-columns: 0.8fr 1.2fr;
+  gap: 64px;
+}
+
+.product-workflow h2, .boundary-table h2 {
+  font-size: 28px;
+  margin-top: 12px;
+}
+
+.product-workflow ol {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  border-top: 1px solid var(--tf-line);
+}
+
+.product-workflow li {
+  padding: 14px 0;
+  border-bottom: 1px solid var(--tf-line);
+  font-size: 13px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+}
+
+.product-workflow li span {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--tf-cipher-text);
+  margin-right: 14px;
+}
+
+.security-principles {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.security-principles article {
+  background: var(--tf-surface);
+  border: 1px solid var(--tf-line);
+  border-radius: var(--radius-md);
+  padding: 22px 24px;
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.security-principles article>svg {
+  color: var(--tf-cipher);
+  margin-top: 2px;
+}
+
+.security-principles h2 {
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.security-principles p {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--tf-ink-muted);
+}
+
+.boundary-table>div:last-child {
+  display: grid;
+  gap: 16px;
+}
+
+.boundary-table p {
+  background: var(--tf-surface);
+  border: 1px solid var(--tf-line);
+  border-radius: var(--radius-sm);
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--tf-ink-muted);
+}
+
+.boundary-table strong {
+  color: var(--tf-ink);
+  font-size: 12px;
+}
+
+.public-notice {
+  max-width: 1120px;
+  margin: 16px auto 0;
+  padding: 10px 16px;
+  border: 1px solid var(--tf-claim-line);
+  background: var(--tf-claim-soft);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 11px;
+}
+
+.public-notice strong {
+  color: var(--tf-claim-text);
+}
+
+.public-notice span {
+  color: var(--tf-ink-muted);
+}
+
+/* ── Interactive Demo Console ────────────────────────────────────── */
+.demo-console {
+  max-width: 1120px;
+  margin: 0 auto 64px;
+  padding: 0 24px;
+  width: 100%;
+}
+
+.demo-console-head {
+  padding: 20px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  background: var(--tf-surface);
+  border: 1px solid var(--tf-line);
+  border-bottom: 0;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+}
+
+.demo-console-head h2 {
+  font-size: 16px;
+  margin-top: 4px;
+}
+
+.demo-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: var(--tf-surface-raised);
+  border-left: 1px solid var(--tf-line);
+  border-right: 1px solid var(--tf-line);
+}
+
+.autoplay-label {
+  font-size: 11px;
+  color: var(--tf-ink-muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  cursor: pointer;
+}
+
+.demo-console-grid {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  border: 1px solid var(--tf-line);
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  overflow: hidden;
+  background: var(--tf-surface);
+}
+
+.demo-steps {
+  list-style: none;
+  margin: 0;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.demo-steps li {
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  gap: 12px;
+  position: relative;
+  padding-bottom: 16px;
+}
+
+.demo-steps li::after {
+  content: "";
+  position: absolute;
+  left: 11px;
+  top: 24px;
+  bottom: 0;
+  width: 1px;
+  background: var(--tf-line);
+}
+
+.demo-steps li:last-child::after {
+  display: none;
+}
+
+.demo-steps>li>span {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid var(--tf-line);
+  background: var(--tf-surface-raised);
+  display: grid;
+  place-items: center;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--tf-ink-muted);
+  z-index: 1;
+}
+
+.demo-steps .complete>span {
+  background: var(--tf-verified-soft);
+  border-color: var(--tf-verified-line);
+  color: var(--tf-verified-text);
+}
+
+.demo-steps .active>span {
+  background: var(--tf-cipher-soft);
+  border-color: var(--tf-cipher-line);
+  color: var(--tf-cipher-text);
+}
+
+.demo-steps button {
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0;
+}
+
+.demo-steps strong {
+  font-size: 13px;
+}
+
+.demo-steps small {
+  font-size: 11px;
+  color: var(--tf-ink-muted);
+}
+
+.demo-steps .pending {
+  opacity: 0.45;
+}
+
+.demo-proof {
+  background: var(--tf-surface-sunken);
+  border-left: 1px solid var(--tf-line);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.proof-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-sm);
+  display: grid;
+  place-items: center;
+}
+
+.proof-icon.pass {
+  color: var(--tf-verified-text);
+  background: var(--tf-verified-soft);
+  border: 1px solid var(--tf-verified-line);
+}
+
+.proof-icon.fail {
+  color: var(--tf-gap-text);
+  background: var(--tf-gap-soft);
+  border: 1px solid var(--tf-gap-line);
+}
+
+.proof-icon.scanning {
+  color: var(--tf-cipher-text);
+  background: var(--tf-cipher-soft);
+  border: 1px solid var(--tf-cipher-line);
+}
+
+.demo-detail {
+  background: var(--tf-surface);
+  border: 1px solid var(--tf-line);
+  border-radius: var(--radius-xs);
+  padding: 12px;
+  font-size: 11px;
+  line-height: 1.55;
+  color: var(--tf-ink-muted);
+}
+
+.demo-proof dl {
+  margin: 8px 0;
+}
+
+.demo-proof dl div {
+  display: flex;
+  justify-content: space-between;
+  border-top: 1px solid var(--tf-line);
+  padding: 8px 0;
+  font-size: 11px;
+}
+
+.demo-proof dt {
+  color: var(--tf-ink-faint);
+}
+
+.demo-proof dd {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--tf-ink);
+}
+
+.demo-agent-log {
+  background: var(--tf-surface);
+  border: 1px solid var(--tf-line);
+  border-radius: var(--radius-xs);
+  padding: 10px 12px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--tf-cipher-text);
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.demo-answer {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 18px 24px;
+  background: var(--tf-verified-soft);
+  border: 1px solid var(--tf-verified-line);
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  color: var(--tf-verified-text);
+}
+
+.demo-answer svg {
+  color: var(--tf-verified);
+  margin-top: 2px;
+}
+
+.demo-answer strong {
+  font-size: 14px;
+  display: block;
+  margin: 4px 0;
+  color: var(--tf-ink);
+}
+
+.demo-answer p {
+  font-size: 11px;
+  line-height: 1.55;
+  color: var(--tf-ink-muted);
+}
+
+.split-cta {
+  max-width: 1120px;
+  margin: 0 auto 80px;
+  padding: 32px 36px;
+  background: var(--tf-surface);
+  border: 1px solid var(--tf-line);
+  border-radius: var(--radius-md);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  width: calc(100% - 48px);
+}
+
+.split-cta h2 {
+  font-size: 22px;
+  margin-top: 6px;
+}
+
+/* ── 404 Page ────────────────────────────────────────────────────── */
+.not-found-page {
+  min-height: calc(100vh - 160px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 40px 24px;
+}
+
+.not-found-page h1 {
+  font-size: 84px;
+  font-weight: 700;
+  letter-spacing: -0.06em;
+  color: var(--tf-line-strong);
+  line-height: 1;
+}
+
+.not-found-page h2 {
+  font-size: 22px;
+  margin: 12px 0 8px;
+}
+
+.not-found-page p {
+  max-width: 440px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.not-found-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+/* ── Responsive Breakpoints ──────────────────────────────────────── */
+@media (max-width: 1050px) {
+  .hero-v3 {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+  .workflow-v2, .capability-stage, .product-workflow, .boundary-table {
+    grid-template-columns: 1fr;
+    gap: 36px;
+  }
+  .architecture-rail {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .marketing-hamburger {
+    display: flex;
+  }
+  .nav-links {
+    display: none !important;
+  }
+  .experience-choice, .comparison-v2, .detail-grid, .capability-cards {
+    grid-template-columns: 1fr;
+  }
+  .comparison-v2 {
+    gap: 16px;
+  }
+  .versus {
+    display: none;
+  }
+  .demo-console-grid {
+    grid-template-columns: 1fr;
+  }
+  .demo-proof {
+    border-left: 0;
+    border-top: 1px solid var(--tf-line);
+  }
+  .split-cta {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .architecture-rail {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 430px) {
+  .hero-v3-copy h1 {
+    font-size: 32px;
+  }
+  .architecture-rail {
+    grid-template-columns: 1fr;
+  }
+  .proof-window-body {
+    grid-template-columns: 1fr;
+  }
+  .proof-window-body aside {
+    border-right: 0;
+    border-bottom: 1px solid var(--tf-line);
+    flex-direction: row;
+    overflow-x: auto;
+  }
+  .proof-flow {
+    grid-template-columns: 1fr;
+  }
+}

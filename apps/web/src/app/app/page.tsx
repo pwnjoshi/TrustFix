@@ -91,14 +91,14 @@ export default function Dashboard() {
       const response = await fetch(`${api}/reviews/${center.latest_review.id}/start`, { method: "POST" });
       const queued = await response.json();
       if (!response.ok) throw new Error(queued.detail || "Could not start assurance run");
-      show("Autonomous assurance run started", "info");
+      show("Autonomous assurance scan initiated across live target", "info");
       for (let attempt = 0; attempt < 90; attempt++) {
         await new Promise((resolve) => setTimeout(resolve, 2000));
         await load();
         const jobResponse = await fetch(`${api}/jobs/${queued.job_id}`, { cache: "no-store" });
         const job = await jobResponse.json();
-        if (job.status === "SUCCEEDED") { await load(); show("Evidence verified", "success"); return; }
-        if (job.status === "FAILED") throw new Error(job.error || "Assurance run failed");
+        if (job.status === "SUCCEEDED") { await load(); show("Live evidence collected and posture verified", "success"); return; }
+        if (job.status === "FAILED") throw new Error(job.error || "Assurance scan failed");
       }
       throw new Error("The run is continuing in the background. Mission Control will keep its status.");
     } catch (error) {
@@ -129,7 +129,7 @@ export default function Dashboard() {
   return <main className="page command-center">
     <header className="command-hero">
       <div><span className="breadcrumb">{center.workspace?.organization_name || center.workspace?.name || "TRUSTFIX"} / COMMAND CENTER</span><h1>Cloud assurance, continuously proven.</h1><p>See live posture, agent work, governed decisions, and evidence from one operational view.</p></div>
-      <div className="command-actions"><span className="live-sync" title={lastSynced?.toLocaleString()}><span/>Live · {lastSynced ? relativeTime(lastSynced.toISOString()) : "connecting"}</span><button className="button secondary" onClick={() => load(true)} disabled={refreshing}><ArrowClockwise className={refreshing ? "spin" : ""}/>{refreshing ? "Refreshing…" : "Refresh"}</button>{proofPackUrl && <a className="button secondary" href={proofPackUrl}><DownloadSimple/> Proof Pack</a>}<button className="button primary glow" onClick={runReview} disabled={running || !center.latest_review}><Play weight="fill"/>{running ? "Agent running…" : "Run assurance"}</button></div>
+      <div className="command-actions"><span className="live-sync" title={lastSynced?.toLocaleString()}><span/>Live · {lastSynced ? relativeTime(lastSynced.toISOString()) : "connecting"}</span><button className="button secondary" onClick={() => load(true)} disabled={refreshing}><ArrowClockwise className={refreshing ? "spin" : ""}/>{refreshing ? "Refreshing…" : "Refresh"}</button>{proofPackUrl && <a className="button secondary" href={proofPackUrl}><DownloadSimple/> Proof Pack</a>}<button className="button primary glow" onClick={runReview} disabled={running || !center.latest_review}><Play weight="fill"/>{running ? "Inspecting live target…" : "Run assurance"}</button></div>
     </header>
 
     <section className="boundary-status" aria-label="Verified Google Cloud boundary">

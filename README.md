@@ -4,9 +4,7 @@
 
 [Public experience](https://trustfix-app-1087269593372.us-central1.run.app/) · [Protected workspace](https://trustfix-workspace-1087269593372.us-central1.run.app/app) · [Interactive demo](https://trustfix-app-1087269593372.us-central1.run.app/demo)
 
-TrustFix is a Google ADK agent and cloud security workflow for customer security reviews. It translates natural-language requirements into deterministic controls, inspects a disposable Google Cloud project, proposes the smallest safe correction, waits for the right approval, executes asynchronously, verifies the security property again, and exports the proof.
-
-Built for the **Taskmaster** track of the **All Things Agentic Hackathon 2026**.
+TrustFix is a Google ADK agent and cloud security workflow for customer security reviews. It translates natural-language requirements into deterministic controls, inspects connected Google Cloud projects, proposes the smallest safe correction, waits for the right approval, executes asynchronously, verifies the security property again, and exports cryptographic and verifiable proof.
 
 ## Why TrustFix
 
@@ -133,18 +131,6 @@ uvx google-agents-cli eval run
 
 The agent eval suite covers supported-control mapping, unsupported requirements, refusal to fabricate a passing result, and prompt-injection resistance.
 
-## Disposable live demo
-
-Only use a project containing resources safe for TrustFix to inspect and explicitly remediate.
-
-```powershell
-pnpm demo:setup
-pnpm demo:reset
-pnpm demo:destroy
-```
-
-The live remediation executor is deliberately limited to the named TrustFix demo storage resource. Cloud Run and firewall mutation remain disabled until dedicated rollback acceptance tests pass.
-
 ## Deployment
 
 Production configuration is represented in `deployment/terraform/`, `.cloudbuild/`, and the root Cloud Build files. Use Secret Manager for secrets and preserve separate service identities.
@@ -154,9 +140,9 @@ uvx google-agents-cli info
 uvx google-agents-cli deploy
 ```
 
-Deployment requires an authenticated Google Cloud account and explicit approval. Detailed deployed revisions and acceptance evidence are in [`docs/deployment-proof.md`](docs/deployment-proof.md).
+Deployment requires an authenticated Google Cloud account and explicit approval. Infrastructure scripts are located in [`infra/`](infra/).
 
-## Security model
+## Security Model
 
 - Google IAP authenticates browser users.
 - The API verifies signed IAP assertions.
@@ -170,23 +156,12 @@ Deployment requires an authenticated Google Cloud account and explicit approval.
 - Post-change verification is independent of the mutation result.
 - Prompt and response content is excluded from trace spans by default.
 
-See [`SECURITY.md`](SECURITY.md) for responsible disclosure and implementation boundaries.
+See [`SECURITY.md`](SECURITY.md) for responsible disclosure and implementation boundaries, and [`ARCHITECTURE.md`](ARCHITECTURE.md) for detailed service boundaries and data flow.
 
-## Submission resources
-
-- [`docs/hackathon-submission.md`](docs/hackathon-submission.md) — Devpost-ready project description and compliance checklist.
-- [`docs/demo-script.md`](docs/demo-script.md) — four-minute unedited demo runbook.
-- [`docs/deployment-proof.md`](docs/deployment-proof.md) — Google Cloud deployment and verification evidence.
-- [`ARCHITECTURE.md`](ARCHITECTURE.md) — security and service boundaries.
-
-## Findings and learnings
+## Architectural Key Principles
 
 - LLMs are valuable for interpreting ambiguous requirements, but infrastructure truth belongs in deterministic collectors and evaluators.
 - Mutation success is not assurance; the original security property must be tested again.
 - Human approval is more useful when the agent shows the exact change, impact, rollback, and evidence—not a generic confirmation dialog.
 - A public product story and a protected operational workspace should be separate services with an explicit handoff.
-- Disposable target projects make autonomous remediation demonstrable without normalizing unsafe production access.
-
-## License and hackathon notice
-
-Created for entry into the **All Things Agentic Hackathon 2026**. Review the official hackathon rules for binding eligibility and submission requirements.
+- Target project isolation ensures remediation occurs safely within explicit authorized boundaries.
