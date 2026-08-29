@@ -125,65 +125,171 @@ export default function OnboardingPage() {
     <header><Mark/><div className="onboarding-header-actions"><ThemeToggle compact/><span className="status verified">Protected by Google IAP</span></div></header>
     <div className="onboarding-intro"><span className="section-index">WORKSPACE SETUP</span><h1>Connect TrustFix to your Google Cloud environment.</h1><p>Configure a real, project-scoped inspection boundary. TrustFix uses a dedicated keyless scanner identity—never your personal credentials.</p></div>
     <div className="onboarding-stepper" aria-label="Setup progress">
-      <div className={`step-pill ${organization.length >= 2 ? "done" : "active"}`}>
-        <span>01</span> Workspace
+      <div className={`step-pill ${organization.length >= 2 && targetProject ? "done" : "active"}`}>
+        <span>01</span> Target Project
       </div>
-      <div className={`step-pill ${targetProject ? "done" : organization.length >= 2 ? "active" : ""}`}>
-        <span>02</span> Target Project
-      </div>
-      <div className={`step-pill ${confirmed ? "done" : targetProject ? "active" : ""}`}>
-        <span>03</span> Scanner IAM
+      <div className={`step-pill ${confirmed ? "done" : organization.length >= 2 && targetProject ? "active" : ""}`}>
+        <span>02</span> Scanner IAM
       </div>
       <div className={`step-pill ${verified ? "done" : confirmed ? "active" : ""}`}>
-        <span>04</span> Verification
+        <span>03</span> Verification
       </div>
     </div>
     <form onSubmit={finish}>
-      <section className="onboarding-step"><span className="step-number">01</span><div><h2>Create your TrustFix workspace</h2><p>Personalize the workspace, reports, evidence exports, and security-review records.</p><label>Organization name<input value={organization} onChange={event => setOrganization(event.target.value)} required minLength={2} placeholder="Acme Security"/></label></div></section>
-      <section className="onboarding-step"><span className="step-number">02</span><div><h2>Select the Google Cloud project</h2><p>Choose an auto-discovered project or enter your exact immutable <strong>Project ID</strong>.</p>
-        {discoveredProjects.length > 0 && (
-          <div style={{ marginBottom: "14px" }}>
-            <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--tf-ink-muted)", display: "block", marginBottom: "6px" }}>1-CLICK PROJECT SELECTOR</span>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
-              {discoveredProjects.map(p => (
-                <button
-                  key={p.id}
-                  type="button"
-                  onClick={() => { setTargetProject(p.id); setVerified(false); setError(""); }}
-                  style={{
-                    padding: "6px 12px",
-                    borderRadius: "6px",
-                    border: targetProject === p.id ? "1px solid #2563eb" : "1px solid var(--tf-line)",
-                    background: targetProject === p.id ? "rgba(37,99,235,0.15)" : "var(--tf-surface-sunken)",
-                    color: targetProject === p.id ? "#60a5fa" : "var(--tf-ink)",
-                    fontSize: "12px",
-                    fontWeight: 600,
-                    cursor: "pointer",
-                  }}
-                >
-                  ⚡ {p.name} ({p.id})
-                </button>
-              ))}
+      <section className="onboarding-step">
+        <span className="step-number">01</span>
+        <div>
+          <h2>Workspace & Target Project</h2>
+          <p>Name your workspace and select the Google Cloud project to inspect.</p>
+          
+          <label>
+            Organization name
+            <input
+              value={organization}
+              onChange={event => setOrganization(event.target.value)}
+              required
+              minLength={2}
+              placeholder="Acme Security"
+            />
+          </label>
+
+          {discoveredProjects.length > 0 && (
+            <div style={{ marginTop: "12px", marginBottom: "12px" }}>
+              <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--tf-ink-muted)", display: "block", marginBottom: "6px", letterSpacing: "0.05em" }}>AVAILABLE PROJECTS</span>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                {discoveredProjects.map(p => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => { setTargetProject(p.id); setVerified(false); setError(""); }}
+                    style={{
+                      padding: "6px 12px",
+                      borderRadius: "6px",
+                      border: targetProject === p.id ? "1px solid #2563eb" : "1px solid var(--tf-line)",
+                      background: targetProject === p.id ? "rgba(37,99,235,0.15)" : "var(--tf-surface-sunken)",
+                      color: targetProject === p.id ? "#60a5fa" : "var(--tf-ink)",
+                      fontSize: "12px",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                    }}
+                  >
+                    {p.name} ({p.id})
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
-        )}
-        <label>Google Cloud project ID<input value={targetProject} onChange={event => { setTargetProject(event.target.value.toLowerCase().trim()); setVerified(false); setError(""); }} required pattern="[a-z][a-z0-9-]{4,28}[a-z0-9]" placeholder="acme-production-security"/><small>Find it in Google Cloud Console → project selector → ID column.</small></label><div className="project-boundary"><div><span>TrustFix platform</span><code>{setup.platform_project}</code></div><div><span>Your inspection target</span><code>{targetProject || "Enter a project ID"}</code></div><div><span>Supported inspection</span><strong>Storage IAM · Cloud Run IAM · Firewall rules</strong></div></div></div></section>
-      <section className="onboarding-step"><span className="step-number">03</span><div><h2>Authorize the TrustFix scanner</h2><p>Grant read-only visibility to the dedicated keyless scanner identity with 1-click or via Cloud Shell.</p><div className="identity-card"><Key/><div><span>SCANNER SERVICE ACCOUNT</span><code>{setup.scanner_principal}</code></div><span className="status neutral">Keyless</span></div>
-        <div style={{ margin: "14px 0" }}>
-          <button
-            type="button"
-            className="button primary"
-            onClick={autoGrant}
-            disabled={autoGranting || !targetProject}
-            style={{ width: "100%", justifyContent: "center", padding: "12px", marginBottom: "8px" }}
-          >
-            {autoGranted ? "✓ Scanner Access Granted" : autoGranting ? "Granting IAM access via CLI…" : "⚡ 1-Click Auto-Grant Scanner Access"}
-          </button>
+          )}
+
+          <label style={{ marginTop: "8px" }}>
+            Google Cloud project ID
+            <input
+              value={targetProject}
+              onChange={event => { setTargetProject(event.target.value.toLowerCase().trim()); setVerified(false); setError(""); }}
+              required
+              pattern="[a-z][a-z0-9-]{4,28}[a-z0-9]"
+              placeholder="acme-production-security"
+            />
+          </label>
         </div>
-        <div className="cloud-command"><header><span>Or Run in Google Cloud Shell</span><button type="button" onClick={copyCommand} disabled={!iamCommand}>{copied ? <Check/> : <Copy/>}{copied ? "Copied" : "Copy command"}</button></header><code>{iamCommand || "Enter a project ID to generate the IAM command."}</code></div><div className="setup-actions"><a className="button secondary" href={cloudShellUrl} target="_blank" rel="noreferrer">Open Cloud Shell <ArrowSquareOut/></a><a className="button secondary" href={iamConsoleUrl} target="_blank" rel="noreferrer">Review project IAM <ArrowSquareOut/></a></div><label className="check-label"><input type="checkbox" checked={confirmed} onChange={event => setConfirmed(event.target.checked)}/><span><strong>I understand and approve this inspection boundary.</strong><small>TrustFix receives project Viewer access for evidence collection. Any future remediation requires a separate approval and separately scoped permission.</small></span></label></div></section>
-      <section className="onboarding-step"><span className="step-number">04</span><div><h2>Test access and collect first evidence</h2><p>Verification calls the live Google Cloud APIs using the scanner identity. The workspace unlocks only if the exact project can be inspected successfully.</p><div className={`connection-check ${verified ? "connection-verified" : ""}`}><CloudCheck size={24}/><div><strong>{verified ? `${targetProject} is verified` : targetProject ? `Ready to test ${targetProject}` : "Enter a project ID first"}</strong><small>{verified ? "Fresh project-scoped evidence was collected successfully." : "Complete the IAM step above, then test the connection."}</small></div>{verified ? <span className="status verified"><CheckCircle/> Verified</span> : <button type="button" className="button primary" onClick={verify} disabled={verifying || !targetProject || !confirmed}>{verifying ? "Testing APIs…" : "Test connection"}</button>}</div>{error && <p className="form-error" role="alert">{error}</p>}</div></section>
-      <section className="onboarding-next"><span className="section-index">AFTER CONNECTION</span><h2>What TrustFix enables next</h2><div><article><CheckCircle/><strong>Run assurance</strong><p>Map review questions to deterministic controls and inspect live resources.</p></article><article><ShieldCheck/><strong>Govern findings</strong><p>Review exact evidence, proposed changes, risk, dependencies, and rollback.</p></article><article><LockKey/><strong>Export proof</strong><p>Produce project-scoped Proof Packs with evidence lineage and approvals.</p></article></div></section>
-      <footer><span>Project access can be changed and reverified later from Integrations.</span><button className="button primary" disabled={!verified || !confirmed || organization.length < 2 || !targetProject}>Finish setup and open workspace</button></footer>
+      </section>
+
+      <section className="onboarding-step">
+        <span className="step-number">02</span>
+        <div>
+          <h2>Authorize Scanner Access</h2>
+          <p>Grant read-only Viewer access to the dedicated scanner identity in your project.</p>
+          
+          <div className="identity-card" style={{ marginBottom: "14px" }}>
+            <Key />
+            <div>
+              <span>SCANNER SERVICE ACCOUNT</span>
+              <code>{setup.scanner_principal}</code>
+            </div>
+            <span className="status neutral">Keyless</span>
+          </div>
+
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", marginBottom: "14px" }}>
+            <a
+              className="button primary"
+              href={iamConsoleUrl}
+              target="_blank"
+              rel="noreferrer"
+              style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", gap: "8px" }}
+            >
+              Continue to Google Cloud Console <ArrowSquareOut />
+            </a>
+
+            <button
+              type="button"
+              className="button secondary"
+              onClick={autoGrant}
+              disabled={autoGranting || !targetProject}
+            >
+              {autoGranted ? "Access Verified" : autoGranting ? "Authorizing via CLI…" : "Authorize via Local CLI"}
+            </button>
+          </div>
+
+          <div className="cloud-command" style={{ marginTop: "10px" }}>
+            <header>
+              <span>Or run command in Google Cloud Shell</span>
+              <button type="button" onClick={copyCommand} disabled={!iamCommand}>
+                {copied ? <Check /> : <Copy />}
+                {copied ? "Copied" : "Copy command"}
+              </button>
+            </header>
+            <code>{iamCommand || "Select a project ID to generate command."}</code>
+          </div>
+
+          <label className="check-label" style={{ marginTop: "14px" }}>
+            <input
+              type="checkbox"
+              checked={confirmed}
+              onChange={event => setConfirmed(event.target.checked)}
+            />
+            <span>
+              <strong>I approve this inspection boundary.</strong>
+              <small>TrustFix receives project Viewer access for read-only evidence collection.</small>
+            </span>
+          </label>
+        </div>
+      </section>
+
+      <section className="onboarding-step">
+        <span className="step-number">03</span>
+        <div>
+          <h2>Verify Connection</h2>
+          <p>Verify live API access to Storage, Cloud Run, and Firewall resources.</p>
+
+          <div className={`connection-check ${verified ? "connection-verified" : ""}`}>
+            <CloudCheck size={24} />
+            <div>
+              <strong>{verified ? `${targetProject} is verified` : targetProject ? `Ready to test ${targetProject}` : "Select a project above"}</strong>
+              <small>{verified ? "Evidence collection pipeline is active." : "Authorize access in Step 02, then test connection."}</small>
+            </div>
+            {verified ? (
+              <span className="status verified"><CheckCircle /> Verified</span>
+            ) : (
+              <button
+                type="button"
+                className="button primary"
+                onClick={verify}
+                disabled={verifying || !targetProject || !confirmed}
+              >
+                {verifying ? "Testing APIs…" : "Test Connection"}
+              </button>
+            )}
+          </div>
+
+          {error && <p className="form-error" role="alert" style={{ marginTop: "12px" }}>{error}</p>}
+        </div>
+      </section>
+
+      <footer>
+        <span style={{ fontSize: "12px", color: "var(--tf-ink-muted)" }}>Project access can be updated anytime from Integrations.</span>
+        <button className="button primary" disabled={!verified || !confirmed || organization.length < 2 || !targetProject}>
+          Finish setup and open workspace
+        </button>
+      </footer>
     </form>
   </div></main>;
 }
