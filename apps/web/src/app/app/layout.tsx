@@ -8,6 +8,7 @@ import { Sidebar } from "@/components/sidebar";
 import { Mark } from "@/components/brand";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { ErrorBoundary } from "@/components/error-boundary";
+import { VoiceAssistant } from "@/components/voice-assistant";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
@@ -87,6 +88,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <ErrorBoundary>
           {children}
         </ErrorBoundary>
+        <VoiceAssistant />
         <nav className="mobile-bottom-nav" aria-label="Primary mobile navigation">
           <Link href="/app" className={pathname === "/app" ? "active" : ""}><Gauge/><span>Overview</span></Link>
           <Link href="/app/reviews" className={pathname.startsWith("/app/reviews") ? "active" : ""}><Article/><span>Reviews</span></Link>
