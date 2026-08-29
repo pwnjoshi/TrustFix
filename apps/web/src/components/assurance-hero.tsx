@@ -164,10 +164,10 @@ export function AssuranceHero() {
           TrustFix inspects live Google Cloud, governs the smallest safe fix, and independently verifies the result with audit-ready proof.
         </p>
         <div className="hero-actions">
-          <Link className="button primary luminous" href="/demo">
-            Explore interactive demo <ArrowRight />
+          <Link className="button primary" href="/demo">
+            Explore interactive demo <ArrowRight size={14} />
           </Link>
-          <a className="button dark-outline" href="/app">
+          <a className="button secondary" href="/app">
             Start for free
           </a>
         </div>
@@ -185,6 +185,10 @@ export function AssuranceHero() {
         style={{
           width: "100%",
           maxWidth: "1040px",
+          minWidth: "min(100%, 1040px)",
+          alignSelf: "stretch",
+          marginLeft: "auto",
+          marginRight: "auto",
           transform: `perspective(1200px) scale(${scale}) translateY(${translateY}px) rotateX(${rotateX}deg)`,
           transformOrigin: "center top",
           transition: "transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease",
@@ -221,7 +225,8 @@ export function AssuranceHero() {
           className="proof-window-body"
           style={{
             display: "grid",
-            gridTemplateColumns: "150px minmax(0, 1fr)",
+            gridTemplateColumns: "160px minmax(0, 1fr)",
+            width: "100%",
             height: "410px",
             minHeight: "410px",
             maxHeight: "410px",
@@ -229,7 +234,7 @@ export function AssuranceHero() {
             overflow: "hidden",
           }}
         >
-          <aside style={{ width: "150px", flexShrink: 0, boxSizing: "border-box", overflowY: "auto" }}>
+          <aside style={{ width: "160px", minWidth: "160px", maxWidth: "160px", flexShrink: 0, boxSizing: "border-box", overflowY: "auto" }}>
             {heroSteps.map((s, idx) => (
               <button
                 key={s.step}
@@ -240,10 +245,11 @@ export function AssuranceHero() {
                 }}
                 className={idx === activeStep ? "rail-active" : ""}
                 style={{
-                  border: 0,
+                  border: "1px solid transparent",
                   textAlign: "left",
                   cursor: "pointer",
                   width: "100%",
+                  boxSizing: "border-box",
                 }}
               >
                 <i>{s.step}</i> {s.name}
