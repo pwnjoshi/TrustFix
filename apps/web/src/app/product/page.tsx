@@ -18,7 +18,7 @@ const operatingLoop = [
 
 export default function ProductPage() {
   return <main className="marketing-page"><MarketingHeader/>
-    <section className="inner-hero"><span className="section-index">PRODUCT</span><h1>Security review operations, grounded in infrastructure.</h1><p>TrustFix converts questionnaire requirements into measurable controls, inspects Google Cloud, governs the smallest safe remediation, and attaches proof to the final answer.</p><div className="hero-actions"><Link className="button primary" href="/app">Start for free <ArrowRight/></Link><Link className="button secondary" href="https://thetrustfix.xyz/demo">Try public demo</Link></div></section>
+    <section className="inner-hero"><span className="section-index">PRODUCT</span><h1>Security review operations, grounded in infrastructure.</h1><p>TrustFix converts questionnaire requirements into measurable controls, inspects Google Cloud, governs the smallest safe remediation, and attaches proof to the final answer.</p><div className="hero-actions"><Link className="button primary" href="/app">Start for free <ArrowRight/></Link><Link className="button secondary" href="/demo">Try public demo</Link></div></section>
     <section className="detail-grid">{features.map(([Icon, title, copy]) => <article key={title}><Icon size={24}/><h2>{title}</h2><p>{copy}</p></article>)}</section>
     <section className="product-workflow"><div><span className="section-index">THE OPERATING LOOP</span><h2>From question to defensible answer.</h2></div><ol>{operatingLoop.map((item, index) => <li key={item}><span>{String(index + 1).padStart(2, "0")}</span>{item}</li>)}</ol></section>
     <MarketingFooter/>

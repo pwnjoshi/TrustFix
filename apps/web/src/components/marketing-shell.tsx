@@ -6,8 +6,6 @@ import { ArrowRight, List, X } from "@phosphor-icons/react";
 import { Mark } from "./brand";
 import { ThemeToggle } from "./theme-toggle";
 
-const publicSite = "https://thetrustfix.xyz";
-
 export function MarketingHeader() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [insideWorkspace, setInsideWorkspace] = useState(false);
@@ -85,14 +83,14 @@ export function MarketingHeader() {
   return (
     <>
       <nav className="marketing-nav">
-        <Link href={publicSite} aria-label="TrustFix home">
+        <Link href="/" aria-label="TrustFix home">
           <Mark />
         </Link>
         <div className="nav-links">
-          <a href={`${publicSite}/product`}>Product</a>
-          <a href={`${publicSite}/#controls`}>Controls</a>
-          <a href={`${publicSite}/security`}>Security</a>
-          <a href={`${publicSite}/demo`}>Public demo</a>
+          <Link href="/product">Product</Link>
+          <Link href="/#controls">Controls</Link>
+          <Link href="/security">Security</Link>
+          <Link href="/demo">Public demo</Link>
           <ThemeToggle compact/>
           <a className="button primary" href="/app">
             {insideWorkspace ? "Open workspace" : "Start for free"} <ArrowRight size={14} />
@@ -126,10 +124,10 @@ export function MarketingHeader() {
           <X size={20} />
         </button>
         <div style={{ marginTop: 48 }}>
-          <a href={`${publicSite}/product`} onClick={close}>Product</a>
-          <a href={`${publicSite}/#controls`} onClick={close}>Controls</a>
-          <a href={`${publicSite}/security`} onClick={close}>Security</a>
-          <a href={`${publicSite}/demo`} onClick={close}>Public demo</a>
+          <Link href="/product" onClick={close}>Product</Link>
+          <Link href="/#controls" onClick={close}>Controls</Link>
+          <Link href="/security" onClick={close}>Security</Link>
+          <Link href="/demo" onClick={close}>Public demo</Link>
           <ThemeToggle/>
           <a href="/app" style={{ borderBottom: "none", paddingTop: 20, display: "flex", flexDirection: "column", gap: 10 }}>
             <span className="button primary wide" style={{ display: "flex" }}>
@@ -147,9 +145,9 @@ export function MarketingFooter() {
     <footer>
       <Mark />
       <div className="footer-links">
-        <a href={`${publicSite}/product`}>Product</a>
-        <a href={`${publicSite}/demo`}>Demo</a>
-        <a href={`${publicSite}/security`}>Security</a>
+        <Link href="/product">Product</Link>
+        <Link href="/demo">Demo</Link>
+        <Link href="/security">Security</Link>
         <a href="/app">Start for free</a>
       </div>
       <span>© 2026 TrustFix</span>

@@ -14,10 +14,10 @@ export default function NotFound() {
           If you&apos;re looking for the security review app, try the links below.
         </p>
         <div className="not-found-actions">
-          <Link href="https://thetrustfix.xyz" className="button secondary">
+          <Link href="/" className="button secondary">
             <ArrowLeft size={14} /> Back to home
           </Link>
-          <Link href="https://thetrustfix.xyz/demo" className="button primary">
+          <Link href="/demo" className="button primary">
             <MagnifyingGlass size={14} /> Try the demo
           </Link>
         </div>

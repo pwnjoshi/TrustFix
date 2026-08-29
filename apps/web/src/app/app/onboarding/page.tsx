@@ -90,6 +90,20 @@ export default function OnboardingPage() {
   return <main className="onboarding"><div className="onboarding-card onboarding-card-wide">
     <header><Mark/><div className="onboarding-header-actions"><ThemeToggle compact/><span className="status verified">Protected by Google IAP</span></div></header>
     <div className="onboarding-intro"><span className="section-index">WORKSPACE SETUP</span><h1>Connect TrustFix to your Google Cloud environment.</h1><p>Configure a real, project-scoped inspection boundary. TrustFix uses a dedicated keyless scanner identity—never your personal credentials.</p></div>
+    <div className="onboarding-stepper" aria-label="Setup progress">
+      <div className={`step-pill ${organization.length >= 2 ? "done" : "active"}`}>
+        <span>01</span> Workspace
+      </div>
+      <div className={`step-pill ${targetProject ? "done" : organization.length >= 2 ? "active" : ""}`}>
+        <span>02</span> Target Project
+      </div>
+      <div className={`step-pill ${confirmed ? "done" : targetProject ? "active" : ""}`}>
+        <span>03</span> Scanner IAM
+      </div>
+      <div className={`step-pill ${verified ? "done" : confirmed ? "active" : ""}`}>
+        <span>04</span> Verification
+      </div>
+    </div>
     <form onSubmit={finish}>
       <section className="onboarding-step"><span className="step-number">01</span><div><h2>Create your TrustFix workspace</h2><p>These details personalize the workspace, reports, evidence exports, and security-review records.</p><label>Organization name<input value={organization} onChange={event => setOrganization(event.target.value)} required minLength={2} placeholder="Acme Security"/></label><label>Primary use case<select value={useCase} onChange={event => setUseCase(event.target.value)}><option>Customer security reviews</option><option>Continuous cloud assurance</option><option>Compliance evidence operations</option><option>Other</option></select></label></div></section>
       <section className="onboarding-step"><span className="step-number">02</span><div><h2>Select the Google Cloud project</h2><p>Use the immutable <strong>Project ID</strong> from Google Cloud—not the project display name or project number. TrustFix stores this as the exact evidence and authorization boundary.</p><label>Google Cloud project ID<input value={targetProject} onChange={event => { setTargetProject(event.target.value.toLowerCase().trim()); setVerified(false); setError(""); }} required pattern="[a-z][a-z0-9-]{4,28}[a-z0-9]" placeholder="acme-production-security"/><small>Find it in Google Cloud Console → project selector → ID column.</small></label><div className="project-boundary"><div><span>TrustFix platform</span><code>{setup.platform_project}</code></div><div><span>Your inspection target</span><code>{targetProject || "Enter a project ID"}</code></div><div><span>Supported inspection</span><strong>Storage IAM · Cloud Run IAM · Firewall rules</strong></div></div></div></section>

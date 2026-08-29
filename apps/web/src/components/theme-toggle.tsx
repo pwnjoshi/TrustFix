@@ -6,9 +6,13 @@ import { useEffect, useState } from "react";
 type Theme = "light" | "dark";
 
 function preferredTheme(): Theme {
+  if (typeof window === "undefined") return "dark";
   const saved = window.localStorage.getItem("trustfix:theme");
   if (saved === "light" || saved === "dark") return saved;
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  if (typeof window.matchMedia === "function") {
+    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  }
+  return "dark";
 }
 
 export function ThemeToggle({ compact = false }: { compact?: boolean }) {

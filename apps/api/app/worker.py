@@ -30,11 +30,7 @@ def health():
     return {"status": "ok", "service": "trustfix-worker"}
 
 
-@app.post("/internal/pubsub/scan", status_code=204)
-async def scan(request: Request):
-    if settings.trustfix_worker_role not in {"all", "scanner"}:
-        raise HTTPException(403, "This worker is not authorized to scan")
-    data = _payload(await request.json())
+def execute_scan(data: dict) -> None:
     job = store.get("jobs", data["job_id"])
     if not job or job.status == "SUCCEEDED":
         return
@@ -51,13 +47,6 @@ async def scan(request: Request):
         target_project_id = (workspace.target_project_id if workspace else None) or settings.trustfix_target_project_id
         if not target_project_id:
             raise RuntimeError("Workspace Google Cloud target is not configured")
-        if (
-            not workspace
-            or workspace.target_verified_project_id != target_project_id
-            or not workspace.target_verified_at
-            or plan.target_project_id != target_project_id
-        ):
-            raise RuntimeError("Remediation refused: the plan is not bound to the currently verified Google Cloud target")
         is_connection_check = job.kind == "CONNECTION_VERIFY"
         if not is_connection_check and (
             not workspace
@@ -85,11 +74,15 @@ async def scan(request: Request):
         store.put("jobs", job.id, job)
 
 
-@app.post("/internal/pubsub/remediate", status_code=204)
-async def remediate(request: Request):
-    if settings.trustfix_worker_role not in {"all", "remediator"}:
-        raise HTTPException(403, "This worker is not authorized to remediate")
+@app.post("/internal/pubsub/scan", status_code=204)
+async def scan(request: Request):
+    if settings.trustfix_worker_role not in {"all", "scanner"}:
+        raise HTTPException(403, "This worker is not authorized to scan")
     data = _payload(await request.json())
+    execute_scan(data)
+
+
+async def execute_remediate(data: dict) -> None:
     job = store.get("jobs", data["job_id"])
     if not job or job.status == "SUCCEEDED":
         return
@@ -121,6 +114,13 @@ async def remediate(request: Request):
         target_project_id = (workspace.target_project_id if workspace else None) or settings.trustfix_target_project_id
         if not target_project_id:
             raise RuntimeError("Workspace Google Cloud target is not configured")
+        if (
+            not workspace
+            or workspace.target_verified_project_id != target_project_id
+            or not workspace.target_verified_at
+            or plan.target_project_id != target_project_id
+        ):
+            raise RuntimeError("Remediation refused: the plan is not bound to the currently verified Google Cloud target")
         adapter = GcpControlAdapter(target_project_id)
         before = {"resource": plan.resource, "fingerprint": plan.expected_fingerprint}
         execution = adapter.remediate_storage(plan.resource, plan.expected_fingerprint)
@@ -153,3 +153,11 @@ async def remediate(request: Request):
     finally:
         job.updated_at = datetime.now(timezone.utc)
         store.put("jobs", job.id, job)
+
+
+@app.post("/internal/pubsub/remediate", status_code=204)
+async def remediate(request: Request):
+    if settings.trustfix_worker_role not in {"all", "remediator"}:
+        raise HTTPException(403, "This worker is not authorized to remediate")
+    data = _payload(await request.json())
+    await execute_remediate(data)

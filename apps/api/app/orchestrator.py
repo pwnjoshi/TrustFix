@@ -21,7 +21,7 @@ class ReviewOrchestrator:
 
     def _collect(self, workspace_id: str, control_id: str):
         if self.settings.preview_mode or not self.target_project_id:
-            return preview_evidence(workspace_id, control_id)
+            return preview_evidence(workspace_id, control_id, self.target_project_id or "trustfix-demo-target")
         adapter = GcpControlAdapter(self.target_project_id or "")
         if control_id == "GCP_STORAGE_PUBLIC_ACCESS":
             return adapter.collect_storage(workspace_id)
@@ -30,7 +30,7 @@ class ReviewOrchestrator:
         return adapter.collect_firewall(workspace_id)
 
     def run(self, review: Review, strict_permissions: bool = False) -> Review:
-        review.target_project_id = None if self.settings.preview_mode else self.target_project_id
+        review.target_project_id = self.target_project_id
         workspace_policy = store.get("policy_settings", review.workspace_id) or PolicySettings(workspace_id=review.workspace_id)
         self.policy = PolicyEngine(workspace_policy)
         review.status = "Scanning"

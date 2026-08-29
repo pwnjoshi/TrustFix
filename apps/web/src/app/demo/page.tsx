@@ -199,18 +199,7 @@ export default function PublicDemo() {
               </div>
             </dl>
 
-            <div
-              style={{
-                background: "#1b2432",
-                borderRadius: 7,
-                padding: "10px 12px",
-                fontFamily: "var(--font-mono)",
-                fontSize: 9,
-                color: "#9eb8d8",
-                overflowX: "auto",
-                whiteSpace: "pre-wrap",
-              }}
-            >
+            <div className="demo-agent-log">
               {current.agent}
             </div>
 
