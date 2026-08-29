@@ -379,14 +379,14 @@ code {
 .button.secondary {
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%);
   border: 1px solid rgba(255, 255, 255, 0.14);
-  color: #ffffff !important;
+  color: var(--tf-ink);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), inset 0 -1px 0 rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .button.secondary:hover:not(:disabled) {
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.06) 100%);
   border-color: rgba(255, 255, 255, 0.25);
-  color: #ffffff !important;
+  color: var(--tf-ink);
   transform: translateY(-2px);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), inset 0 -1px 0 rgba(0, 0, 0, 0.35), 0 6px 16px rgba(0, 0, 0, 0.4);
 }
@@ -399,15 +399,80 @@ code {
 .button.dark-outline {
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.12);
-  color: #ffffff !important;
+  color: var(--tf-ink);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 .button.dark-outline:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.09);
   border-color: rgba(255, 255, 255, 0.22);
-  color: #ffffff !important;
+  color: var(--tf-ink);
   transform: translateY(-2px);
+}
+
+/* Light mode explicit button overrides */
+html[data-theme="light"] .button.secondary,
+html[data-theme="light"] .button.dark-outline {
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%) !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #0f172a !important;
+  box-shadow: inset 0 1px 0 #ffffff, 0 1px 2px rgba(15, 23, 42, 0.06) !important;
+}
+
+html[data-theme="light"] .button.secondary:hover:not(:disabled),
+html[data-theme="light"] .button.dark-outline:hover:not(:disabled) {
+  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%) !important;
+  border-color: #94a3b8 !important;
+  color: #0f172a !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.1) !important;
+}
+
+/* ── Sidebar Dark Contrast Isolation ───────────────────────────── */
+aside.sidebar,
+.sidebar {
+  background: #0b0f19 !important;
+  border-right: 1px solid #1a2333 !important;
+  color: #f8fafc !important;
+}
+
+.sidebar .brand {
+  color: #f8fafc !important;
+}
+
+.sidebar .brand strong {
+  color: #f8fafc !important;
+}
+
+.sidebar a {
+  color: #94a3b8 !important;
+}
+
+.sidebar a:hover,
+.sidebar a.active {
+  color: #ffffff !important;
+  background: #182235 !important;
+}
+
+.sidebar .nav-label {
+  color: #64748b !important;
+}
+
+.sidebar .workspace-card,
+.sidebar .user-card {
+  background: #121927 !important;
+  border: 1px solid #1e293b !important;
+  color: #f8fafc !important;
+}
+
+.sidebar .workspace-card strong,
+.sidebar .user-card strong {
+  color: #f8fafc !important;
+}
+
+.sidebar .workspace-card small,
+.sidebar .user-card small {
+  color: #94a3b8 !important;
 }
 
 .button.luminous {
@@ -498,12 +563,12 @@ code {
 /* ── Toast Notifications ─────────────────────────────────────────── */
 .toast-container {
   position: fixed;
-  bottom: 24px;
+  top: 24px;
   right: 24px;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  z-index: 100;
+  z-index: 1000;
   pointer-events: none;
 }
 

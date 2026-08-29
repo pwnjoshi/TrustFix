@@ -12,7 +12,7 @@ export function Mark({ compact = false, size = 26 }: { compact?: boolean; size?:
         style={{ objectFit: "contain", display: "inline-block", width: size, height: size }}
       />
       {!compact && (
-        <span style={{ fontSize: "16px", fontWeight: 750, letterSpacing: "-0.03em", color: "var(--tf-ink)" }}>
+        <span style={{ fontSize: "16px", fontWeight: 750, letterSpacing: "-0.03em", color: "currentColor" }}>
           Trust<span style={{ color: "#10b981" }}>Fix</span>
         </span>
       )}
