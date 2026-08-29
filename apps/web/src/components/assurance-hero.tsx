@@ -106,6 +106,8 @@ export function AssuranceHero() {
   const [outcomeIndex, setOutcomeIndex] = useState(0);
   const [activeStep, setActiveStep] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const windowRef = useRef<HTMLDivElement>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -120,18 +122,36 @@ export function AssuranceHero() {
     if (!isPlaying) return;
     timerRef.current = setTimeout(() => {
       setActiveStep((prev) => (prev + 1) % heroSteps.length);
-    }, 3200);
+    }, 3400);
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
   }, [isPlaying, activeStep]);
 
+  // Parallax zoom effect on scroll
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollY = window.scrollY;
+      const progress = Math.min(scrollY / 500, 1);
+      setScrollProgress(progress);
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   const current = heroSteps[activeStep];
   const isVerified = current.status === "VERIFIED";
 
+  // Interpolate smooth 3D scale and tilt based on scroll
+  const scale = 0.95 + scrollProgress * 0.05;
+  const translateY = (1 - scrollProgress) * 20;
+  const rotateX = (1 - scrollProgress) * 3.5;
+  const glowOpacity = 0.6 + scrollProgress * 0.4;
+
   return (
     <section className="hero-v3">
-      <div className="hero-v3-glow" />
+      <div className="hero-v3-glow" style={{ opacity: glowOpacity }} />
       <div className="hero-v3-grid" />
       <div className="hero-v3-copy">
         <div className="hero-v3-badge">
@@ -161,7 +181,16 @@ export function AssuranceHero() {
         </div>
       </div>
 
-      <div className="proof-window" aria-label="TrustFix live assurance simulation console">
+      <div
+        ref={windowRef}
+        className="proof-window parallax-zoom-window"
+        aria-label="TrustFix live assurance simulation console"
+        style={{
+          transform: `perspective(1200px) scale(${scale}) translateY(${translateY}px) rotateX(${rotateX}deg)`,
+          transformOrigin: "center top",
+          transition: "transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease",
+        }}
+      >
         <header>
           <div className="window-dots"><i /><i /><i /></div>
           <strong>TRUSTFIX · AUTONOMOUS ASSURANCE ENGINE</strong>
@@ -188,8 +217,8 @@ export function AssuranceHero() {
           </button>
         </header>
 
-        <div className="proof-window-body">
-          <aside>
+        <div className="proof-window-body" style={{ minHeight: "410px" }}>
+          <aside style={{ width: "160px", flexShrink: 0 }}>
             {heroSteps.map((s, idx) => (
               <button
                 key={s.step}
@@ -211,49 +240,62 @@ export function AssuranceHero() {
             ))}
           </aside>
 
-          <main>
-            <div className="proof-question">
-              <div>
+          <main style={{ flex: 1, minWidth: 0 }}>
+            <div className="proof-question" style={{ minHeight: "56px", alignItems: "flex-start" }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
                 <span className="micro">{current.badge}</span>
-                <h2>{current.title}</h2>
+                <h2 style={{ fontSize: "15px", lineHeight: "1.3", margin: "4px 0 0" }}>{current.title}</h2>
               </div>
-              <span className={`status ${isVerified ? "verified" : current.status === "FAILED" ? "failed" : "needs-review"}`}>
+              <span
+                className={`status ${isVerified ? "verified" : current.status === "FAILED" ? "failed" : "needs-review"}`}
+                style={{ flexShrink: 0, marginLeft: "12px" }}
+              >
                 {isVerified ? <CheckCircle weight="fill" /> : <Warning weight="fill" />} {current.statusText}
               </span>
             </div>
 
-            <div className="proof-resource">
+            <div className="proof-resource" style={{ minHeight: "52px", alignItems: "center" }}>
               <span className="proof-resource-icon">
                 {isVerified ? <LockKey size={20} /> : <Cloud size={20} />}
               </span>
-              <div>
-                <strong>{current.resource}</strong>
-                <small>{current.resourceSub}</small>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <strong style={{ display: "block", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>
+                  {current.resource}
+                </strong>
+                <small style={{ display: "block", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>
+                  {current.resourceSub}
+                </small>
               </div>
-              <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.06em", marginLeft: "auto" }}>
+              <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.06em", marginLeft: "12px", flexShrink: 0 }}>
                 {current.risk}
               </span>
             </div>
 
-            <div className="proof-flow">
+            <div className="proof-flow" style={{ minHeight: "72px" }}>
               {current.flow.map((f, i) => (
-                <div key={f.num} className={isVerified && i === 2 ? "flow-success" : ""}>
+                <div key={f.num} className={isVerified && i === 2 ? "flow-success" : ""} style={{ flex: 1, minWidth: 0 }}>
                   <span className="flow-number">{f.num}</span>
                   <p>
                     <small>{f.label}</small>
-                    <strong>{f.text}</strong>
+                    <strong style={{ display: "block", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>
+                      {f.text}
+                    </strong>
                   </p>
                 </div>
               ))}
             </div>
 
-            <div className="proof-decision">
-              <span><Lightning weight="fill" /></span>
-              <div>
+            <div className="proof-decision" style={{ minHeight: "52px", alignItems: "center" }}>
+              <span style={{ flexShrink: 0 }}><Lightning weight="fill" /></span>
+              <div style={{ flex: 1, minWidth: 0 }}>
                 <small>TRUSTFIX OPERATIONAL ASSURANCE DECISION</small>
-                <strong>{current.decision}</strong>
+                <strong style={{ display: "block", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>
+                  {current.decision}
+                </strong>
               </div>
-              <span className="proof-awaiting">{current.statusBadge}</span>
+              <span className="proof-awaiting" style={{ flexShrink: 0, marginLeft: "12px" }}>
+                {current.statusBadge}
+              </span>
             </div>
           </main>
         </div>

@@ -1749,33 +1749,95 @@ code {
 }
 
 /* ── Marketing Footer ────────────────────────────────────────────── */
-footer {
-  margin-top: auto;
+.marketing-footer-v2 {
+  margin-top: 80px;
   border-top: 1px solid var(--tf-line);
-  background: var(--tf-canvas);
-  padding: 24px 0;
-}
-
-footer>div:not(.footer-links), footer {
-  max-width: 1240px;
+  background: var(--tf-surface-sunken);
+  padding: 64px 24px 40px;
   width: 100%;
-  margin: auto;
+}
+
+.footer-columns {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 48px;
+}
+
+.footer-brand-col {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 24px;
-  font-size: 12px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.footer-brand-col p {
+  font-size: 13px;
+  line-height: 1.6;
   color: var(--tf-ink-muted);
+  max-width: 320px;
+  margin: 0;
 }
 
-.footer-links {
+.footer-badge {
+  display: inline-flex;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  background: var(--tf-surface-raised);
+  border: 1px solid var(--tf-line);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--tf-ink-secondary);
+}
+
+.footer-copy {
+  font-size: 11px;
+  color: var(--tf-ink-faint);
+  margin-top: 12px;
+}
+
+.footer-nav-col {
   display: flex;
-  align-items: center;
-  gap: 20px;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.footer-links a:hover {
+.footer-nav-col strong {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
   color: var(--tf-ink);
+  margin-bottom: 4px;
+}
+
+.footer-nav-col a {
+  font-size: 13px;
+  color: var(--tf-ink-muted);
+  transition: color var(--duration-fast) ease;
+}
+
+.footer-nav-col a:hover {
+  color: var(--tf-verified-text);
+}
+
+@media (max-width: 860px) {
+  .footer-columns {
+    grid-template-columns: 1fr 1fr;
+    gap: 36px;
+  }
+  .footer-brand-col {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 520px) {
+  .footer-columns {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* ── Inner Marketing Pages (Product / Security / Demo / 404) ─────── */

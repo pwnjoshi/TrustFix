@@ -50,7 +50,13 @@ export function MarketingHeader() {
           >
             Product
           </Link>
-          <Link href="/#controls">Controls</Link>
+          <Link
+            href="/controls"
+            className={isLinkActive("/controls") ? "active" : ""}
+            aria-current={isLinkActive("/controls") ? "page" : undefined}
+          >
+            Controls
+          </Link>
           <Link
             href="/security"
             className={isLinkActive("/security") ? "active" : ""}
@@ -106,7 +112,14 @@ export function MarketingHeader() {
           >
             Product
           </Link>
-          <Link href="/#controls" onClick={close}>Controls</Link>
+          <Link
+            href="/controls"
+            onClick={close}
+            className={isLinkActive("/controls") ? "active" : ""}
+            aria-current={isLinkActive("/controls") ? "page" : undefined}
+          >
+            Controls
+          </Link>
           <Link
             href="/security"
             onClick={close}
@@ -139,15 +152,45 @@ export function MarketingHeader() {
 
 export function MarketingFooter() {
   return (
-    <footer>
-      <Mark />
-      <div className="footer-links">
-        <Link href="/product">Product</Link>
-        <Link href="/demo">Demo</Link>
-        <Link href="/security">Security</Link>
-        <a href="/app">Start for free</a>
+    <footer className="marketing-footer-v2">
+      <div className="footer-columns">
+        <div className="footer-brand-col">
+          <Mark />
+          <p>
+            Autonomous Google Cloud assurance.
+            Verifying requirements against live infrastructure and proving the result.
+          </p>
+          <div className="footer-badge">
+            <span>BUILT WITH GOOGLE ADK & GEMINI 3.5</span>
+          </div>
+          <span className="footer-copy">© 2026 TrustFix. All rights reserved.</span>
+        </div>
+
+        <div className="footer-nav-col">
+          <strong>PRODUCT</strong>
+          <Link href="/product">Platform Overview</Link>
+          <Link href="/controls">Controls Catalog</Link>
+          <Link href="/security">Security & Boundaries</Link>
+          <Link href="/demo">Interactive Walkthrough</Link>
+        </div>
+
+        <div className="footer-nav-col">
+          <strong>WORKSPACE</strong>
+          <a href="/app">Command Center</a>
+          <a href="/app/reviews">Reviews Studio</a>
+          <a href="/app/findings">Finding Governance</a>
+          <a href="/app/evidence">Evidence Records</a>
+          <a href="/app/activity">Audit Timeline</a>
+        </div>
+
+        <div className="footer-nav-col">
+          <strong>GOVERNANCE</strong>
+          <a href="/app/integrations">Keyless GCP Boundary</a>
+          <a href="/app/policies">Mutation Policies</a>
+          <a href="/app/team">Team Access & Roles</a>
+          <a href="/app/onboarding">Workspace Setup</a>
+        </div>
       </div>
-      <span>© 2026 TrustFix</span>
     </footer>
   );
 }
