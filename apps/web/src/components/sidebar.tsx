@@ -83,31 +83,38 @@ export function Sidebar({ open, close }: { open: boolean; close: () => void }) {
           <span className="nav-label">Workspace</span>
           {group(workspace)}
         </nav>
-        <div className="workspace-card">
-          <span className="avatar small">T</span>
-          <div>
-            <strong>TrustFix workspace</strong>
-            <small>Firestore-backed</small>
+        <div className="sidebar-footer-container" style={{ marginTop: "auto", paddingTop: "16px", borderTop: "1px solid rgba(255,255,255,0.08)", display: "flex", flexDirection: "column", gap: "10px" }}>
+          {/* Workspace Card */}
+          <div className="workspace-card" style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px" }}>
+            <span className="avatar small" style={{ width: "24px", height: "24px", borderRadius: "6px", background: "rgba(37,99,235,0.2)", color: "#60a5fa", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: "12px" }}>T</span>
+            <div style={{ display: "flex", flexDirection: "column", flex: 1, minWidth: 0 }}>
+              <strong style={{ fontSize: "12px", color: "#f8fafc", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>TrustFix Workspace</strong>
+              <small style={{ fontSize: "11px", color: "#94a3b8" }}>Firestore-backed</small>
+            </div>
+            <ThemeToggle compact />
           </div>
-        </div>
-        <ThemeToggle />
-        <div className="user-card">
-          <span className="avatar" aria-hidden="true">{initials}</span>
-          <div>
-            <strong>
-              {user === undefined ? "Loading…" : user?.display_name ?? "Signed-in user"}
-            </strong>
-            <small>
-              {user === undefined
-                ? "Checking session…"
-                : user
-                ? `${user.role} · ${user.email}`
-                : "Session unavailable"}
-            </small>
+
+          {/* User Account Card */}
+          <div className="user-card" style={{ display: "flex", alignItems: "center", gap: "10px", padding: "10px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px" }}>
+            <span className="avatar" style={{ width: "28px", height: "28px", borderRadius: "50%", background: "#1e293b", color: "#f8fafc", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: "12px", border: "1px solid rgba(255,255,255,0.15)" }}>
+              {initials}
+            </span>
+            <div style={{ display: "flex", flexDirection: "column", flex: 1, minWidth: 0 }}>
+              <strong style={{ fontSize: "12px", color: "#f8fafc", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                {user === undefined ? "Loading…" : user?.display_name ?? "Signed-in user"}
+              </strong>
+              <small style={{ fontSize: "10px", color: "#94a3b8", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                {user === undefined
+                  ? "Checking session…"
+                  : user
+                  ? `${user.role} · ${user.email}`
+                  : "Session unavailable"}
+              </small>
+            </div>
+            <a href="/_gcp_iap/clear_login_cookie" className="sign-out" style={{ fontSize: "11px", fontWeight: 600, color: "#60a5fa", textDecoration: "none", padding: "4px 6px", borderRadius: "4px", background: "rgba(37,99,235,0.1)" }}>
+              Sign out
+            </a>
           </div>
-          <a href="/_gcp_iap/clear_login_cookie" className="sign-out" style={{ fontSize: 10, color: "var(--muted)", marginLeft: "auto" }}>
-            Sign out
-          </a>
         </div>
       </aside>
     </>

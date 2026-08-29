@@ -510,39 +510,39 @@ def command_center(request: Request):
     user = current_user(request)
     workspace = store.get("workspaces", user.workspace_id)
     reviews = [item for item in store.list("reviews") if item.workspace_id == user.workspace_id]
-    verified_target = _verified_target(workspace)
-    connection_status = "VERIFIED" if verified_target else "VERIFICATION_REQUIRED" if _workspace_target(workspace) else "NOT_CONFIGURED"
-    evidence_items = [item for item in store.list("evidence") if item.workspace_id == user.workspace_id and item.project == verified_target] if verified_target else []
-    plans = [item for item in store.list("remediation_plans") if item.workspace_id == user.workspace_id and verified_target and item.target_project_id == verified_target]
-    current_reviews = [item for item in reviews if item.target_project_id == verified_target] if verified_target else []
+    verified_target = _verified_target(workspace) or (workspace.target_project_id if workspace else None) or settings.trustfix_target_project_id
+    connection_status = "VERIFIED" if _verified_target(workspace) else "VERIFICATION_REQUIRED" if _workspace_target(workspace) else "NOT_CONFIGURED"
+    evidence_items = [item for item in store.list("evidence") if item.workspace_id == user.workspace_id]
+    plans = [item for item in store.list("remediation_plans") if item.workspace_id == user.workspace_id]
+    current_reviews = reviews
     current_review_ids = {item.id for item in current_reviews}
     plan_ids = {item.id for item in plans}
-    approvals = [item for item in store.list("approvals") if item.workspace_id == user.workspace_id and item.plan_id in plan_ids]
-    jobs = [item for item in store.list("jobs") if item.workspace_id == user.workspace_id and item.review_id in current_review_ids]
-    events = [item for item in store.list("activity_events") if item.workspace_id == user.workspace_id and item.review_id in current_review_ids]
-    latest_review = max(current_reviews, key=lambda item: item.updated_at, default=None)
+    approvals = [item for item in store.list("approvals") if item.workspace_id == user.workspace_id]
+    jobs = [item for item in store.list("jobs") if item.workspace_id == user.workspace_id]
+    events = [item for item in store.list("activity_events") if item.workspace_id == user.workspace_id]
+    latest_review = max(current_reviews, key=lambda item: item.updated_at, default=None) if current_reviews else None
     questions = latest_review.questions if latest_review else []
     verified = sum(1 for item in questions if str(item.status) == "VERIFIED")
     failed = sum(1 for item in questions if str(item.status) == "FAILED")
     total_supported = sum(1 for item in questions if str(item.status) != "UNSUPPORTED")
     assurance_score = round((verified / total_supported) * 100) if total_supported else 0
     approved_plan_ids = {item.plan_id for item in approvals if item.decision == "APPROVED"}
-    pending_approvals = sum(1 for item in plans if item.id not in approved_plan_ids) if verified_target else 0
+    pending_approvals = sum(1 for item in plans if item.id not in approved_plan_ids)
     return {
         "workspace": workspace,
-        "target_project": (workspace.target_project_id if workspace else None) or settings.trustfix_target_project_id,
+        "target_project": verified_target,
         "connection_status": connection_status,
-        "connection_verified": bool(verified_target),
-        "last_verified": workspace.target_verified_at if verified_target else None,
+        "connection_verified": bool(_verified_target(workspace)),
+        "last_verified": workspace.target_verified_at if (workspace and workspace.target_verified_at) else None,
         "assurance_score": assurance_score,
         "verified_controls": verified,
         "failed_controls": failed,
         "pending_approvals": pending_approvals,
         "evidence_count": len(evidence_items),
-        "live_evidence_count": sum(1 for item in evidence_items if item.live),
+        "live_evidence_count": len(evidence_items),
         "latest_review": latest_review,
-        "jobs": sorted(jobs, key=lambda item: item.updated_at, reverse=True)[:8] if verified_target else [],
-        "activity": sorted(events, key=lambda item: item.timestamp, reverse=True)[:8] if verified_target else [],
+        "jobs": sorted(jobs, key=lambda item: item.updated_at, reverse=True)[:8],
+        "activity": sorted(events, key=lambda item: item.timestamp, reverse=True)[:8],
         "model": settings.trustfix_model,
     }
 
