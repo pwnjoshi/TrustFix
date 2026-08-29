@@ -1,4 +1,4 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 import {
   ArrowRight, CheckCircle, Cloud, Code, Fingerprint,
   HardDrives, LockKey, ShieldCheck, ShieldWarning, Warning
@@ -65,11 +65,11 @@ export default function ControlsPage() {
           Zero hallucinated answers—every control is inspected live and proved with evidence.
         </p>
         <div className="hero-actions">
-          <Link className="button primary" href="/app">
-            Connect your project <ArrowRight size={14} />
-          </Link>
-          <Link className="button secondary" href="/demo">
-            Test controls in demo
+          <a className="button primary" href="/app">
+            Launch live workspace <ArrowRight size={14} />
+          </a>
+          <Link className="button secondary" href="/security">
+            Security & Boundaries
           </Link>
         </div>
       </section>

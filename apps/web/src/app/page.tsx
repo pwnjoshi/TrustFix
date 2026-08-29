@@ -56,19 +56,19 @@ export default function Landing() {
       {/* Two Paths */}
       <section className="experience-choice home-choice">
         <article>
-          <span className="status neutral">No cloud login required</span>
-          <h3>Explore the interactive demo</h3>
-          <p>Walk through question → finding → approval → remediation → independent proof with clearly labeled illustrative data.</p>
-          <Link href="/demo">
-            Launch interactive walkthrough <ArrowRight />
+          <span className="status neutral">Full Coverage</span>
+          <h3>Explore Supported Controls</h3>
+          <p>Inspect our deterministic rulebook for Cloud Storage IAM, Cloud Run Invoker, and Compute Engine firewall perimeters.</p>
+          <Link href="/controls">
+            View controls catalog <ArrowRight size={14} />
           </Link>
         </article>
         <article>
-          <span className="status verified">Real Google Cloud</span>
-          <h3>Start your protected workspace</h3>
-          <p>Connect a verified Google Cloud project, preserve evidence, approve governed changes, and export an auditor-ready Proof Pack.</p>
+          <span className="status verified">Live Protected Workspace</span>
+          <h3>Start Production Workspace</h3>
+          <p>Connect a verified Google Cloud project, preserve cryptographic evidence, approve governed changes, and export audit Proof Packs.</p>
           <a href="/app">
-            Open workspace <ArrowRight />
+            Open workspace <ArrowRight size={14} />
           </a>
         </article>
       </section>
@@ -238,13 +238,13 @@ export default function Landing() {
           See autonomous assurance<br />
           finish the work.
         </h2>
-        <p>Explore publicly with illustrative data, or connect a disposable Google Cloud project for live evidence.</p>
+        <p>Explore our deterministic controls catalog, or launch your live workspace backed by Google Cloud IAM.</p>
         <div className="hero-actions">
-          <Link className="button secondary" href="/demo">
-            Explore without login
+          <Link className="button secondary" href="/controls">
+            Explore controls catalog
           </Link>
           <a className="button primary" href="/app">
-            Start for free <ArrowRight />
+            Launch live workspace <ArrowRight size={14} />
           </a>
         </div>
       </section>
