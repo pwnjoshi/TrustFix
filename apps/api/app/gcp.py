@@ -110,12 +110,12 @@ class GcpControlAdapter:
             return (await client.get(url)).status_code
 
 
-def preview_evidence(workspace_id: str, control_id: str) -> list[Evidence]:
+def preview_evidence(workspace_id: str, control_id: str, project_id: str = "trustfix-demo-target") -> list[Evidence]:
     """Explicitly labelled sample observations for local UI review, never acceptance evidence."""
     samples = {
         "GCP_STORAGE_PUBLIC_ACCESS": ("trustfix-public-storage-demo", "gs://trustfix-public-storage-demo", "Public principals have bucket access.", {"public_principals": [{"role": "roles/storage.objectViewer", "members": ["allUsers"]}], "public_access_prevention": "inherited"}),
-        "GCP_RUN_PUBLIC_INVOKER": ("trustfix-public-run-demo", "projects/trustfix-demo-target/locations/us-central1/services/trustfix-public-run-demo", "allUsers has roles/run.invoker.", {"all_users_invoker": True}),
+        "GCP_RUN_PUBLIC_INVOKER": ("trustfix-public-run-demo", f"projects/{project_id}/locations/us-central1/services/trustfix-public-run-demo", "allUsers has roles/run.invoker.", {"all_users_invoker": True}),
         "GCP_FIREWALL_ADMIN_EXPOSURE": ("trustfix-open-ssh-demo", "trustfix-open-ssh-demo", "Internet exposure detected on TCP 22.", {"source_ranges": ["0.0.0.0/0"], "exposed_admin_ports": ["22"], "disabled": False}),
     }
     name, identifier, observation, properties = samples[control_id]
-    return [Evidence(workspace_id=workspace_id, control_id=control_id, source="PREVIEW DATA — connect a disposable GCP project for live evidence", project="trustfix-demo-target (preview)", resource=name, resource_identifier=identifier, observation=observation, relevant_properties=properties, raw=properties, live=False)]
+    return [Evidence(workspace_id=workspace_id, control_id=control_id, source="PREVIEW DATA — connect a disposable GCP project for live evidence", project=f"{project_id} (preview)", resource=name, resource_identifier=identifier, observation=observation, relevant_properties=properties, raw=properties, live=False)]
