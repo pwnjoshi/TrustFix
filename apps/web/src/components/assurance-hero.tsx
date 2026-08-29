@@ -102,8 +102,40 @@ const heroSteps = [
   },
 ];
 
+const telemetryBadges = [
+  {
+    tag: "LIVE AGENT ENGINE",
+    detail: "Gemini 3.5 Flash · Google ADK",
+    sub: "Zero Hallucinations",
+    href: "/security",
+    color: "#10b981",
+  },
+  {
+    tag: "KEYLESS GCP SCANNER",
+    detail: "Direct Google Cloud IAM APIs",
+    sub: "Zero Static Credentials",
+    href: "/controls",
+    color: "#38bdf8",
+  },
+  {
+    tag: "DETERMINISTIC VERIFIER",
+    detail: "External HTTP 403 Probes",
+    sub: "100% Code-Proved",
+    href: "/demo",
+    color: "#818cf8",
+  },
+  {
+    tag: "AUDIT PROOF PACK",
+    detail: "SHA-256 Cryptographic Ledger",
+    sub: "Tamper-Evident Artifacts",
+    href: "/product",
+    color: "#fbbf24",
+  },
+];
+
 export function AssuranceHero() {
   const [outcomeIndex, setOutcomeIndex] = useState(0);
+  const [telemetryIndex, setTelemetryIndex] = useState(0);
   const [activeStep, setActiveStep] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
   const [scrollProgress, setScrollProgress] = useState(0);
@@ -115,7 +147,14 @@ export function AssuranceHero() {
       () => setOutcomeIndex((current) => (current + 1) % proofOutcomes.length),
       2800
     );
-    return () => window.clearInterval(outcomeTimer);
+    const telemetryTimer = window.setInterval(
+      () => setTelemetryIndex((current) => (current + 1) % telemetryBadges.length),
+      3400
+    );
+    return () => {
+      window.clearInterval(outcomeTimer);
+      window.clearInterval(telemetryTimer);
+    };
   }, []);
 
   useEffect(() => {
@@ -141,6 +180,7 @@ export function AssuranceHero() {
   }, []);
 
   const current = heroSteps[activeStep];
+  const activeTelemetry = telemetryBadges[telemetryIndex];
   const isVerified = current.status === "VERIFIED";
 
   // Interpolate smooth 3D scale and tilt based on scroll
@@ -154,9 +194,17 @@ export function AssuranceHero() {
       <div className="hero-v3-glow" style={{ opacity: glowOpacity }} />
       <div className="hero-v3-grid" />
       <div className="hero-v3-copy">
-        <div className="hero-v3-badge">
-          <span /> AUTONOMOUS CLOUD ASSURANCE <small>POWERED BY GOOGLE ADK & GEMINI</small>
-        </div>
+        <Link
+          href={activeTelemetry.href}
+          className="hero-v3-badge interactive-telemetry-badge"
+          title="Click to explore this capability & architecture"
+        >
+          <span style={{ background: activeTelemetry.color, boxShadow: `0 0 10px ${activeTelemetry.color}` }} />
+          <strong>{activeTelemetry.tag}</strong>
+          <small>{activeTelemetry.detail}</small>
+          <span className="badge-tag-extra">{activeTelemetry.sub}</span>
+          <ArrowRight size={11} className="badge-arrow" />
+        </Link>
         <h1 aria-label="Turn cloud risk into verified evidence.">
           <span>Turn cloud risk into</span>
           <span className="hero-v3-outcome" aria-hidden="true">
