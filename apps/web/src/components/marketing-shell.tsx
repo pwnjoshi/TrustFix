@@ -64,16 +64,9 @@ export function MarketingHeader() {
           >
             Security
           </Link>
-          <Link
-            href="/demo"
-            className={isLinkActive("/demo") ? "active" : ""}
-            aria-current={isLinkActive("/demo") ? "page" : undefined}
-          >
-            Public demo
-          </Link>
           <ThemeToggle compact />
           <a className="button primary" href="/app">
-            {insideWorkspace ? "Open workspace" : "Start for free"} <ArrowRight size={14} />
+            {insideWorkspace ? "Open workspace" : "Launch workspace"} <ArrowRight size={14} />
           </a>
         </div>
         <button
@@ -128,20 +121,12 @@ export function MarketingHeader() {
           >
             Security
           </Link>
-          <Link
-            href="/demo"
-            onClick={close}
-            className={isLinkActive("/demo") ? "active" : ""}
-            aria-current={isLinkActive("/demo") ? "page" : undefined}
-          >
-            Public demo
-          </Link>
           <div style={{ padding: "12px 0", borderBottom: "1px solid var(--tf-line)" }}>
             <ThemeToggle />
           </div>
           <a href="/app" style={{ borderBottom: "none", paddingTop: 20, display: "flex", flexDirection: "column", gap: 10 }}>
             <span className="button primary wide" style={{ display: "flex" }}>
-              {insideWorkspace ? "Open workspace" : "Start for free"} <ArrowRight size={14} />
+              {insideWorkspace ? "Open workspace" : "Launch workspace"} <ArrowRight size={14} />
             </span>
           </a>
         </div>
@@ -171,7 +156,7 @@ export function MarketingFooter() {
           <Link href="/product">Platform Overview</Link>
           <Link href="/controls">Controls Catalog</Link>
           <Link href="/security">Security & Boundaries</Link>
-          <Link href="/demo">Interactive Walkthrough</Link>
+          <a href="/app">Live Workspace</a>
         </div>
 
         <div className="footer-nav-col">

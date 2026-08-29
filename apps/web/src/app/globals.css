@@ -30,55 +30,59 @@
 /* ── Dark Theme (Default) ───────────────────────────────────────── */
 html[data-theme="dark"],
 :root {
-  /* Canvas & Base Surfaces */
-  --tf-canvas: #090d15;
-  --tf-canvas-subtle: #0d131f;
-  --tf-surface: #121927;
-  --tf-surface-raised: #182235;
-  --tf-surface-overlay: #1e2b42;
+  /* Canvas & Base Surfaces (Logo-Harmonized Midnight Obsidian) */
+  --tf-canvas: #080b11;
+  --tf-canvas-subtle: #0d121c;
+  --tf-surface: #111723;
+  --tf-surface-raised: #172030;
+  --tf-surface-overlay: #1e2a3e;
   --tf-surface-hover: rgba(255, 255, 255, 0.04);
   --tf-surface-sunken: #06090e;
 
   /* Ink & Typography */
-  --tf-ink: #f1f5f9;
+  --tf-ink: #f8fafc;
   --tf-ink-secondary: #cbd5e1;
   --tf-ink-muted: #94a3b8;
   --tf-ink-faint: #64748b;
-  --tf-ink-inverse: #090d15;
+  --tf-ink-inverse: #080b11;
 
   /* Structural Lines & Borders */
   --tf-line: #1e293b;
   --tf-line-strong: #334155;
   --tf-line-subtle: rgba(255, 255, 255, 0.07);
 
-  /* Semantic Ontological Palette */
-  /* 1. Verified Fact (Green) */
+  /* Semantic Ontological Palette (Direct from Official Logo) */
+  /* 1. Verified Fact & Logo Chevron (Mint Emerald) */
   --tf-verified: #10b981;
-  --tf-verified-soft: rgba(16, 185, 129, 0.12);
-  --tf-verified-line: rgba(16, 185, 129, 0.35);
-  --tf-verified-glow: rgba(16, 185, 129, 0.20);
+  --tf-verified-soft: rgba(16, 185, 129, 0.10);
+  --tf-verified-line: rgba(16, 185, 129, 0.30);
+  --tf-verified-glow: rgba(16, 185, 129, 0.18);
   --tf-verified-text: #34d399;
 
-  /* 2. Unverified Claim / Human Gate / Pending (Amber) */
+  /* 2. Primary Engine & Logo Wing (Electric Royal Blue) */
+  --tf-brand-blue: #2563eb;
+  --tf-brand-blue-hover: #1d4ed8;
+  --tf-brand-blue-soft: rgba(37, 99, 235, 0.10);
+  --tf-brand-blue-line: rgba(37, 99, 235, 0.25);
+  --tf-cipher: #3b82f6;
+  --tf-cipher-soft: rgba(59, 130, 246, 0.10);
+  --tf-cipher-line: rgba(59, 130, 246, 0.25);
+  --tf-cipher-glow: rgba(59, 130, 246, 0.18);
+  --tf-cipher-text: #60a5fa;
+
+  /* 3. Unverified Claim / Human Gate / Pending (Amber) */
   --tf-claim: #f59e0b;
-  --tf-claim-soft: rgba(245, 158, 11, 0.12);
-  --tf-claim-line: rgba(245, 158, 11, 0.35);
-  --tf-claim-glow: rgba(245, 158, 11, 0.20);
+  --tf-claim-soft: rgba(245, 158, 11, 0.10);
+  --tf-claim-line: rgba(245, 158, 11, 0.30);
+  --tf-claim-glow: rgba(245, 158, 11, 0.18);
   --tf-claim-text: #fbbf24;
 
-  /* 3. Assurance Gap / Failed Control (Crimson) */
-  --tf-gap: #f43f5e;
-  --tf-gap-soft: rgba(244, 63, 94, 0.12);
-  --tf-gap-line: rgba(244, 63, 94, 0.35);
-  --tf-gap-glow: rgba(244, 63, 94, 0.20);
-  --tf-gap-text: #fb7185;
-
-  /* 4. Active Scanner / Orchestrator / Cipher (Cyan/Blue) */
-  --tf-cipher: #38bdf8;
-  --tf-cipher-soft: rgba(56, 189, 248, 0.10);
-  --tf-cipher-line: rgba(56, 189, 248, 0.30);
-  --tf-cipher-glow: rgba(56, 189, 248, 0.20);
-  --tf-cipher-text: #7dd3fc;
+  /* 4. Assurance Gap / Failed Control (Crimson) */
+  --tf-gap: #ef4444;
+  --tf-gap-soft: rgba(239, 68, 68, 0.10);
+  --tf-gap-line: rgba(239, 68, 68, 0.30);
+  --tf-gap-glow: rgba(239, 68, 68, 0.18);
+  --tf-gap-text: #f87171;
 
   /* Sidebar Tokens */
   --tf-sidebar-bg: #0b0f19;
@@ -315,27 +319,34 @@ code {
   color: var(--tf-cipher);
 }
 
-/* ── Buttons ─────────────────────────────────────────────────────── */
+/* ── Buttons (Precision 3D Tactile Design) ─────────────────────────── */
 .button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 8px 14px;
-  font-size: 12px;
+  padding: 8px 16px;
+  font-size: 13px;
   font-weight: 600;
-  border-radius: var(--radius-sm);
+  border-radius: 8px;
   border: 1px solid transparent;
   background: var(--tf-surface-raised);
-  color: var(--tf-ink);
-  transition: all var(--duration-fast) ease;
+  color: #ffffff;
+  transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.15s ease, background 0.15s ease;
   white-space: nowrap;
   user-select: none;
+  cursor: pointer;
+  box-sizing: border-box;
 }
 
 .button:hover {
   background: var(--tf-surface-overlay);
   border-color: var(--tf-line-strong);
+  color: #ffffff;
+}
+
+.button:active {
+  transform: translateY(1px) !important;
 }
 
 .button:disabled {
@@ -345,57 +356,73 @@ code {
 }
 
 .button.primary {
-  background: var(--tf-verified);
-  color: #042f2e;
-  border: 1px solid #059669;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 1px 2px rgba(0, 0, 0, 0.2);
+  background: linear-gradient(180deg, #3b82f6 0%, #2563eb 100%);
+  color: #ffffff !important;
+  border: 1px solid #1d4ed8;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.32), inset 0 -2px 0 rgba(0, 0, 0, 0.22), 0 2px 4px rgba(0, 0, 0, 0.25);
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
 }
 
 .button.primary:hover:not(:disabled) {
-  background: #059669;
-  border-color: #047857;
-  color: #ffffff;
-  transform: translateY(-1px);
+  background: linear-gradient(180deg, #60a5fa 0%, #2563eb 100%);
+  border-color: #1e40af;
+  color: #ffffff !important;
+  transform: translateY(-2px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45), inset 0 -2px 0 rgba(0, 0, 0, 0.3), 0 8px 18px -4px rgba(37, 99, 235, 0.45);
+}
+
+.button.primary:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.35), 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .button.secondary {
-  background: var(--tf-surface-raised);
-  border: 1px solid var(--tf-line);
-  color: var(--tf-ink);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #ffffff !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), inset 0 -1px 0 rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .button.secondary:hover:not(:disabled) {
-  background: var(--tf-surface-overlay);
-  border-color: var(--tf-line-strong);
-  color: var(--tf-ink);
-  transform: translateY(-1px);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.06) 100%);
+  border-color: rgba(255, 255, 255, 0.25);
+  color: #ffffff !important;
+  transform: translateY(-2px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), inset 0 -1px 0 rgba(0, 0, 0, 0.35), 0 6px 16px rgba(0, 0, 0, 0.4);
+}
+
+.button.secondary:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .button.dark-outline {
   background: rgba(255, 255, 255, 0.04);
-  border: 1px solid var(--tf-line);
-  color: var(--tf-ink);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #ffffff !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 .button.dark-outline:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: var(--tf-line-strong);
-  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(255, 255, 255, 0.22);
+  color: #ffffff !important;
+  transform: translateY(-2px);
 }
 
 .button.luminous {
-  background: var(--tf-verified);
-  color: #042f2e;
-  border: 1px solid #059669;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 1px 2px rgba(0, 0, 0, 0.2);
+  background: linear-gradient(180deg, #3b82f6 0%, #2563eb 100%);
+  color: #ffffff !important;
+  border: 1px solid #1d4ed8;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.32), inset 0 -2px 0 rgba(0, 0, 0, 0.22), 0 2px 4px rgba(0, 0, 0, 0.25);
 }
 
 .button.luminous:hover:not(:disabled) {
-  background: #059669;
-  border-color: #047857;
-  color: #ffffff;
-  transform: translateY(-1px);
+  background: linear-gradient(180deg, #60a5fa 0%, #2563eb 100%);
+  border-color: #1e40af;
+  color: #ffffff !important;
+  transform: translateY(-2px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45), inset 0 -2px 0 rgba(0, 0, 0, 0.3), 0 8px 18px -4px rgba(37, 99, 235, 0.45);
 }
 
 .button.wide {

@@ -52,7 +52,14 @@ const steps = [
   },
 ] as const;
 
+import { useRouter } from "next/navigation";
+
 export default function PublicDemo() {
+  const router = useRouter();
+  useEffect(() => {
+    router.replace("/app");
+  }, [router]);
+
   const [stage, setStage] = useState(0);
   const [autoPlay, setAutoPlay] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);

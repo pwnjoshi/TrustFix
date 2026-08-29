@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import {
   ArrowRight, CheckCircle, Cloud, Fingerprint,
-  Lightning, LockKey, Play, ShieldCheck, Warning,
+  Lightning, LockKey, ShieldCheck, Warning,
 } from "@phosphor-icons/react";
 
 const proofOutcomes = ["verified evidence", "governed fixes", "audit-ready proof"];
@@ -105,7 +105,7 @@ const heroSteps = [
 export function AssuranceHero() {
   const [outcomeIndex, setOutcomeIndex] = useState(0);
   const [activeStep, setActiveStep] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(true);
+  const [scrollProgress, setScrollProgress] = useState(0);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -117,23 +117,50 @@ export function AssuranceHero() {
   }, []);
 
   useEffect(() => {
-    if (!isPlaying) return;
     timerRef.current = setTimeout(() => {
       setActiveStep((prev) => (prev + 1) % heroSteps.length);
     }, 3400);
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [isPlaying, activeStep]);
+  }, [activeStep]);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollY = window.scrollY;
+      const progress = Math.min(Math.max(scrollY / 450, 0), 1);
+      setScrollProgress(progress);
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const current = heroSteps[activeStep];
   const isVerified = current.status === "VERIFIED";
 
+  // Parallax calculations
+  const copyOpacity = Math.max(0, 1 - scrollProgress * 1.5);
+  const copyTranslateY = scrollProgress * -45;
+  const copyBlur = scrollProgress * 6;
+  const cardScale = 1 + scrollProgress * 0.05;
+  const cardTranslateY = scrollProgress * -25;
+  const glowOpacity = 0.5 + scrollProgress * 0.5;
+
   return (
     <section className="hero-v3">
-      <div className="hero-v3-glow" />
+      <div className="hero-v3-glow" style={{ opacity: glowOpacity }} />
       <div className="hero-v3-grid" />
-      <div className="hero-v3-copy">
+      <div
+        className="hero-v3-copy"
+        style={{
+          opacity: copyOpacity,
+          transform: `translateY(${copyTranslateY}px)`,
+          filter: `blur(${copyBlur}px)`,
+          transition: "opacity 0.08s ease-out, transform 0.08s ease-out, filter 0.08s ease-out",
+          pointerEvents: copyOpacity < 0.1 ? "none" : "auto",
+        }}
+      >
         <h1 aria-label="Turn cloud risk into verified evidence.">
           <span>Turn cloud risk into</span>
           <span className="hero-v3-outcome" aria-hidden="true">
@@ -144,12 +171,12 @@ export function AssuranceHero() {
           TrustFix inspects live Google Cloud, governs the smallest safe fix, and independently verifies the result with audit-ready proof.
         </p>
         <div className="hero-actions">
-          <Link className="button primary" href="/demo">
-            Explore interactive demo <ArrowRight size={14} />
-          </Link>
-          <a className="button secondary" href="/app">
-            Start for free
+          <a className="button primary" href="/app">
+            Launch live workspace <ArrowRight size={14} />
           </a>
+          <Link className="button secondary" href="/controls">
+            Explore controls catalog
+          </Link>
         </div>
         <div className="hero-v3-trust">
           <span><CheckCircle weight="fill" /> Live cloud inspection</span>
@@ -166,32 +193,45 @@ export function AssuranceHero() {
           maxWidth: "1040px",
           margin: "0 auto",
           boxSizing: "border-box",
+          transform: `scale(${cardScale}) translateY(${cardTranslateY}px)`,
+          transformOrigin: "center top",
+          boxShadow: `0 ${30 + scrollProgress * 30}px ${80 + scrollProgress * 40}px -${20 - scrollProgress * 10}px rgba(0, 0, 0, 0.8), 0 0 ${50 + scrollProgress * 60}px rgba(37, 99, 235, ${0.12 + scrollProgress * 0.25})`,
+          transition: "transform 0.1s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease",
         }}
       >
         <header style={{ height: "42px", minHeight: "42px", maxHeight: "42px", boxSizing: "border-box" }}>
           <div className="window-dots"><i /><i /><i /></div>
-          <strong>TRUSTFIX · AUTONOMOUS ASSURANCE ENGINE</strong>
-          <button
-            type="button"
-            className="sim-play-toggle"
-            onClick={() => setIsPlaying(!isPlaying)}
-            title={isPlaying ? "Pause simulation" : "Play simulation"}
+          <strong style={{ fontFamily: "var(--font-mono)", fontSize: "11px", letterSpacing: "0.06em", color: "var(--tf-ink-secondary)" }}>
+            trustfix-assurance-engine <span style={{ color: "var(--tf-ink-faint)", fontWeight: 400 }}>· gcp-target-verified</span>
+          </strong>
+          <div
             style={{
               marginLeft: "auto",
-              background: "transparent",
-              border: 0,
-              color: isPlaying ? "var(--green)" : "var(--muted)",
-              cursor: "pointer",
               display: "inline-flex",
               alignItems: "center",
-              gap: 5,
-              fontSize: 10,
-              fontWeight: 600,
+              gap: "6px",
+              fontFamily: "var(--font-mono)",
+              fontSize: "10px",
+              fontWeight: 700,
+              letterSpacing: "0.08em",
+              color: "#3b82f6",
+              background: "rgba(37, 99, 235, 0.1)",
+              padding: "3px 8px",
+              borderRadius: "4px",
+              border: "1px solid rgba(37, 99, 235, 0.25)",
             }}
           >
-            <Play size={12} weight={isPlaying ? "fill" : "regular"} />
-            {isPlaying ? "SIMULATING LIVE" : "PAUSED"}
-          </button>
+            <span
+              style={{
+                width: "5px",
+                height: "5px",
+                borderRadius: "50%",
+                background: "#3b82f6",
+                display: "inline-block",
+              }}
+            />
+            ENGINE ACTIVE
+          </div>
         </header>
 
         <div
@@ -212,10 +252,7 @@ export function AssuranceHero() {
               <button
                 key={s.step}
                 type="button"
-                onClick={() => {
-                  setActiveStep(idx);
-                  setIsPlaying(false);
-                }}
+                onClick={() => setActiveStep(idx)}
                 className={idx === activeStep ? "rail-active" : ""}
                 style={{
                   border: "1px solid transparent",
