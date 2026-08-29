@@ -8,10 +8,7 @@ async function proxy(
   request: NextRequest,
   context: { params: Promise<{ path: string[] }> },
 ) {
-  const apiBase = process.env.API_BASE_URL;
-  if (!apiBase) {
-    return NextResponse.json({ detail: "Backend is not configured" }, { status: 503 });
-  }
+  const apiBase = process.env.API_BASE_URL || "http://127.0.0.1:8000";
 
   const { path } = await context.params;
   const target = new URL(path.join("/"), `${apiBase.replace(/\/$/, "")}/`);
