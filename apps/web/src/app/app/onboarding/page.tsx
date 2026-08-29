@@ -65,10 +65,12 @@ export default function OnboardingPage() {
         body: JSON.stringify({ target_project_id: targetProject }),
       });
       const res = await fetch(`${api}/integrations/google-cloud/auto-grant`, { method: "POST" });
-      if (!res.ok) throw new Error("Auto-grant could not be completed via CLI. Please use Cloud Shell.");
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || "Auto-grant could not be completed. Please grant access in Google Cloud Console or Cloud Shell.");
       setAutoGranted(true);
       setConfirmed(true);
     } catch (err) {
+      setAutoGranted(false);
       setError(err instanceof Error ? err.message : "Auto-grant failed");
     } finally {
       setAutoGranting(false);

@@ -261,12 +261,12 @@ def discover_gcp_projects(request: Request):
 
 @app.post("/api/integrations/google-cloud/auto-grant")
 def auto_grant_iam(request: Request):
-    """Automatically run gcloud IAM binding grant with 1-click."""
+    """Run gcloud IAM binding grant against real GCP project."""
     user = current_user(request)
     workspace = store.get("workspaces", user.workspace_id)
     target_project = (workspace.target_project_id if workspace else None) or settings.trustfix_target_project_id
     if not target_project:
-        raise HTTPException(400, "Configure target project first")
+        raise HTTPException(400, "Configure a target project ID first")
 
     import subprocess
     cmd = [
@@ -275,10 +275,17 @@ def auto_grant_iam(request: Request):
         "--role=roles/viewer"
     ]
     try:
-        subprocess.check_output(cmd, text=True, timeout=10)
+        res = subprocess.run(cmd, capture_output=True, text=True, timeout=12)
+        if res.returncode != 0:
+            err = res.stderr.strip() or res.stdout.strip() or f"Project '{target_project}' could not be reached via gcloud."
+            raise HTTPException(400, f"Google Cloud IAM error: {err}")
         return {"status": "SUCCESS", "message": f"Successfully granted Viewer role to scanner on {target_project}"}
-    except Exception:
-        return {"status": "SUCCESS", "message": f"IAM policy binding registered for {target_project}"}
+    except HTTPException:
+        raise
+    except subprocess.TimeoutExpired:
+        raise HTTPException(408, "gcloud command timed out. Please run the command in Google Cloud Shell directly.")
+    except Exception as e:
+        raise HTTPException(400, f"Could not grant IAM permissions automatically: {str(e)}. Please run the command in Google Cloud Shell.")
 
 
 @app.post("/api/integrations/google-cloud/verify", status_code=202)
