@@ -1,11 +1,12 @@
 "use client";
 import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { Bell, List } from "@phosphor-icons/react";
+import { List } from "@phosphor-icons/react";
 import { Article, Gauge, ShieldWarning, SquaresFour } from "@phosphor-icons/react";
 import Link from "next/link";
 import { Sidebar } from "@/components/sidebar";
 import { Mark } from "@/components/brand";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { ErrorBoundary } from "@/components/error-boundary";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -81,9 +82,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <List size={22} />
           </button>
           <Mark />
-          <button aria-label="Notifications" title="No unread notifications" disabled>
-            <Bell size={20} />
-          </button>
+          <ThemeToggle compact />
         </header>
         <ErrorBoundary>
           {children}

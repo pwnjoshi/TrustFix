@@ -98,20 +98,21 @@ uvx google-agents-cli setup
 uv sync
 pnpm install
 Copy-Item .env.example .env.local
+Copy-Item apps/web/.env.example apps/web/.env.local
 ```
+
+*(On macOS / Linux, use `cp .env.example .env.local && cp apps/web/.env.example apps/web/.env.local`)*
 
 The default local configuration uses development authentication, the memory adapter, and preview evidence. Do not place credentials or an OAuth client secret in `.env.local` or any `NEXT_PUBLIC_*` variable.
 
 ### Run
 
 ```powershell
+# Terminal 1 — Next.js frontend (http://localhost:3000)
 pnpm dev
-```
 
-In another terminal:
-
-```powershell
-uv run uvicorn app.main:app --reload --app-dir apps/api --port 8080
+# Terminal 2 — FastAPI backend (http://localhost:8000)
+pnpm api:dev
 ```
 
 Open `http://localhost:3000`.

@@ -17,7 +17,7 @@ Updated: 2026-08-26
 - Public marketing pages hand off to the IAP-protected workspace with full-page navigation, preventing protected API responses from being parsed as public-page JSON.
 - Workspace-scoped Google Cloud target selection, validation, verification, and durable onboarding completion.
 - Production onboarding now explains the exact customer IAM setup, generates a project-specific read-only grant, tests live API access, and blocks completion until that exact project is verified.
-- Public demo links are canonical to `thetrustfix.xyz`, workspace entry is the only IAP handoff, signed-out CTAs use `Start for free`, and authenticated workspace pages use `Open workspace`.
+- Public demo and marketing links use clean relative in-repo routes (`/demo`, `/product`, `/security`, `/#controls`), workspace entry is the IAP handoff, signed-out CTAs use `Start for free`, and authenticated workspace pages use `Open workspace`.
 - Persistent system-aware light and dark themes cover the marketing site, mobile navigation, onboarding, and authenticated product workspace.
 - Theme preference now synchronizes across routes and tabs, survives the public-site to IAP-workspace origin handoff, initializes before paint, and is directly controllable from onboarding.
 - Command Center now exposes verified-boundary freshness, supported-control coverage, real-data operator shortcuts, manual refresh, responsive action hierarchy, and theme-correct operational panels.

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
-  Article, Bell, CirclesThreePlus, Gauge, Gear, List,
+  Article, CirclesThreePlus, Gauge, Gear, List,
   ListChecks, Pulse, Scroll, ShieldWarning, SquaresFour,
   UsersThree, X,
 } from "@phosphor-icons/react";
@@ -115,4 +115,4 @@ export function Sidebar({ open, close }: { open: boolean; close: () => void }) {
 }
 
 // Re-export for use in app layout
-export { Bell, List };
+export { List };
