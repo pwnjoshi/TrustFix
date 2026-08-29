@@ -42,6 +42,27 @@ def _firewall_evaluator(evidence: list[Evidence]) -> tuple[ControlStatus, str]:
     return ControlStatus.VERIFIED, "No ingress firewall rule exposes administrative ports to the internet."
 
 
+def _sql_evaluator(evidence: list[Evidence]) -> tuple[ControlStatus, str]:
+    public = [e for e in evidence if e.relevant_properties.get("has_public_ip")]
+    if public:
+        return ControlStatus.FAILED, f"Public IPv4 exposure detected on {len(public)} database instance(s)."
+    return ControlStatus.VERIFIED, "Cloud SQL instances enforce private IP and require TLS encryption."
+
+
+def _kms_evaluator(evidence: list[Evidence]) -> tuple[ControlStatus, str]:
+    unrotated = [e for e in evidence if not e.relevant_properties.get("auto_rotation")]
+    if unrotated:
+        return ControlStatus.FAILED, f"Automatic 90-day rotation is missing on {len(unrotated)} KMS crypto key(s)."
+    return ControlStatus.VERIFIED, "All customer-managed encryption keys have active 90-day automatic rotation."
+
+
+def _iam_keyless_evaluator(evidence: list[Evidence]) -> tuple[ControlStatus, str]:
+    user_keys = [e for e in evidence if e.relevant_properties.get("user_managed_keys_count", 0) > 0]
+    if user_keys:
+        return ControlStatus.FAILED, f"Exportable user-managed JSON service account keys detected on {len(user_keys)} account(s)."
+    return ControlStatus.VERIFIED, "All service accounts adhere to keyless Workload Identity federation."
+
+
 REGISTRY = {
     c.id: c
     for c in (
@@ -49,7 +70,6 @@ REGISTRY = {
             "GCP_STORAGE_PUBLIC_ACCESS",
             "Public cloud storage",
             "Customer buckets deny anonymous access.",
-            # Require storage/bucket context + some access concern (not just any mention of "storage")
             (r"(storage|bucket).{0,60}(public|anonymous|internet|access|inaccessible|restrict)",
              r"(public|anonymous|internet).{0,60}(storage|bucket|object)",),
             Risk.MEDIUM,
@@ -73,6 +93,33 @@ REGISTRY = {
              r"(network|internet).{0,60}(administrat|ssh|rdp)",),
             Risk.HIGH,
             _firewall_evaluator,
+        ),
+        ControlDefinition(
+            "GCP_SQL_PUBLIC_IP",
+            "Cloud SQL database isolation",
+            "Production databases enforce private network endpoints and TLS encryption.",
+            (r"(sql|database|postgres|mysql).{0,60}(public|internet|ip|network|tls|ssl|encrypt)",
+             r"(private|isolate).{0,60}(database|sql|rds|postgres)",),
+            Risk.HIGH,
+            _sql_evaluator,
+        ),
+        ControlDefinition(
+            "GCP_KMS_KEY_ROTATION",
+            "Cryptographic key rotation",
+            "Customer-managed encryption keys have automated 90-day rotation enabled.",
+            (r"(kms|encryption\s+key|cmek|cryptographic\s+key).{0,60}(rotat|period|schedule|90\s+days)",
+             r"(rotat|cycle).{0,60}(key|kms|secret)",),
+            Risk.MEDIUM,
+            _kms_evaluator,
+        ),
+        ControlDefinition(
+            "GCP_IAM_KEYLESS_WORKLOADS",
+            "Keyless IAM security",
+            "Workloads use keyless token federation instead of long-lived JSON service account keys.",
+            (r"(service\s+account|user\s+managed\s+key|keyless|workload\s+identity).{0,60}(key|json|secret|leak|rotat)",
+             r"(credential|key).{0,60}(service\s+account|keyless|iam)",),
+            Risk.HIGH,
+            _iam_keyless_evaluator,
         ),
     )
 }

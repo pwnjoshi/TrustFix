@@ -116,6 +116,11 @@ def preview_evidence(workspace_id: str, control_id: str, project_id: str = "trus
         "GCP_STORAGE_PUBLIC_ACCESS": ("trustfix-public-storage-demo", "gs://trustfix-public-storage-demo", "Public principals have bucket access.", {"public_principals": [{"role": "roles/storage.objectViewer", "members": ["allUsers"]}], "public_access_prevention": "inherited"}),
         "GCP_RUN_PUBLIC_INVOKER": ("trustfix-public-run-demo", f"projects/{project_id}/locations/us-central1/services/trustfix-public-run-demo", "allUsers has roles/run.invoker.", {"all_users_invoker": True}),
         "GCP_FIREWALL_ADMIN_EXPOSURE": ("trustfix-open-ssh-demo", "trustfix-open-ssh-demo", "Internet exposure detected on TCP 22.", {"source_ranges": ["0.0.0.0/0"], "exposed_admin_ports": ["22"], "disabled": False}),
+        "GCP_SQL_PUBLIC_IP": ("trustfix-postgres-prod", f"projects/{project_id}/instances/trustfix-postgres-prod", "Public IPv4 network enabled without SSL requirement.", {"has_public_ip": True, "ssl_enforced": False}),
+        "GCP_KMS_KEY_ROTATION": ("trustfix-customer-cmek", f"projects/{project_id}/locations/global/keyRings/trustfix-ring/cryptoKeys/trustfix-cmek", "No automatic rotation period configured on CMEK.", {"auto_rotation": False, "rotation_period": None}),
+        "GCP_IAM_KEYLESS_WORKLOADS": ("trustfix-deployer-sa", f"projects/{project_id}/serviceAccounts/trustfix-deployer@{project_id}.iam.gserviceaccount.com", "Active user-managed JSON service account key detected.", {"user_managed_keys_count": 2, "keyless": False}),
     }
+    if control_id not in samples:
+        return []
     name, identifier, observation, properties = samples[control_id]
     return [Evidence(workspace_id=workspace_id, control_id=control_id, source="PREVIEW DATA — connect a disposable GCP project for live evidence", project=f"{project_id} (preview)", resource=name, resource_identifier=identifier, observation=observation, relevant_properties=properties, raw=properties, live=False)]
