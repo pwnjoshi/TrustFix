@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import {
-  Microphone, MicrophoneSlash, Sparkle, X,
+  Microphone, MicrophoneSlash, PaperPlaneRight, Sparkle, X,
 } from "@phosphor-icons/react";
 import { useToast } from "./toast";
 
@@ -34,7 +34,8 @@ export function VoiceAssistant({ onRefresh }: Props) {
   const [isThinking, setIsThinking] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [transcript, setTranscript] = useState("");
-  const [lastResponse, setLastResponse] = useState("Hello! I am your TrustFix Voice Assistant. Say 'Run audit', 'Fix storage bucket', or 'Verify controls'.");
+  const [manualInput, setManualInput] = useState("");
+  const [lastResponse, setLastResponse] = useState("TrustFix Voice Agent ready. Speak or type 'Run audit', 'Fix storage bucket', or 'Verify controls'.");
   const [log, setLog] = useState<string[]>([]);
   const recognitionRef = useRef<SpeechRecognizer | null>(null);
   const { show } = useToast();
@@ -91,7 +92,7 @@ export function VoiceAssistant({ onRefresh }: Props) {
         addLog("Tool: run_live_audit() executed");
         const res = await fetch(`${api}/command-center`);
         const data = await res.json();
-        const msg = `Audit completed. Found ${data.failed_controls || 1} failed control: Cloud Storage bucket gs://trustfix-public-storage-demo has public read access enabled.`;
+        const msg = `Audit completed. Found ${data.failed_controls || 1} failed control: Cloud Storage bucket has public read access enabled.`;
         setLastResponse(msg);
         speak(msg);
         if (onRefresh) onRefresh();
@@ -113,7 +114,7 @@ export function VoiceAssistant({ onRefresh }: Props) {
             speak(msg);
           }
         } catch {
-          const msg = "Remediation plan ready for review in the dashboard.";
+          const msg = "Remediation plan ready for operator review in the Command Center.";
           setLastResponse(msg);
           speak(msg);
         }
@@ -143,7 +144,7 @@ export function VoiceAssistant({ onRefresh }: Props) {
         speak(msg);
       }
     } catch {
-      const msg = "Processed voice command against TrustFix control plane.";
+      const msg = "Processed command against TrustFix control plane.";
       setLastResponse(msg);
       speak(msg);
     } finally {
@@ -175,6 +176,7 @@ export function VoiceAssistant({ onRefresh }: Props) {
     if (isListening) {
       if (recognitionRef.current) recognitionRef.current.stop();
       setIsListening(false);
+      if (transcript) handleCommand(transcript);
     } else {
       if (recognitionRef.current) {
         try {
@@ -183,8 +185,9 @@ export function VoiceAssistant({ onRefresh }: Props) {
           setIsListening(false);
         }
       } else {
-        const promptText = prompt("Type voice command (e.g. 'Run audit', 'Fix bucket', 'Verify controls'):");
-        if (promptText) handleCommand(promptText);
+        // Fallback: focus the inline text input
+        const inputEl = document.getElementById("voice-manual-input");
+        if (inputEl) inputEl.focus();
       }
     }
   };
@@ -197,7 +200,7 @@ export function VoiceAssistant({ onRefresh }: Props) {
     <>
       <button
         type="button"
-        className="button primary"
+        className="button primary voice-assistant-fab"
         onClick={() => setIsOpen(true)}
         aria-label="Open Voice Assistant"
         style={{
@@ -207,12 +210,12 @@ export function VoiceAssistant({ onRefresh }: Props) {
           zIndex: 999,
           borderRadius: "999px",
           padding: "10px 16px",
-          boxShadow: "0 8px 24px rgba(37, 99, 235, 0.35), inset 0 1px 0 rgba(255,255,255,0.3)",
           display: "inline-flex",
           alignItems: "center",
           gap: "8px",
           fontWeight: 650,
           fontSize: "13px",
+          boxShadow: "var(--tf-shadow-lg)",
         }}
       >
         <Microphone size={16} weight="fill" />
@@ -242,8 +245,8 @@ export function VoiceAssistant({ onRefresh }: Props) {
               maxWidth: "520px",
               background: "var(--tf-surface)",
               border: "1px solid var(--tf-line-strong)",
-              borderRadius: "20px",
-              boxShadow: "0 30px 90px rgba(0,0,0,0.8), 0 0 40px rgba(37,99,235,0.15)",
+              borderRadius: "18px",
+              boxShadow: "var(--tf-shadow-modal)",
               overflow: "hidden",
               display: "flex",
               flexDirection: "column",
@@ -251,7 +254,7 @@ export function VoiceAssistant({ onRefresh }: Props) {
           >
             <header
               style={{
-                padding: "16px 24px",
+                padding: "16px 20px",
                 borderBottom: "1px solid var(--tf-line)",
                 display: "flex",
                 alignItems: "center",
@@ -260,22 +263,12 @@ export function VoiceAssistant({ onRefresh }: Props) {
               }}
             >
               <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                <Sparkle size={20} color="#3b82f6" weight="fill" />
-                <span style={{ fontSize: "13px", fontWeight: 700, letterSpacing: "-0.01em", color: "var(--tf-ink)" }}>
+                <Sparkle size={18} color="var(--tf-cipher)" weight="fill" />
+                <span style={{ fontSize: "13px", fontWeight: 700, color: "var(--tf-ink)" }}>
                   TrustFix Voice Assistant
                 </span>
-                <span
-                  style={{
-                    fontSize: "10px",
-                    fontFamily: "var(--font-mono)",
-                    background: "rgba(16,185,129,0.1)",
-                    color: "#10b981",
-                    padding: "2px 6px",
-                    borderRadius: "4px",
-                    border: "1px solid rgba(16,185,129,0.2)",
-                  }}
-                >
-                  GEMINI LIVE · ADK
+                <span className="status verified" style={{ fontSize: "10px", padding: "2px 6px" }}>
+                  Google ADK · Gemini
                 </span>
               </div>
               <button
@@ -293,34 +286,35 @@ export function VoiceAssistant({ onRefresh }: Props) {
               </button>
             </header>
 
-            <div style={{ padding: "32px 28px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center" }}>
+            <div style={{ padding: "28px 24px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center" }}>
+              {/* Waveform / Visualizer */}
               <div
                 style={{
-                  width: "90px",
-                  height: "90px",
+                  width: "80px",
+                  height: "80px",
                   borderRadius: "50%",
                   background: isListening
-                    ? "radial-gradient(circle, rgba(239,68,68,0.2) 0%, rgba(239,68,68,0.05) 70%)"
+                    ? "var(--tf-gap-soft)"
                     : isSpeaking
-                    ? "radial-gradient(circle, rgba(16,185,129,0.2) 0%, rgba(16,185,129,0.05) 70%)"
-                    : "radial-gradient(circle, rgba(37,99,235,0.25) 0%, rgba(37,99,235,0.05) 70%)",
-                  border: `2px solid ${isListening ? "#ef4444" : isSpeaking ? "#10b981" : "#3b82f6"}`,
+                    ? "var(--tf-verified-soft)"
+                    : "var(--tf-cipher-soft)",
+                  border: `2px solid ${isListening ? "var(--tf-gap)" : isSpeaking ? "var(--tf-verified)" : "var(--tf-cipher)"}`,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  marginBottom: "24px",
-                  boxShadow: `0 0 30px ${isListening ? "rgba(239,68,68,0.3)" : isSpeaking ? "rgba(16,185,129,0.3)" : "rgba(37,99,235,0.3)"}`,
-                  transition: "all 0.3s ease",
+                  marginBottom: "20px",
+                  boxShadow: `0 0 24px ${isListening ? "var(--tf-gap-glow)" : isSpeaking ? "var(--tf-verified-glow)" : "var(--tf-cipher-glow)"}`,
+                  transition: "all 0.25s ease",
                 }}
               >
-                <div style={{ display: "flex", alignItems: "center", gap: "5px", height: "32px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "4px", height: "28px" }}>
                   {[0.4, 0.8, 1.0, 0.7, 0.5, 0.9, 0.4].map((h, idx) => (
                     <span
                       key={idx}
                       style={{
-                        width: "4px",
-                        height: isListening || isSpeaking ? `${h * 32}px` : "8px",
-                        background: isListening ? "#ef4444" : isSpeaking ? "#10b981" : "#3b82f6",
+                        width: "3px",
+                        height: isListening || isSpeaking ? `${h * 28}px` : "6px",
+                        background: isListening ? "var(--tf-gap)" : isSpeaking ? "var(--tf-verified)" : "var(--tf-cipher)",
                         borderRadius: "2px",
                         transition: "height 0.15s ease",
                       }}
@@ -329,82 +323,124 @@ export function VoiceAssistant({ onRefresh }: Props) {
                 </div>
               </div>
 
-              <div style={{ fontSize: "11px", fontFamily: "var(--font-mono)", letterSpacing: "0.08em", fontWeight: 700, color: isListening ? "#ef4444" : isSpeaking ? "#10b981" : "#3b82f6", marginBottom: "12px" }}>
-                {isListening ? "LISTENING TO YOUR VOICE…" : isThinking ? "THINKING & PROCESSING TOOL…" : isSpeaking ? "SPEAKING RESPONSE…" : "READY FOR COMMAND"}
+              <div style={{ fontSize: "11px", fontFamily: "var(--font-mono)", letterSpacing: "0.06em", fontWeight: 700, color: isListening ? "var(--tf-gap-text)" : isSpeaking ? "var(--tf-verified-text)" : "var(--tf-cipher-text)", marginBottom: "12px" }}>
+                {isListening ? "LISTENING TO VOICE…" : isThinking ? "ORCHESTRATING AGENT TOOL…" : isSpeaking ? "SPEAKING VERDICT…" : "READY FOR INPUT"}
               </div>
 
-              <div style={{ background: "var(--tf-surface-sunken)", border: "1px solid var(--tf-line)", borderRadius: "12px", padding: "16px 20px", width: "100%", textAlign: "left", marginBottom: "20px" }}>
+              {/* Response & Transcript Card */}
+              <div style={{ background: "var(--tf-surface-sunken)", border: "1px solid var(--tf-line)", borderRadius: "12px", padding: "14px 18px", width: "100%", textAlign: "left", marginBottom: "16px" }}>
                 {transcript && (
-                  <p style={{ fontSize: "12px", color: "var(--tf-ink-muted)", marginBottom: "8px", fontStyle: "italic" }}>
+                  <p style={{ fontSize: "12px", color: "var(--tf-ink-muted)", marginBottom: "6px", fontStyle: "italic" }}>
                     &ldquo;{transcript}&rdquo;
                   </p>
                 )}
-                <p style={{ fontSize: "14px", lineHeight: "1.5", color: "var(--tf-ink)", fontWeight: 500, margin: 0 }}>
+                <p style={{ fontSize: "13px", lineHeight: "1.5", color: "var(--tf-ink)", fontWeight: 500, margin: 0 }}>
                   {lastResponse}
                 </p>
               </div>
 
+              {/* Push to speak button */}
               <button
                 type="button"
                 className="button primary"
                 onClick={toggleListening}
                 style={{
                   width: "100%",
-                  padding: "12px",
-                  borderRadius: "10px",
-                  fontSize: "14px",
-                  fontWeight: 700,
+                  padding: "11px",
+                  borderRadius: "8px",
+                  fontSize: "13px",
+                  fontWeight: 650,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   gap: "8px",
-                  background: isListening ? "linear-gradient(180deg, #ef4444 0%, #dc2626 100%)" : undefined,
-                  borderColor: isListening ? "#b91c1c" : undefined,
-                  marginBottom: "20px",
+                  background: isListening ? "var(--tf-gap)" : undefined,
+                  borderColor: isListening ? "var(--tf-gap)" : undefined,
+                  marginBottom: "14px",
                 }}
               >
                 {isListening ? (
                   <>
-                    <MicrophoneSlash size={18} /> Stop Listening & Execute
+                    <MicrophoneSlash size={16} /> Stop Listening & Execute
                   </>
                 ) : (
                   <>
-                    <Microphone size={18} weight="fill" /> Push to Speak
+                    <Microphone size={16} weight="fill" /> Push to Speak
                   </>
                 )}
               </button>
 
+              {/* Manual input form fallback (replaces browser prompt) */}
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (manualInput.trim()) {
+                    handleCommand(manualInput.trim());
+                    setManualInput("");
+                  }
+                }}
+                style={{ width: "100%", display: "flex", gap: "8px", marginBottom: "16px" }}
+              >
+                <input
+                  id="voice-manual-input"
+                  type="text"
+                  placeholder="Or type a command (e.g. 'Run audit', 'Verify controls')…"
+                  value={manualInput}
+                  onChange={(e) => setManualInput(e.target.value)}
+                  style={{
+                    flex: 1,
+                    padding: "8px 12px",
+                    borderRadius: "8px",
+                    border: "1px solid var(--tf-line)",
+                    background: "var(--tf-surface-sunken)",
+                    color: "var(--tf-ink)",
+                    fontSize: "12px",
+                  }}
+                />
+                <button
+                  type="submit"
+                  className="button secondary"
+                  disabled={!manualInput.trim()}
+                  style={{ padding: "8px 12px" }}
+                  aria-label="Send text command"
+                >
+                  <PaperPlaneRight size={14} />
+                </button>
+              </form>
+
+              {/* Quick action chips */}
               <div style={{ width: "100%", textAlign: "left" }}>
-                <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--tf-ink-muted)", display: "block", marginBottom: "10px", letterSpacing: "0.04em" }}>
-                  OR TAP A QUICK VOICE COMMAND
+                <span style={{ fontSize: "10px", fontWeight: 700, color: "var(--tf-ink-muted)", display: "block", marginBottom: "8px", letterSpacing: "0.04em" }}>
+                  QUICK AGENT COMMANDS
                 </span>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px" }}>
                   {[
-                    ["Run Live Audit", "Run audit on Google Cloud project"],
-                    ["Fix Storage Bucket", "Remediate public access on storage bucket"],
-                    ["Verify Controls", "Verify security controls with HTTP 403 probe"],
-                    ["Check Posture", "What is the current posture score?"],
+                    ["Run Live Audit", "Run audit on Google Cloud target project"],
+                    ["Fix Storage Exposure", "Remediate public access on customer storage"],
+                    ["Verify With HTTP Probe", "Verify security controls with HTTP 403 probe"],
+                    ["Check Posture Score", "What is the current posture score?"],
                   ].map(([label, cmd]) => (
                     <button
                       key={label}
                       type="button"
                       className="button secondary"
                       onClick={() => handleCommand(cmd)}
-                      style={{ fontSize: "12px", justifyContent: "flex-start", padding: "8px 12px" }}
+                      style={{ fontSize: "11px", justifyContent: "flex-start", padding: "6px 10px" }}
                     >
-                      <Sparkle size={13} color="#3b82f6" /> {label}
+                      <Sparkle size={12} color="var(--tf-cipher)" /> {label}
                     </button>
                   ))}
                 </div>
               </div>
 
+              {/* Tool trace log */}
               {log.length > 0 && (
-                <div style={{ width: "100%", marginTop: "20px", textAlign: "left", background: "var(--tf-canvas-subtle)", border: "1px solid var(--tf-line-subtle)", borderRadius: "8px", padding: "10px 14px" }}>
-                  <span style={{ fontSize: "10px", fontFamily: "var(--font-mono)", color: "var(--tf-ink-faint)", display: "block", marginBottom: "4px" }}>
+                <div style={{ width: "100%", marginTop: "16px", textAlign: "left", background: "var(--tf-surface-sunken)", border: "1px solid var(--tf-line-subtle)", borderRadius: "8px", padding: "8px 12px" }}>
+                  <span style={{ fontSize: "9px", fontFamily: "var(--font-mono)", color: "var(--tf-ink-faint)", display: "block", marginBottom: "4px" }}>
                     AGENT TOOL EXECUTION TRACE
                   </span>
                   {log.map((l, idx) => (
-                    <div key={idx} style={{ fontSize: "11px", fontFamily: "var(--font-mono)", color: "var(--tf-cipher-text)", lineHeight: "1.4" }}>
+                    <div key={idx} style={{ fontSize: "10px", fontFamily: "var(--font-mono)", color: "var(--tf-cipher-text)", lineHeight: "1.4" }}>
                       {l}
                     </div>
                   ))}

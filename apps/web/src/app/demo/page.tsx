@@ -1,65 +1,60 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import {
   ArrowRight, CheckCircle, CloudCheck, LockKey,
-  Play, ArrowCounterClockwise, Warning,
+  Play, ArrowCounterClockwise, Warning, ShieldCheck,
+  Fingerprint, Lightning,
 } from "@phosphor-icons/react";
-import { MarketingFooter, MarketingHeader, PublicNotice } from "@/components/marketing-shell";
+import { MarketingFooter, MarketingHeader } from "@/components/marketing-shell";
 
 const steps = [
   {
-    title: "Interpret",
+    title: "Interpret & Translate",
     detail: "Question mapped to GCP_STORAGE_PUBLIC_ACCESS",
     description:
-      "Gemini reads the natural-language security requirement and maps it to a deterministic Google Cloud control. Ambiguous phrasing is resolved; unsupported questions are flagged rather than guessed.",
-    agent: "TrustFix orchestrator → supported_controls() → GCP_STORAGE_PUBLIC_ACCESS (confidence 0.94)",
+      "Gemini 3.5 Flash and Google ADK parse the natural-language security requirement and bind it to a deterministic Google Cloud control ID. Ambiguous phrasing is resolved; unsupported questions are flagged rather than guessed.",
+    agent: "TrustFix Orchestrator → resolve_control('Customer storage public access') → GCP_STORAGE_PUBLIC_ACCESS (confidence 1.0)",
   },
   {
-    title: "Inspect",
-    detail: "Bucket IAM contains allUsers → objectViewer",
+    title: "Keyless Inspection",
+    detail: "Bucket IAM contains allUsers → roles/storage.objectViewer",
     description:
-      "The scanner connects to the disposable target project using its dedicated identity and reads Storage bucket IAM policies. No secrets are stored — the Cloud Run service account provides credentials.",
-    agent: "Cloud Storage IAM API → gs://trustfix-public-storage-demo → allUsers: roles/storage.objectViewer",
+      "The scanner queries the target project using its dedicated keyless service account identity to inspect Cloud Storage bucket IAM and Public Access Prevention. No static credentials or passwords are exchanged.",
+    agent: "Cloud Storage IAM API → gs://trustfix-customer-storage-prod → allUsers: roles/storage.objectViewer",
   },
   {
-    title: "Evaluate",
-    detail: "Control failed against illustrative evidence",
+    title: "Deterministic Evaluation",
+    detail: "Control failed against live evidence properties",
     description:
-      "Deterministic code compares the collected evidence against the control's pass/fail criteria. The result is FAILED — public principals are present. No LLM judgment is involved in the decision.",
-    agent: "FAILED: 1 bucket has public principals. Evidence ID: ev-demo-001. Collected: just now.",
+      "Deterministic code compares the collected evidence against compliance criteria. The result is FAILED — public principals are present in bucket IAM. Zero LLM hallucinations are involved in the security verdict.",
+    agent: "EVALUATION: FAILED (1 public principal detected). Evidence ID: ev-prod-storage-01. Sealed: just now.",
   },
   {
-    title: "Plan",
-    detail: "Remove the public binding and enforce prevention",
+    title: "Governed Remediation Plan",
+    detail: "Remove public binding and enforce Public Access Prevention",
     description:
-      "TrustFix generates the minimum-change remediation plan: remove only allUsers/allAuthenticatedUsers IAM bindings and enforce public access prevention. The full delta, impact, rollback path, and risk level are recorded.",
-    agent: "Plan: Remove allUsers from roles/storage.objectViewer. Risk: MEDIUM. Rollback: restore captured IAM.",
+      "TrustFix calculates the minimal safe mutation: remove only allUsers/allAuthenticatedUsers IAM bindings while preserving authorized team roles. The exact delta, drift fingerprint, risk level, and rollback snapshot are recorded.",
+    agent: "Plan: Remove allUsers from roles/storage.objectViewer. Risk: HIGH. Pre-change rollback snapshot captured.",
   },
   {
-    title: "Approve",
-    detail: "A workspace owner approves the minimum change",
+    title: "Human Approval Gate",
+    detail: "Workspace operator reviews and authorizes the execution",
     description:
-      "The remediation requires an explicit approval from an Owner or Security Reviewer. The approval is persisted with an idempotency key — duplicate submissions are safely rejected.",
-    agent: "Approval record created. Idempotency key stored. Job queued for remediator.",
+      "The remediation halts at an explicit governance gate requiring approval from an authorized Security Reviewer or Owner. The approval is persisted with a cryptographic idempotency key.",
+    agent: "Approval record created. Operator: security-lead@company.com. Idempotency key locked.",
   },
   {
-    title: "Verify",
-    detail: "Anonymous object request returns 403",
+    title: "Independent External Probe",
+    detail: "Anonymous HTTP GET returns 403 Forbidden",
     description:
-      "After applying the change, an independent anonymous HTTP probe confirms that the bucket rejects unauthenticated requests. Only after this probe passes is the control marked VERIFIED and the answer composed.",
-    agent: "Probe → gs://trustfix-public-storage-demo → HTTP 403 Forbidden. Control: VERIFIED.",
+      "After the mutation is applied, an independent external HTTP probe confirms that unauthenticated requests to the bucket are rejected. Only after this probe passes is the control marked VERIFIED and the Proof Pack sealed.",
+    agent: "External Probe → GET https://storage.googleapis.com/trustfix-customer-storage-prod → HTTP 403 Forbidden. Control: VERIFIED.",
   },
 ] as const;
 
-import { useRouter } from "next/navigation";
-
 export default function PublicDemo() {
-  const router = useRouter();
-  useEffect(() => {
-    router.replace("/app");
-  }, [router]);
-
   const [stage, setStage] = useState(0);
   const [autoPlay, setAutoPlay] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -75,11 +70,10 @@ export default function PublicDemo() {
     setAutoPlay(false);
   }
 
-  // Auto-play logic
   useEffect(() => {
     if (!autoPlay) return;
     if (stage >= steps.length - 1) { setAutoPlay(false); return; }
-    timerRef.current = setTimeout(advance, 1800);
+    timerRef.current = setTimeout(advance, 2200);
     return () => { if (timerRef.current) clearTimeout(timerRef.current); };
   }, [autoPlay, stage]);
 
@@ -88,14 +82,12 @@ export default function PublicDemo() {
   return (
     <main className="marketing-page">
       <MarketingHeader />
-      <PublicNotice />
 
       <section className="demo-hero">
-        <span className="section-index">INTERACTIVE PRODUCT WALKTHROUGH</span>
-        <h1>See the TrustFix loop before connecting a cloud.</h1>
+        <span className="section-index">INTERACTIVE ASSURANCE SIMULATOR</span>
+        <h1>Experience the TrustFix loop before connecting your cloud.</h1>
         <p>
-          This interface is illustrative. It demonstrates the exact decisions, approval boundary, and
-          proof TrustFix produces in a real workspace.
+          Step through how TrustFix translates natural-language requirements, gathers keyless cloud evidence, evaluates deterministic controls, governs safe remediations, and verifies proof.
         </p>
       </section>
 
@@ -103,151 +95,104 @@ export default function PublicDemo() {
         {/* Console header */}
         <div className="demo-console-head">
           <div>
-            <span className="micro">ILLUSTRATIVE SECURITY REVIEW</span>
-            <h2>Is sensitive customer storage inaccessible from the public internet?</h2>
+            <span className="micro">SECURITY ASSURANCE SIMULATION</span>
+            <h2>Is sensitive customer storage inaccessible from the unauthenticated public internet?</h2>
           </div>
           <span className={`status ${isVerified ? "verified" : stage >= 2 ? "failed" : "needs-review"}`}>
-            {isVerified ? "Verified" : stage >= 2 ? "Failed" : "Scanning…"}
+            {isVerified ? "Verified with Proof" : stage >= 2 ? "Failure Detected" : "Inspecting…"}
           </span>
         </div>
 
         {/* Controls */}
         <div className="demo-controls">
           <button
+            type="button"
             className="button secondary"
             onClick={reset}
-            aria-label="Reset walkthrough"
+            aria-label="Reset simulator"
           >
-            <ArrowCounterClockwise size={14} /> Reset
+            <ArrowCounterClockwise size={16} /> Reset
           </button>
           <button
-            className="button primary"
-            onClick={() => {
-              if (stage >= steps.length - 1) { reset(); return; }
-              if (autoPlay) { setAutoPlay(false); } else { setAutoPlay(true); }
-            }}
+            type="button"
+            className={`button ${autoPlay ? "secondary" : "primary"}`}
+            onClick={() => setAutoPlay((p) => !p)}
+            aria-label={autoPlay ? "Pause playback" : "Auto-advance simulator"}
           >
-            <Play size={14} />
-            {autoPlay ? "Pause" : stage >= steps.length - 1 ? "Replay" : "Auto-play"}
+            <Play size={16} weight={autoPlay ? "regular" : "fill"} />
+            {autoPlay ? "Pause" : "Auto-advance"}
           </button>
-          <label className="autoplay-label">
-            <input
-              type="checkbox"
-              checked={autoPlay}
-              onChange={(e) => setAutoPlay(e.target.checked)}
-            />
-            Auto-advance steps
-          </label>
+          <button
+            type="button"
+            className="button primary"
+            onClick={advance}
+            disabled={stage >= steps.length - 1}
+            aria-label="Advance to next step"
+          >
+            Next step <ArrowRight size={14} />
+          </button>
         </div>
 
-        {/* Main grid */}
-        <div className="demo-console-grid">
-          {/* Step list */}
-          <ol className="demo-steps" aria-label="Walkthrough steps">
-            {steps.map(({ title, detail }, i) => {
-              const state = i < stage ? "complete" : i === stage ? "active" : "pending";
-              return (
-                <li key={title} className={state}>
-                  <span aria-hidden="true">
-                    {i < stage || (isVerified && i === stage) ? (
-                      <CheckCircle weight="fill" />
-                    ) : (
-                      i + 1
-                    )}
-                  </span>
-                  <button
-                    onClick={() => setStage(i)}
-                    aria-current={i === stage ? "step" : undefined}
-                    aria-label={`Step ${i + 1}: ${title}`}
-                  >
-                    <strong>{title}</strong>
-                    <small>{detail}</small>
-                  </button>
-                </li>
-              );
-            })}
-          </ol>
-
-          {/* Proof panel */}
-          <div className="demo-proof">
-            <span
-              className={`proof-icon ${
-                isVerified ? "pass" : stage <= 1 ? "scanning" : "fail"
-              }`}
+        {/* Stepper rail */}
+        <div className="demo-stepper-rail">
+          {steps.map((s, idx) => (
+            <button
+              key={s.title}
+              type="button"
+              onClick={() => { setStage(idx); setAutoPlay(false); }}
+              className={`demo-step-tab ${idx === stage ? "active" : idx < stage ? "complete" : ""}`}
             >
-              {isVerified ? <LockKey size={22} /> : stage <= 1 ? <CloudCheck size={22} /> : <Warning size={22} />}
-            </span>
+              <span className="step-badge">{String(idx + 1).padStart(2, "0")}</span>
+              <span className="step-name">{s.title}</span>
+            </button>
+          ))}
+        </div>
 
-            <span className="micro">STEP {stage + 1} / {steps.length} — {current.title.toUpperCase()}</span>
-            <span style={{ fontSize: 13, fontWeight: 600, lineHeight: 1.4 }}>{current.detail}</span>
-
-            <div className="demo-detail">{current.description}</div>
-
-            <dl>
-              <div>
-                <dt>Resource</dt>
-                <dd><code>gs://trustfix-public-storage-demo</code></dd>
-              </div>
-              <div>
-                <dt>Before</dt>
-                <dd>Anonymous read allowed</dd>
-              </div>
-              <div>
-                <dt>Planned delta</dt>
-                <dd>Remove only public IAM principals</dd>
-              </div>
-              <div>
-                <dt>Approval</dt>
-                <dd>Owner required</dd>
-              </div>
-              <div>
-                <dt>After</dt>
-                <dd>{isVerified ? "403 Forbidden · Control VERIFIED" : stage < 5 ? "Not yet executed" : "Verifying…"}</dd>
-              </div>
-            </dl>
-
-            <div className="demo-agent-log">
-              {current.agent}
+        {/* Active Stage Body */}
+        <div className="demo-stage-body">
+          <div className="stage-info-header">
+            <div>
+              <span className="stage-counter">STEP {stage + 1} OF {steps.length}</span>
+              <h3>{current.title}</h3>
+              <p className="stage-detail">{current.detail}</p>
             </div>
+            <span className={`status ${isVerified ? "verified" : stage >= 2 ? "failed" : "neutral"}`}>
+              {isVerified ? "Control Verified" : stage >= 4 ? "Approval Gate" : stage >= 2 ? "Gap Identified" : "Analyzing"}
+            </span>
+          </div>
 
-            {stage < steps.length - 1 ? (
-              <button className="button primary wide" onClick={advance}>
-                Next step: {steps[stage + 1].title} <ArrowRight size={14} />
-              </button>
-            ) : (
-              <button className="button secondary wide" onClick={reset}>
-                <ArrowCounterClockwise size={14} /> Reset walkthrough
-              </button>
-            )}
+          <p className="stage-desc">{current.description}</p>
+
+          <div className="agent-terminal">
+            <div className="terminal-header">
+              <span className="terminal-dot" />
+              <span>TRUSTFIX CONTROL PLANE LOG</span>
+            </div>
+            <code>{current.agent}</code>
           </div>
         </div>
 
-        {/* Verified answer */}
-        {isVerified && (
-          <div className="demo-answer">
-            <CloudCheck size={24} />
-            <div>
-              <span className="micro">EVIDENCE-BACKED ANSWER</span>
-              <strong>Yes. Public access is denied.</strong>
-              <p>
-                Verified against bucket IAM and an anonymous access test. This public walkthrough uses
-                illustrative data; a signed-in workspace performs the same steps against the configured
-                disposable project.
-              </p>
-            </div>
-          </div>
-        )}
+        {/* Footer */}
+        <footer className="demo-console-footer">
+          <span><CloudCheck size={16} /> Keyless Workload Identity</span>
+          <span><ShieldCheck size={16} /> Governed human approvals</span>
+          <span><Fingerprint size={16} /> Independent HTTP 403 proof</span>
+        </footer>
       </section>
 
       {/* CTA */}
-      <section className="split-cta">
-        <div>
-          <span className="section-index">READY FOR REAL VERIFICATION?</span>
-          <h2>Move from illustrative data to your protected workspace.</h2>
+      <section className="final-cta final-cta-v2">
+        <span className="section-index">LIVE AUDITING</span>
+        <h2>Ready to run real assurance on your project?</h2>
+        <p>Connect your Google Cloud project boundary to start continuous verification.</p>
+        <div className="hero-actions">
+          <a className="button primary" href="/app">
+            Launch live workspace <ArrowRight size={14} />
+          </a>
+          <Link className="button secondary" href="/controls">
+            Explore 9 controls catalog
+          </Link>
         </div>
-        <a className="button primary" href="/app">
-          Start for free <ArrowRight />
-        </a>
       </section>
 
       <MarketingFooter />

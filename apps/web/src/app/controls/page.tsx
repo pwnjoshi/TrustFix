@@ -1,8 +1,12 @@
+"use client";
+
 import Link from "next/link";
+import { useState, useMemo } from "react";
 import {
-  ArrowRight, CheckCircle, Cloud, Code, Fingerprint,
-  HardDrives, LockKey, ShieldCheck, ShieldWarning, Warning
-} from "@phosphor-icons/react/dist/ssr";
+  ArrowRight, CheckCircle, Cloud, Code, Database,
+  Fingerprint, HardDrives, Key, LockKey, ShieldCheck,
+  ShieldWarning, Warning, MagnifyingGlass,
+} from "@phosphor-icons/react";
 import { MarketingFooter, MarketingHeader } from "@/components/marketing-shell";
 
 const supportedControls = [
@@ -10,49 +14,127 @@ const supportedControls = [
     id: "GCP_STORAGE_PUBLIC_ACCESS",
     title: "Storage IAM Public Access Prevention",
     service: "Google Cloud Storage",
-    category: "Data Security & Access Control",
+    category: "Storage & Databases",
     severity: "HIGH",
-    description: "Ensures no Cloud Storage bucket grants public or anonymous read/write roles (roles/storage.objectViewer, roles/storage.admin) to allUsers or allAuthenticatedUsers.",
-    evidenceCollected: "Bucket IAM policy bindings, Uniform Bucket-Level Access (UBLA) status, Public Access Prevention (PAP) setting.",
-    remediationAction: "Surgically removes only the public IAM binding while preserving all team and service account bindings. Captures pre-change rollback fingerprint.",
-    independentProbe: "Executes unauthenticated external HTTP GET against the bucket endpoint and confirms HTTP 403 Forbidden."
+    description: "Guarantees no customer Cloud Storage bucket grants anonymous or public read/write permissions (roles/storage.objectViewer, roles/storage.admin) to allUsers or allAuthenticatedUsers.",
+    evidenceCollected: "Bucket IAM policy bindings, Uniform Bucket-Level Access (UBLA) status, Public Access Prevention (PAP) configuration.",
+    remediationAction: "Surgically removes only public principal IAM bindings while preserving all engineering and service identities. Enforces Public Access Prevention and records rollback snapshot.",
+    independentProbe: "Executes unauthenticated external HTTP GET request against the bucket endpoint and confirms HTTP 403 Forbidden.",
   },
   {
     id: "GCP_RUN_PUBLIC_INVOKER",
     title: "Cloud Run Unauthenticated Invocation Gating",
     service: "Cloud Run",
-    category: "Application & Service Security",
+    category: "Compute & Containers",
     severity: "CRITICAL",
-    description: "Guarantees internal services and private microservices do not grant roles/run.invoker to anonymous callers without Google IAP or IAM token verification.",
-    evidenceCollected: "Service IAM policy, ingress traffic settings (all vs internal vs internal-and-cloud-load-balancing), authentication requirement state.",
-    remediationAction: "Removes unauthenticated invoker permissions and enforces authenticated service-to-service IAM.",
-    independentProbe: "Attempts anonymous HTTP POST/GET to the Cloud Run service URL and verifies HTTP 401/403 rejection."
+    description: "Guarantees that internal microservices and APIs do not grant roles/run.invoker to anonymous callers without Google Identity-Aware Proxy or authenticated IAM token verification.",
+    evidenceCollected: "Service IAM policy, ingress traffic annotations (all vs internal vs internal-and-cloud-load-balancing), and authentication requirements.",
+    remediationAction: "Purges unauthenticated invoker IAM permissions and enforces authenticated service-to-service IAM tokens.",
+    independentProbe: "Attempts anonymous HTTP POST/GET to the Cloud Run service URL and verifies rejection with HTTP 401 Unauthorized or 403 Forbidden.",
   },
   {
     id: "GCP_FIREWALL_ADMIN_EXPOSURE",
     title: "VPC Ingress Administrative Port Lockdown",
     service: "Compute Engine & VPC Firewall",
-    category: "Network Perimeter Security",
-    severity: "HIGH",
-    description: "Verifies that ingress firewall rules do not expose sensitive administrative ports (SSH 22, RDP 3389, Database ports) to the open internet (0.0.0.0/0).",
-    evidenceCollected: "VPC Firewall rules, source IP ranges, allowed protocols/ports, rule priority, disabled state.",
+    category: "Telemetry & Network",
+    severity: "CRITICAL",
+    description: "Verifies that ingress firewall rules do not expose sensitive administrative ports (SSH 22, RDP 3389, or unrestricted 0-65535) to the open internet (0.0.0.0/0).",
+    evidenceCollected: "VPC Firewall rules, source IP CIDR ranges, allowed protocol/port specifications, rule priority, and disabled state.",
     remediationAction: "Restricts source IP range to trusted internal VPC CIDRs (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16) or Identity-Aware Proxy CIDR (35.235.240.0/20).",
-    independentProbe: "Validates firewall rule evaluation engine confirms no internet-facing allow paths."
+    independentProbe: "Validates firewall rule evaluation engine confirms no internet-facing allow paths exist for administrative ports.",
   },
   {
-    id: "GCP_IAM_LEAST_PRIVILEGE",
-    title: "Keyless IAM & Principle of Least Privilege",
-    service: "Cloud IAM & Resource Manager",
-    category: "Identity & Access Governance",
+    id: "GCP_SQL_PUBLIC_IP",
+    title: "Cloud SQL Database Network Isolation & TLS",
+    service: "Cloud SQL",
+    category: "Storage & Databases",
+    severity: "HIGH",
+    description: "Ensures production relational databases (PostgreSQL, MySQL, SQL Server) disable public IPv4 network interfaces, enforce Private Service Connect (PSC), and mandate SSL/TLS client certificates.",
+    evidenceCollected: "Instance IP configuration (ipv4Enabled, privateNetwork), authorized networks list, requireSsl enforcement state.",
+    remediationAction: "Disables public IPv4 assignment, binds database instance to authorized private VPC subnet, and enforces requireSsl=true.",
+    independentProbe: "Queries Cloud SQL Admin API and network connectivity tests to verify zero public endpoint routing.",
+  },
+  {
+    id: "GCP_KMS_KEY_ROTATION",
+    title: "Cryptographic Key 90-Day Automated Rotation",
+    service: "Cloud Key Management Service (KMS)",
+    category: "Security & IAM",
     severity: "MEDIUM",
-    description: "Validates that scanning and remediation workloads use dedicated, project-scoped service identities without permanent exported service account keys.",
-    evidenceCollected: "Project IAM policy, service account keys audit, OAuth scope constraints.",
-    remediationAction: "Disables key export, enforces Google Cloud Workload Identity Federation / Keyless SA tokens.",
-    independentProbe: "Inspects Cloud Audit Logs for keyless token exchange."
-  }
+    description: "Audits Customer-Managed Encryption Keys (CMEK) to enforce an automated rotation period of 90 days or fewer, preventing stale cryptographic exposure.",
+    evidenceCollected: "CryptoKey rotationPeriod, nextRotationTime, key ring locations, and primary version state.",
+    remediationAction: "Configures rotationPeriod to 7776000s (90 days) on customer-managed keys without automated schedules.",
+    independentProbe: "Cloud KMS API confirms active automatic rotation schedule on all verified CryptoKeys.",
+  },
+  {
+    id: "GCP_IAM_KEYLESS_WORKLOADS",
+    title: "Keyless IAM Workload Identity Federation",
+    service: "Cloud IAM & Resource Manager",
+    category: "Security & IAM",
+    severity: "HIGH",
+    description: "Identifies and flags exportable, user-managed JSON service account keys, enforcing Google Cloud Workload Identity Federation and short-lived OAuth tokens.",
+    evidenceCollected: "List of service account keys, keyType (USER_MANAGED vs SYSTEM_MANAGED), creation timestamp, and expiration date.",
+    remediationAction: "Flags exportable keys for revocation and drafts migration plan to keyless Workload Identity token federation.",
+    independentProbe: "Verifies zero active user-managed keys on service identities via Cloud IAM API.",
+  },
+  {
+    id: "GCP_LOGGING_ADMIN_AUDIT",
+    title: "Cloud Audit Trail Logging & Retention",
+    service: "Cloud Logging & Cloud Monitoring",
+    category: "Telemetry & Network",
+    severity: "MEDIUM",
+    description: "Verifies that Admin Activity and Data Access audit logging sinks are enabled across all project services with minimum 365-day compliance retention.",
+    evidenceCollected: "Project audit config, log sinks, destination storage/bucket, retention period, and filter expressions.",
+    remediationAction: "Enables required audit log types (ADMIN_READ, DATA_READ, DATA_WRITE) and configures compliance sink.",
+    independentProbe: "Queries Cloud Logging API to confirm active log emission and ingestion for administrative actions.",
+  },
+  {
+    id: "GCP_SECRET_MANAGER_ROTATION_IAM",
+    title: "Secret Manager Access Gating & Key Rotation",
+    service: "Secret Manager",
+    category: "Security & IAM",
+    severity: "HIGH",
+    description: "Ensures production API keys, tokens, and database passwords restrict accessor IAM permissions and maintain automated secret rotation schedules.",
+    evidenceCollected: "Secret IAM policy bindings, rotation schedule, version states (ENABLED, DESTROYED), and access audit configs.",
+    remediationAction: "Removes unauthenticated or broad viewer access, restricts secret accessor role to authorized service identities.",
+    independentProbe: "Validates secret IAM policy rejects unauthorized principals and confirms version lifecycle.",
+  },
+  {
+    id: "GCP_GKE_PRIVATE_CLUSTER",
+    title: "GKE Private Cluster & Control Plane Isolation",
+    service: "Google Kubernetes Engine (GKE)",
+    category: "Compute & Containers",
+    severity: "CRITICAL",
+    description: "Audits Kubernetes clusters to guarantee master control plane endpoints disable public exposure and worker node pools operate strictly on private subnets.",
+    evidenceCollected: "Cluster privateClusterConfig (enablePrivateNodes, enablePrivateEndpoint, masterIpv4CidrBlock), authorized networks config.",
+    remediationAction: "Enables private nodes, restricts master endpoint access to authorized CIDRs, and enforces Shielded GKE nodes.",
+    independentProbe: "Tests master API endpoint from external unauthenticated network to verify zero internet routing.",
+  },
+];
+
+const categories = [
+  "All Categories",
+  "Compute & Containers",
+  "Storage & Databases",
+  "Security & IAM",
+  "Telemetry & Network",
 ];
 
 export default function ControlsPage() {
+  const [selectedCategory, setSelectedCategory] = useState("All Categories");
+  const [search, setSearch] = useState("");
+
+  const filtered = useMemo(() => {
+    return supportedControls.filter((ctrl) => {
+      const matchesCategory = selectedCategory === "All Categories" || ctrl.category === selectedCategory;
+      const matchesSearch = !search ||
+        ctrl.title.toLowerCase().includes(search.toLowerCase()) ||
+        ctrl.id.toLowerCase().includes(search.toLowerCase()) ||
+        ctrl.service.toLowerCase().includes(search.toLowerCase()) ||
+        ctrl.description.toLowerCase().includes(search.toLowerCase());
+      return matchesCategory && matchesSearch;
+    });
+  }, [selectedCategory, search]);
+
   return (
     <main className="marketing-page">
       <MarketingHeader />
@@ -61,8 +143,8 @@ export default function ControlsPage() {
         <span className="section-index">CONTROLS CATALOG</span>
         <h1>Deterministic Google Cloud security controls.</h1>
         <p>
-          TrustFix evaluates questionnaire requirements against verifiable, code-backed Google Cloud control definitions.
-          Zero hallucinated answers—every control is inspected live and proved with evidence.
+          TrustFix evaluates customer questionnaire requirements against code-backed Google Cloud control definitions across 9 core services.
+          Zero hallucinated answers—every control is inspected live and backed by cryptographic proof.
         </p>
         <div className="hero-actions">
           <a className="button primary" href="/app">
@@ -74,67 +156,94 @@ export default function ControlsPage() {
         </div>
       </section>
 
-      <section style={{ maxWidth: "1120px", margin: "0 auto 80px", padding: "0 24px" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "28px" }}>
-          {supportedControls.map((ctrl) => (
-            <article
-              key={ctrl.id}
-              style={{
-                background: "var(--tf-surface)",
-                border: "1px solid var(--tf-line)",
-                borderRadius: "14px",
-                padding: "32px",
-                boxShadow: "var(--tf-shadow-md)",
-                transition: "border-color 0.2s ease",
-              }}
-            >
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "16px", marginBottom: "16px", flexWrap: "wrap" }}>
+      <section className="controls-catalog-container">
+        {/* Search and Category Filters */}
+        <div className="controls-filter-bar">
+          <div className="controls-search-wrap">
+            <MagnifyingGlass size={16} className="search-icon" />
+            <input
+              type="text"
+              placeholder="Search controls, services, or resource types…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="controls-search-input"
+            />
+          </div>
+
+          <div className="controls-category-pills">
+            {categories.map((cat) => (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => setSelectedCategory(cat)}
+                className={`cat-pill ${selectedCategory === cat ? "active" : ""}`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Controls List */}
+        <div className="controls-grid">
+          {filtered.map((ctrl) => (
+            <article key={ctrl.id} className="control-detail-card">
+              <header className="control-card-header">
                 <div>
-                  <span style={{ fontFamily: "var(--font-mono)", fontSize: "11px", color: "var(--tf-verified)", letterSpacing: "0.06em", fontWeight: 700 }}>
+                  <span className="control-card-meta">
                     {ctrl.id} · {ctrl.service.toUpperCase()}
                   </span>
-                  <h2 style={{ fontSize: "22px", margin: "6px 0 4px", letterSpacing: "-0.02em" }}>{ctrl.title}</h2>
-                  <span style={{ fontSize: "12px", color: "var(--tf-ink-muted)" }}>Category: {ctrl.category}</span>
+                  <h2>{ctrl.title}</h2>
+                  <span className="control-card-category">{ctrl.category}</span>
                 </div>
-                <span className={`status ${ctrl.severity === "CRITICAL" ? "failed" : "neutral"}`}>
+                <span className={`status ${ctrl.severity === "CRITICAL" ? "failed" : ctrl.severity === "HIGH" ? "needs-review" : "neutral"}`}>
                   {ctrl.severity} SEVERITY
                 </span>
-              </div>
+              </header>
 
-              <p style={{ fontSize: "15px", lineHeight: "1.6", color: "var(--tf-ink-secondary)", marginBottom: "24px" }}>
+              <p className="control-card-desc">
                 {ctrl.description}
               </p>
 
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "18px", borderTop: "1px solid var(--tf-line-subtle)", paddingTop: "20px" }}>
-                <div style={{ background: "var(--tf-surface-sunken)", padding: "16px 18px", borderRadius: "8px", border: "1px solid var(--tf-line-subtle)" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px", color: "var(--tf-ink-secondary)", fontSize: "11px", fontWeight: 700 }}>
-                    <Fingerprint size={16} color="var(--tf-verified)" /> EVIDENCE COLLECTED
+              <div className="control-specs-grid">
+                <div className="spec-box">
+                  <div className="spec-label">
+                    <Fingerprint size={16} className="spec-icon evidence" /> EVIDENCE COLLECTED
                   </div>
-                  <p style={{ fontSize: "12px", color: "var(--tf-ink-muted)", margin: 0, lineHeight: "1.5" }}>
-                    {ctrl.evidenceCollected}
-                  </p>
+                  <p>{ctrl.evidenceCollected}</p>
                 </div>
 
-                <div style={{ background: "var(--tf-surface-sunken)", padding: "16px 18px", borderRadius: "8px", border: "1px solid var(--tf-line-subtle)" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px", color: "var(--tf-ink-secondary)", fontSize: "11px", fontWeight: 700 }}>
-                    <ShieldCheck size={16} color="#60a5fa" /> SURGICAL REMEDIATION
+                <div className="spec-box">
+                  <div className="spec-label">
+                    <ShieldCheck size={16} className="spec-icon remediation" /> SURGICAL REMEDIATION
                   </div>
-                  <p style={{ fontSize: "12px", color: "var(--tf-ink-muted)", margin: 0, lineHeight: "1.5" }}>
-                    {ctrl.remediationAction}
-                  </p>
+                  <p>{ctrl.remediationAction}</p>
                 </div>
 
-                <div style={{ background: "var(--tf-surface-sunken)", padding: "16px 18px", borderRadius: "8px", border: "1px solid var(--tf-line-subtle)" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px", color: "var(--tf-ink-secondary)", fontSize: "11px", fontWeight: 700 }}>
-                    <CheckCircle size={16} color="var(--tf-verified)" /> INDEPENDENT VERIFICATION PROBE
+                <div className="spec-box">
+                  <div className="spec-label">
+                    <CheckCircle size={16} className="spec-icon verification" /> INDEPENDENT VERIFICATION PROBE
                   </div>
-                  <p style={{ fontSize: "12px", color: "var(--tf-ink-muted)", margin: 0, lineHeight: "1.5" }}>
-                    {ctrl.independentProbe}
-                  </p>
+                  <p>{ctrl.independentProbe}</p>
                 </div>
               </div>
             </article>
           ))}
+
+          {filtered.length === 0 && (
+            <div className="empty-state">
+              <Warning size={28} />
+              <h2>No matching controls found</h2>
+              <p>Try clearing your search query or choosing another category filter.</p>
+              <button
+                type="button"
+                className="button secondary"
+                onClick={() => { setSearch(""); setSelectedCategory("All Categories"); }}
+              >
+                Reset filters
+              </button>
+            </div>
+          )}
         </div>
       </section>
 

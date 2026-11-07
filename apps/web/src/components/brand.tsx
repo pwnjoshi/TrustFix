@@ -13,7 +13,7 @@ export function Mark({ compact = false, size = 26 }: { compact?: boolean; size?:
       />
       {!compact && (
         <span style={{ fontSize: "16px", fontWeight: 750, letterSpacing: "-0.03em", color: "currentColor" }}>
-          Trust<span style={{ color: "#10b981" }}>Fix</span>
+          Trust<span style={{ color: "var(--tf-verified)" }}>Fix</span>
         </span>
       )}
     </span>

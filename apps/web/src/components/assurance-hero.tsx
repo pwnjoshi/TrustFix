@@ -7,97 +7,97 @@ import {
   Lightning, LockKey, ShieldCheck, Warning,
 } from "@phosphor-icons/react";
 
-const proofOutcomes = ["verified evidence", "governed fixes", "audit-ready proof"];
+const proofOutcomes = ["verified evidence", "governed fixes", "cryptographic proof"];
 
 const heroSteps = [
   {
     step: "01",
     name: "Interpret",
-    badge: "GEMINI 3.5 FLASH · ADK",
-    title: "Is customer storage inaccessible from the public internet?",
+    badge: "GOOGLE ADK · GEMINI 3.5 FLASH",
+    title: "Is customer storage inaccessible from the unauthenticated public internet?",
     status: "FAILED",
-    statusText: "Finding Detected",
-    resource: "gs://trustfix-public-storage-demo",
-    resourceSub: "allUsers → roles/storage.objectViewer",
-    risk: "MEDIUM RISK",
+    statusText: "Finding Identified",
+    resource: "gs://trustfix-customer-storage-prod",
+    resourceSub: "Principal allUsers assigned roles/storage.objectViewer",
+    risk: "HIGH EXPOSURE",
     flow: [
-      { num: "1", label: "QUESTION", text: "Storage public access?" },
-      { num: "2", label: "MAPPED CONTROL", text: "GCP_STORAGE_PUBLIC_ACCESS" },
-      { num: "3", label: "CONFIDENCE", text: "94% deterministic match" },
+      { num: "1", label: "REQUIREMENT", text: "Customer storage public isolation?" },
+      { num: "2", label: "DETERMINISTIC CONTROL", text: "GCP_STORAGE_PUBLIC_ACCESS" },
+      { num: "3", label: "MATCH ACCURACY", text: "100% deterministic binding" },
     ],
-    decision: "Mapped questionnaire requirement to deterministic Google Cloud control ID.",
-    statusBadge: "Interpreted",
+    decision: "Mapped questionnaire requirement to deterministic Google Cloud control ID without hallucinated criteria.",
+    statusBadge: "Mapped",
   },
   {
     step: "02",
     name: "Inspect",
     badge: "KEYLESS SCANNER IDENTITY",
-    title: "Read IAM policies across live Google Cloud Storage buckets",
+    title: "Collect IAM policy and Uniform Bucket-Level Access directly from Cloud Storage API",
     status: "FAILED",
-    statusText: "Public Access Found",
-    resource: "gs://trustfix-public-storage-demo",
-    resourceSub: "allUsers granted Storage Object Viewer",
-    risk: "MEDIUM RISK",
+    statusText: "Public Principal Present",
+    resource: "gs://trustfix-customer-storage-prod",
+    resourceSub: "Public Access Prevention: inherited | IAM allUsers active",
+    risk: "UNAUTHENTICATED ACCESS",
     flow: [
-      { num: "1", label: "OBSERVED", text: "Public principal detected" },
-      { num: "2", label: "BINDING", text: "roles/storage.objectViewer" },
-      { num: "3", label: "EVIDENCE", text: "ID: ev-demo-storage-01" },
+      { num: "1", label: "API PROBE", text: "Live storage.buckets.getIamPolicy" },
+      { num: "2", label: "BINDING FOUND", text: "allUsers → roles/storage.objectViewer" },
+      { num: "3", label: "EVIDENCE DIGEST", text: "SHA-256: 7f83b165...0126" },
     ],
-    decision: "Keyless scanner identity collected current bucket IAM policy directly from GCP API.",
+    decision: "Dedicated keyless service account collected fresh infrastructure policy directly from Google Cloud.",
     statusBadge: "Inspected",
   },
   {
     step: "03",
     name: "Evaluate",
-    badge: "DETERMINISTIC POLICY ENGINE",
-    title: "Policy evaluation: Bucket violates non-public storage requirement",
+    badge: "CODE-BACKED POLICY ENGINE",
+    title: "Deterministic evaluation: Resource fails non-public storage compliance criteria",
     status: "FAILED",
-    statusText: "Control Failed",
-    resource: "gs://trustfix-public-storage-demo",
-    resourceSub: "Failed: unauthenticated public read enabled",
-    risk: "MEDIUM RISK",
+    statusText: "Control Evaluation: Failed",
+    resource: "gs://trustfix-customer-storage-prod",
+    resourceSub: "Violates: No anonymous principals permitted in bucket IAM",
+    risk: "GAP DETECTED",
     flow: [
-      { num: "1", label: "CRITERIA", text: "No allUsers in IAM" },
-      { num: "2", label: "RESULT", text: "FAILED (1 finding)" },
-      { num: "3", label: "ACTION", text: "Remediation plan generated" },
+      { num: "1", label: "POLICY CRITERIA", text: "allUsers == 0 && PAP == enforced" },
+      { num: "2", label: "EVALUATION RESULT", text: "FAILED (1 finding flagged)" },
+      { num: "3", label: "AUTOMATION GATE", text: "Surgical remediation plan drafted" },
     ],
-    decision: "Deterministic code evaluated evidence. Zero LLM hallucinations involved in the decision.",
+    decision: "Deterministic Python policy evaluator checked evidence. Zero LLM hallucinations in the security decision.",
     statusBadge: "Evaluated",
   },
   {
     step: "04",
     name: "Approve",
     badge: "SEPARATED MUTATION AUTHORITY",
-    title: "Surgical minimum delta: Remove 1 IAM binding with captured rollback",
+    title: "Surgical minimum delta: Remove 1 IAM binding with captured pre-change rollback",
     status: "PENDING",
-    statusText: "Awaiting Approval",
-    resource: "gs://trustfix-public-storage-demo",
-    resourceSub: "Delta: -allUsers | Rollback: captured",
-    risk: "GOVERNED MUTATION",
+    statusText: "Awaiting Operator Approval",
+    resource: "gs://trustfix-customer-storage-prod",
+    resourceSub: "Delta: -allUsers | Pre-change rollback snapshot captured",
+    risk: "HUMAN GOVERNANCE GATE",
     flow: [
-      { num: "1", label: "DELTA", text: "Remove 1 IAM binding" },
-      { num: "2", label: "FINGERPRINT", text: "SHA-256 drift locked" },
-      { num: "3", label: "GATE", text: "Owner approval required" },
+      { num: "1", label: "MUTATION DELTA", text: "Remove 1 public IAM binding only" },
+      { num: "2", label: "DRIFT FINGERPRINT", text: "Pre-change SHA-256 locked" },
+      { num: "3", label: "AUTHORITY GATE", text: "Owner or Security Reviewer required" },
     ],
-    decision: "Remediation is locked to the verified project. Idempotent approval queued.",
-    statusBadge: "Approved",
+    decision: "Mutation is locked to verified project boundary. Safe rollback snapshot stored in Firestore.",
+    statusBadge: "Awaiting Gate",
   },
   {
     step: "05",
     name: "Verify",
     badge: "INDEPENDENT HTTP PROBE",
-    title: "Anonymous probe returns HTTP 403 Forbidden. Control VERIFIED.",
+    title: "Anonymous HTTP GET returns 403 Forbidden. Control VERIFIED with cryptographic proof.",
     status: "VERIFIED",
-    statusText: "Verified with Proof",
-    resource: "gs://trustfix-public-storage-demo",
-    resourceSub: "Anonymous probe: HTTP 403 Forbidden",
-    risk: "SECURED & PROVEN",
+    statusText: "Verified & Proven",
+    resource: "gs://trustfix-customer-storage-prod",
+    resourceSub: "External anonymous probe: HTTP 403 Forbidden confirmed",
+    risk: "100% PROVEN SAFE",
     flow: [
-      { num: "1", label: "MUTATED", text: "Public principal removed" },
-      { num: "2", label: "PROBED", text: "Anonymous GET → 403" },
-      { num: "3", label: "PROOF PACK", text: "Cryptographic manifest ready" },
+      { num: "1", label: "MUTATED IAM", text: "Public principal surgically purged" },
+      { num: "2", label: "EXTERNAL PROBE", text: "GET storage.googleapis.com → 403" },
+      { num: "3", label: "PROOF PACK", text: "Tamper-evident JSON sealed" },
     ],
-    decision: "Independent probe proved public access is denied. Audit-ready Proof Pack packaged.",
+    decision: "Independent external probe mathematically proved public access is denied before sealing the Proof Pack.",
     statusBadge: "Proven",
   },
 ];
@@ -105,246 +105,154 @@ const heroSteps = [
 export function AssuranceHero() {
   const [outcomeIndex, setOutcomeIndex] = useState(0);
   const [activeStep, setActiveStep] = useState(0);
-  const [scrollProgress, setScrollProgress] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const outcomeTimer = window.setInterval(
       () => setOutcomeIndex((current) => (current + 1) % proofOutcomes.length),
-      2800
+      2600
     );
     return () => window.clearInterval(outcomeTimer);
   }, []);
 
   useEffect(() => {
+    if (isPaused) return;
     timerRef.current = setTimeout(() => {
       setActiveStep((prev) => (prev + 1) % heroSteps.length);
-    }, 3400);
+    }, 3800);
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [activeStep]);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      const scrollY = window.scrollY;
-      const progress = Math.min(Math.max(scrollY / 450, 0), 1);
-      setScrollProgress(progress);
-    };
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    handleScroll();
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  }, [activeStep, isPaused]);
 
   const current = heroSteps[activeStep];
   const isVerified = current.status === "VERIFIED";
 
-  // Parallax calculations
-  const copyOpacity = Math.max(0, 1 - scrollProgress * 1.5);
-  const copyTranslateY = scrollProgress * -45;
-  const copyBlur = scrollProgress * 6;
-  const cardScale = 1 + scrollProgress * 0.05;
-  const cardTranslateY = scrollProgress * -25;
-  const glowOpacity = 0.5 + scrollProgress * 0.5;
-
   return (
     <section className="hero-v3">
-      <div className="hero-v3-glow" style={{ opacity: glowOpacity }} />
+      <div className="hero-v3-glow" />
       <div className="hero-v3-grid" />
-      <div
-        className="hero-v3-copy"
-        style={{
-          opacity: copyOpacity,
-          transform: `translateY(${copyTranslateY}px)`,
-          filter: `blur(${copyBlur}px)`,
-          transition: "opacity 0.08s ease-out, transform 0.08s ease-out, filter 0.08s ease-out",
-          pointerEvents: copyOpacity < 0.1 ? "none" : "auto",
-        }}
-      >
-        <h1 aria-label="Turn cloud risk into verified evidence.">
+      
+      <div className="hero-v3-copy">
+        <div className="hero-v3-badge">
+          <span className="pulse-dot-wrapper">
+            <span className="pulse-dot-core" />
+            <span className="pulse-dot-ping" />
+          </span>
+          <span className="badge-tech">Google Cloud & Agent Development Kit</span>
+          <span className="badge-divider" />
+          <span className="badge-label">Continuous Assurance</span>
+        </div>
+
+        <h1>
           <span>Turn cloud risk into</span>
           <span className="hero-v3-outcome" aria-hidden="true">
             <em key={proofOutcomes[outcomeIndex]}>{proofOutcomes[outcomeIndex]}</em>
           </span>
         </h1>
+        
         <p>
-          TrustFix inspects live Google Cloud, governs the smallest safe fix, and independently verifies the result with audit-ready proof.
+          TrustFix continuously audits Google Cloud environments, proves compliance against security questionnaires with live cryptographic evidence, and executes human-governed remediations.
         </p>
+        
         <div className="hero-actions">
           <a className="button primary" href="/app">
-            Launch live workspace <ArrowRight size={14} />
+            Launch workspace <ArrowRight size={14} />
           </a>
           <Link className="button secondary" href="/controls">
-            Explore controls catalog
+            Explore 9 supported controls
           </Link>
         </div>
+
         <div className="hero-v3-trust">
-          <span><CheckCircle weight="fill" /> Live cloud inspection</span>
-          <span><ShieldCheck weight="fill" /> Governed mutations</span>
-          <span><Fingerprint weight="fill" /> Audit-ready proof</span>
+          <span><CheckCircle weight="fill" /> Keyless cloud inspection</span>
+          <span><ShieldCheck weight="fill" /> Governed human approval</span>
+          <span><Fingerprint weight="fill" /> Independent HTTP probes</span>
         </div>
       </div>
 
       <div
         className="proof-window"
         aria-label="TrustFix live assurance simulation console"
-        style={{
-          width: "100%",
-          maxWidth: "1040px",
-          margin: "0 auto",
-          boxSizing: "border-box",
-          transform: `scale(${cardScale}) translateY(${cardTranslateY}px)`,
-          transformOrigin: "center top",
-          boxShadow: `0 ${30 + scrollProgress * 30}px ${80 + scrollProgress * 40}px -${20 - scrollProgress * 10}px rgba(0, 0, 0, 0.8), 0 0 ${50 + scrollProgress * 60}px rgba(37, 99, 235, ${0.12 + scrollProgress * 0.25})`,
-          transition: "transform 0.1s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease",
-        }}
+        onMouseEnter={() => setIsPaused(true)}
+        onMouseLeave={() => setIsPaused(false)}
       >
-        <header style={{ height: "42px", minHeight: "42px", maxHeight: "42px", boxSizing: "border-box" }}>
+        <header className="proof-window-header">
           <div className="window-dots"><i /><i /><i /></div>
-          <strong style={{ fontFamily: "var(--font-mono)", fontSize: "11px", letterSpacing: "0.06em", color: "var(--tf-ink-secondary)" }}>
-            trustfix-assurance-engine <span style={{ color: "var(--tf-ink-faint)", fontWeight: 400 }}>· gcp-target-verified</span>
+          <strong className="terminal-title">
+            trustfix-assurance-engine <span className="terminal-sub">· project-boundary: verified</span>
           </strong>
-          <div
-            style={{
-              marginLeft: "auto",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-              fontFamily: "var(--font-mono)",
-              fontSize: "10px",
-              fontWeight: 700,
-              letterSpacing: "0.08em",
-              color: "#3b82f6",
-              background: "rgba(37, 99, 235, 0.1)",
-              padding: "3px 8px",
-              borderRadius: "4px",
-              border: "1px solid rgba(37, 99, 235, 0.25)",
-            }}
-          >
-            <span
-              style={{
-                width: "5px",
-                height: "5px",
-                borderRadius: "50%",
-                background: "#3b82f6",
-                display: "inline-block",
-              }}
-            />
-            ENGINE ACTIVE
+          <div className="engine-status-pill">
+            <span className="status-ping" />
+            LIVE SIMULATION
           </div>
         </header>
 
-        <div
-          className="proof-window-body"
-          style={{
-            display: "grid",
-            gridTemplateColumns: "160px minmax(0, 1fr)",
-            width: "100%",
-            height: "410px",
-            minHeight: "410px",
-            maxHeight: "410px",
-            boxSizing: "border-box",
-            overflow: "hidden",
-          }}
-        >
-          <aside style={{ width: "160px", minWidth: "160px", maxWidth: "160px", flexShrink: 0, boxSizing: "border-box", overflowY: "auto" }}>
+        <div className="proof-window-body">
+          <aside className="proof-rail">
             {heroSteps.map((s, idx) => (
               <button
                 key={s.step}
                 type="button"
-                onClick={() => setActiveStep(idx)}
-                className={idx === activeStep ? "rail-active" : ""}
-                style={{
-                  border: "1px solid transparent",
-                  textAlign: "left",
-                  cursor: "pointer",
-                  width: "100%",
-                  boxSizing: "border-box",
-                }}
+                onClick={() => { setActiveStep(idx); setIsPaused(true); }}
+                className={`rail-btn ${idx === activeStep ? "rail-active" : ""}`}
               >
-                <i>{s.step}</i> {s.name}
+                <span className="rail-step">{s.step}</span>
+                <span className="rail-name">{s.name}</span>
               </button>
             ))}
           </aside>
 
-          <main
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "space-between",
-              height: "100%",
-              width: "100%",
-              minWidth: 0,
-              padding: "20px 24px",
-              boxSizing: "border-box",
-              overflow: "hidden",
-            }}
-          >
-            <div className="proof-question" style={{ height: "60px", minHeight: "60px", maxHeight: "60px", display: "flex", justifyContent: "space-between", alignItems: "flex-start", width: "100%", minWidth: 0, boxSizing: "border-box" }}>
-              <div style={{ flex: 1, minWidth: 0, paddingRight: "12px" }}>
-                <span className="micro">{current.badge}</span>
-                <h2 style={{ fontSize: "15px", lineHeight: "1.35", margin: "4px 0 0", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
-                  {current.title}
-                </h2>
+          <main className="proof-content">
+            <div className="proof-question-row">
+              <div className="question-info">
+                <span className="micro-badge">{current.badge}</span>
+                <h2 className="question-text">{current.title}</h2>
               </div>
-              <span
-                className={`status ${isVerified ? "verified" : current.status === "FAILED" ? "failed" : "needs-review"}`}
-                style={{ flexShrink: 0, whiteSpace: "nowrap" }}
-              >
+              <span className={`status ${isVerified ? "verified" : current.status === "FAILED" ? "failed" : "needs-review"}`}>
                 {isVerified ? <CheckCircle weight="fill" /> : <Warning weight="fill" />} {current.statusText}
               </span>
             </div>
 
-            <div className="proof-resource" style={{ height: "52px", minHeight: "52px", maxHeight: "52px", display: "flex", alignItems: "center", width: "100%", minWidth: 0, boxSizing: "border-box" }}>
-              <span className="proof-resource-icon" style={{ flexShrink: 0 }}>
-                {isVerified ? <LockKey size={20} /> : <Cloud size={20} />}
+            <div className="proof-resource-row">
+              <span className="resource-icon">
+                {isVerified ? <LockKey size={18} /> : <Cloud size={18} />}
               </span>
-              <div style={{ flex: 1, minWidth: 0, paddingRight: "12px" }}>
-                <strong style={{ display: "block", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>
-                  {current.resource}
-                </strong>
-                <small style={{ display: "block", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>
-                  {current.resourceSub}
-                </small>
+              <div className="resource-details">
+                <strong className="resource-name">{current.resource}</strong>
+                <small className="resource-sub">{current.resourceSub}</small>
               </div>
-              <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.06em", flexShrink: 0, whiteSpace: "nowrap" }}>
-                {current.risk}
-              </span>
+              <span className="risk-tag">{current.risk}</span>
             </div>
 
-            <div className="proof-flow" style={{ height: "76px", minHeight: "76px", maxHeight: "76px", display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "10px", width: "100%", minWidth: 0, boxSizing: "border-box" }}>
+            <div className="proof-flow-grid">
               {current.flow.map((f, i) => (
-                <div key={f.num} className={isVerified && i === 2 ? "flow-success" : ""} style={{ minWidth: 0, overflow: "hidden", boxSizing: "border-box" }}>
-                  <span className="flow-number">{f.num}</span>
-                  <p style={{ minWidth: 0, overflow: "hidden" }}>
+                <div key={f.num} className={`flow-card ${isVerified && i === 2 ? "flow-success" : ""}`}>
+                  <span className="flow-num">{f.num}</span>
+                  <div className="flow-text-wrap">
                     <small>{f.label}</small>
-                    <strong style={{ display: "block", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>
-                      {f.text}
-                    </strong>
-                  </p>
+                    <strong>{f.text}</strong>
+                  </div>
                 </div>
               ))}
             </div>
 
-            <div className="proof-decision" style={{ height: "54px", minHeight: "54px", maxHeight: "54px", display: "flex", alignItems: "center", width: "100%", minWidth: 0, boxSizing: "border-box" }}>
-              <span style={{ flexShrink: 0 }}><Lightning weight="fill" /></span>
-              <div style={{ flex: 1, minWidth: 0, paddingRight: "12px" }}>
-                <small>TRUSTFIX OPERATIONAL ASSURANCE DECISION</small>
-                <strong style={{ display: "block", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>
-                  {current.decision}
-                </strong>
+            <div className="proof-decision-row">
+              <span className="decision-icon"><Lightning weight="fill" /></span>
+              <div className="decision-text-wrap">
+                <small>DETERMINISTIC ASSURANCE DECISION</small>
+                <strong>{current.decision}</strong>
               </div>
-              <span className="proof-awaiting" style={{ flexShrink: 0, whiteSpace: "nowrap" }}>
-                {current.statusBadge}
-              </span>
+              <span className="decision-badge">{current.statusBadge}</span>
             </div>
           </main>
         </div>
 
-        <footer style={{ height: "38px", minHeight: "38px", maxHeight: "38px", boxSizing: "border-box" }}>
-          <span><i /> Keyless scanner IAM</span>
-          <span>Drift fingerprint locked</span>
-          <span>Gemini 3.5 Flash · Google ADK</span>
+        <footer className="proof-window-footer">
+          <span><i /> Keyless scanner identity</span>
+          <span>Pre-change drift locked</span>
+          <span>Google ADK · Gemini 3.5 Flash</span>
         </footer>
       </div>
     </section>

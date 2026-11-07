@@ -362,14 +362,14 @@ export default function Reviews() {
 
               {/* Agent steps */}
               <div className="agent-steps">
-                <h3>Agent run</h3>
+                <h3>Agent assurance lifecycle</h3>
                 <div className="done">
                   <span><Check size={13} /></span>
-                  Requirement interpreted
+                  Requirement interpreted & mapped
                 </div>
                 <div className="done">
                   <span><Check size={13} /></span>
-                  Disposable GCP project inspected
+                  Target Google Cloud project inspected
                 </div>
                 <div className={selected.status === "FAILED" ? "fail" : selected.status ? "done" : "waiting"}>
                   <span>
@@ -379,8 +379,8 @@ export default function Reviews() {
                   {selected.status === "FAILED"
                     ? "Control failed against live evidence"
                     : selected.status === "VERIFIED"
-                    ? "Result recorded without invented evidence"
-                    : "Awaiting inspection"}
+                    ? "Evidence collected and verified from live APIs"
+                    : "Awaiting inspection pass"}
                 </div>
               </div>
 

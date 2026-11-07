@@ -1,9 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import {
-  ArrowSquareOut, Check, CheckCircle, Cloud, Copy, HardDrives, Info, LockKey,
-  Pulse, ShieldWarning, UserPlus, Warning,
+  ArrowRight, ArrowSquareOut, Check, CheckCircle, Cloud, Copy,
+  Database, Eye, Fingerprint, HardDrives, Info, Key, LockKey,
+  MagnifyingGlass, Pulse, ShieldCheck, ShieldWarning, UserPlus, Warning,
 } from "@phosphor-icons/react";
 import { useToast } from "./toast";
 
@@ -45,8 +47,8 @@ function Failure({ message, retry }: { message: string; retry?: () => void }) {
   );
 }
 
-/** Format a datetime string to a relative time string */
 function relativeTime(iso: string): string {
+  if (!iso) return "Just now";
   const diff = Date.now() - new Date(iso).getTime();
   const s = Math.floor(diff / 1000);
   if (s < 60) return "Just now";
@@ -76,6 +78,7 @@ function useLiveRefresh(refresh: () => void, intervalMs = 15_000) {
 export function IntegrationsPage() {
   const [connection, setConnection] = useState<Json | null>(null);
   const [project, setProject] = useState("");
+  const [discoveredProjects, setDiscoveredProjects] = useState<Array<{ id: string; name: string }>>([]);
   const [error, setError] = useState("");
   const [verifying, setVerifying] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -94,7 +97,14 @@ export function IntegrationsPage() {
       .catch((e) => setError(e.message)),
   []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    load();
+    fetch(`${api}/gcp/discovered-projects`)
+      .then((r) => r.json())
+      .then((data) => { if (Array.isArray(data)) setDiscoveredProjects(data); })
+      .catch(() => {});
+  }, [load]);
+
   useLiveRefresh(load);
 
   async function verify() {
@@ -135,37 +145,39 @@ export function IntegrationsPage() {
   }
 
   const scannerPrincipal = String(connection?.scanner_principal || "");
-  const iamCommand = project === connection?.project && connection?.iam_command
-    ? String(connection.iam_command)
-    : project && scannerPrincipal
-      ? `gcloud projects add-iam-policy-binding ${project} --member="serviceAccount:${scannerPrincipal}" --role="roles/viewer" && gcloud projects add-iam-policy-binding ${project} --member="serviceAccount:${scannerPrincipal}" --role="roles/cloudasset.viewer"`
-      : "";
+  const iamCommand = project && scannerPrincipal
+    ? `gcloud projects add-iam-policy-binding ${project} --member="serviceAccount:${scannerPrincipal}" --role="roles/viewer" && gcloud projects add-iam-policy-binding ${project} --member="serviceAccount:${scannerPrincipal}" --role="roles/cloudasset.viewer"`
+    : "";
+  const iamConsoleUrl = `https://console.cloud.google.com/iam-admin/iam?project=${encodeURIComponent(project)}`;
 
   return (
     <main className="page section-page">
-      <Heading title="Integrations" description="Connected systems TrustFix can inspect and verify." />
+      <Heading title="Integrations" description="Connected systems TrustFix can inspect, audit, and verify." />
       {!connection ? (
         error ? <Failure message={error} retry={load} /> : <Loading />
       ) : (
         <div className="integration-grid">
           <article className="featured">
-            <Cloud size={28} />
-            <div>
-              <h3>Google Cloud</h3>
-              <p>Live infrastructure inspection and governed remediation.</p>
-            </div>
-            <span className={`status ${connection.status === "VERIFIED" ? "verified" : connection.status === "VERIFICATION_REQUIRED" ? "needs-review" : "failed"}`}>
-              {connection.status === "VERIFIED" ? "Verified" : connection.status === "VERIFICATION_REQUIRED" ? "Verification required" : "Not configured"}
-            </span>
-            <dl>
-              <div><dt>Project</dt><dd>{String(connection.project || "—")}</dd></div>
-              <div><dt>Boundary</dt><dd>{String(connection.boundary)}</dd></div>
-              <div><dt>Authentication</dt><dd>{String(connection.authentication)}</dd></div>
-              <div><dt>Region</dt><dd>{String(connection.region)}</dd></div>
-              <div><dt>Live evidence</dt><dd>{String(connection.evidence_count)} items</dd></div>
-              <div><dt>Services inspected</dt><dd>{Array.isArray(connection.inspection_services) ? connection.inspection_services.length : 0}</dd></div>
+            <div className="integration-card-head">
+              <Cloud size={30} />
               <div>
-                <dt>Last verified</dt>
+                <h3>Google Cloud Platform</h3>
+                <p>Live infrastructure inspection across 9 services via keyless scanner identity.</p>
+              </div>
+              <span className={`status ${connection.status === "VERIFIED" ? "verified" : connection.status === "VERIFICATION_REQUIRED" ? "needs-review" : "failed"}`}>
+                {connection.status === "VERIFIED" ? "Verified" : connection.status === "VERIFICATION_REQUIRED" ? "Verification Required" : "Not Configured"}
+              </span>
+            </div>
+
+            <dl>
+              <div><dt>Project ID</dt><dd>{String(connection.project || "—")}</dd></div>
+              <div><dt>Boundary Type</dt><dd>{String(connection.boundary)}</dd></div>
+              <div><dt>Authentication</dt><dd>{String(connection.authentication)}</dd></div>
+              <div><dt>Deployment Region</dt><dd>{String(connection.region)}</dd></div>
+              <div><dt>Live Evidence Count</dt><dd>{String(connection.evidence_count)} items</dd></div>
+              <div><dt>Services Inspected</dt><dd>{Array.isArray(connection.inspection_services) ? connection.inspection_services.length : 9}</dd></div>
+              <div>
+                <dt>Last Verified</dt>
                 <dd>
                   {connection.last_verified
                     ? new Date(String(connection.last_verified)).toLocaleString()
@@ -173,43 +185,102 @@ export function IntegrationsPage() {
                 </dd>
               </div>
             </dl>
+
             {Array.isArray(connection.inspection_services) && (
               <div className="connection-explainer">
-                <strong>Inspection coverage</strong>
+                <strong>Verified Inspection Services</strong>
                 <p>{connection.inspection_services.map(String).join(" · ")}</p>
               </div>
             )}
-            <div className="connection-explainer">
-              <strong>How this connection works</strong>
-              <p>Saving a project ID only selects the inspection boundary. TrustFix becomes operational after its dedicated scanner service account successfully reads that exact project. Your Google login authenticates this workspace; it does not grant cloud access.</p>
-              <ol><li><span>1</span>Enter the exact Google Cloud project ID</li><li><span>2</span>Grant the displayed scanner identity read access</li><li><span>3</span>Verify and collect fresh project-scoped evidence</li></ol>
-            </div>
-            <label className="connection-editor">
-              Workspace target project
+
+            {discoveredProjects.length > 0 && (
+              <div className="discovered-projects-row" style={{ marginTop: "16px", marginBottom: "8px" }}>
+                <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--tf-ink-muted)", display: "block", marginBottom: "6px" }}>
+                  DISCOVERED GOOGLE CLOUD PROJECTS
+                </span>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                  {discoveredProjects.map((p) => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => setProject(p.id)}
+                      className={`button secondary ${project === p.id ? "active" : ""}`}
+                      style={{ fontSize: "11px", padding: "4px 10px" }}
+                    >
+                      {p.name} ({p.id})
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <label className="connection-editor" style={{ marginTop: "14px" }}>
+              Workspace target project ID
               <input
                 value={project}
                 onChange={(e) => setProject(e.target.value.toLowerCase().trim())}
                 pattern="[a-z][a-z0-9-]{4,28}[a-z0-9]"
-                placeholder="acme-production-security"
+                placeholder="acme-production-cloud"
                 aria-label="Workspace target project"
               />
             </label>
-            {project && <div className="connection-iam-guide"><div><strong>1. Grant scanner access in the target project</strong><span>Run as a Project Owner or IAM administrator. This grants read-only Viewer and Cloud Asset Viewer access to the dedicated keyless scanner.</span></div><div className="cloud-command"><header><span>Google Cloud Shell</span><button type="button" onClick={async () => { await navigator.clipboard.writeText(iamCommand); setCopied(true); window.setTimeout(() => setCopied(false), 1800); }}>{copied ? <Check/> : <Copy/>}{copied ? "Copied" : "Copy command"}</button></header><code>{iamCommand}</code></div><a className="button secondary" href={`https://console.cloud.google.com/iam-admin/iam?project=${encodeURIComponent(project)}`} target="_blank" rel="noreferrer">Open project IAM <ArrowSquareOut/></a><div><strong>2. Verify live API access</strong><span>TrustFix tests direct service APIs and Cloud Asset Inventory before marking this project verified.</span></div></div>}
+
+            {project && (
+              <div className="connection-iam-guide" style={{ marginTop: "14px" }}>
+                <div>
+                  <strong>Authorize Scanner Identity</strong>
+                  <span>Grant read-only Viewer access to the dedicated keyless scanner identity.</span>
+                </div>
+
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", margin: "10px 0" }}>
+                  <a
+                    className="button primary"
+                    href={iamConsoleUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", gap: "8px" }}
+                  >
+                    Open Google Cloud Console IAM <ArrowSquareOut />
+                  </a>
+                </div>
+
+                <div className="cloud-command">
+                  <header>
+                    <span>Or run in Google Cloud Shell</span>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        await navigator.clipboard.writeText(iamCommand);
+                        setCopied(true);
+                        window.setTimeout(() => setCopied(false), 1800);
+                      }}
+                    >
+                      {copied ? <Check /> : <Copy />}
+                      {copied ? "Copied" : "Copy command"}
+                    </button>
+                  </header>
+                  <code>{iamCommand}</code>
+                </div>
+              </div>
+            )}
+
             <button
               className="button primary"
               onClick={verify}
               disabled={verifying || !project}
+              style={{ marginTop: "16px" }}
             >
-              {verifying ? "Testing scanner access…" : connection.status === "VERIFIED" && project === connection.project ? "Reverify connection" : "Save and verify access"}
+              {verifying ? "Testing scanner access…" : connection.status === "VERIFIED" && project === connection.project ? "Reverify live access" : "Save and verify access"}
             </button>
             {error && <p className="form-error" role="alert">{error}</p>}
           </article>
-          {["Google Drive", "Gmail", "Slack"].map((name) => (
-            <article key={name}>
-              <HardDrives />
+
+          {["Google Drive", "Gmail", "Slack", "Jira / ServiceNow"].map((name) => (
+            <article key={name} style={{ opacity: 0.75 }}>
+              <HardDrives size={24} />
               <div>
                 <h3>{name}</h3>
-                <p>Optional questionnaire source.</p>
+                <p>Optional questionnaire or document source connector.</p>
               </div>
               <span className="status neutral">Roadmap</span>
             </article>
@@ -274,14 +345,14 @@ export function TeamPage() {
 
   return (
     <main className="page section-page">
-      <Heading title="Team" description="Workspace access and security-review roles." />
+      <Heading title="Team" description="Workspace access and role-based governance oversight." />
       {!data ? (
         error ? <Failure message={error} retry={load} /> : <Loading />
       ) : (
         <>
           <div className="data-panel">
             <div className="data-head">
-              <strong>Workspace members</strong>
+              <strong>Workspace Members & Reviewers</strong>
               <span className="status verified">{data.members.length} active</span>
             </div>
             {data.members.map((member) => (
@@ -313,23 +384,23 @@ export function TeamPage() {
               </div>
             )}
           </div>
-          <form className="invite-panel" onSubmit={invite}>
+          <form className="invite-panel" onSubmit={invite} style={{ marginTop: "24px" }}>
             <div>
-              <h2>Invite team member</h2>
-              <p>Create the workspace role record, then grant the same email IAP access in Google Cloud. TrustFix does not send an email invitation yet.</p>
+              <h2>Invite Security Reviewer</h2>
+              <p>Authorize a team member to review controls and approve governed cloud remediations.</p>
             </div>
             <label>
-              Email
+              Email address
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                placeholder="reviewer@company.com"
+                placeholder="security-lead@company.com"
               />
             </label>
             <label>
-              Role
+              Role assignment
               <select value={role} onChange={(e) => setRole(e.target.value)}>
                 <option>Security Reviewer</option>
                 <option>Admin</option>
@@ -369,16 +440,16 @@ export function SystemPage() {
 
   return (
     <main className="page section-page">
-      <Heading title="System" description="Deployment state and production readiness signals." />
+      <Heading title="System" description="Deployment architecture, runtime signals, and production readiness." />
       {!data ? (
         error ? <Failure message={error} retry={load} /> : <Loading />
       ) : (
         <div className="system-grid">
           {Object.entries(data).map(([key, value]) => (
             <article key={key}>
-              <span>{key.replaceAll("_", " ")}</span>
+              <span>{key.replaceAll("_", " ").toUpperCase()}</span>
               <strong>{String(value)}</strong>
-              <CheckCircle weight="fill" color="var(--green)" />
+              <CheckCircle weight="fill" color="var(--tf-verified)" />
             </article>
           ))}
         </div>
@@ -410,9 +481,9 @@ export function EvidencePage({ kind }: { kind: "evidence" | "activity" | "findin
 
   const title = kind === "findings" ? "Findings" : kind[0].toUpperCase() + kind.slice(1);
   const description =
-    kind === "evidence" ? "Resource-specific proof collected during control checks." :
-    kind === "activity" ? "Append-oriented history of review and remediation decisions." :
-    "Security gaps that need remediation or manual review.";
+    kind === "evidence" ? "Resource-specific proof and API observations collected during control audits." :
+    kind === "activity" ? "Append-oriented audit log of review, evaluation, and remediation decisions." :
+    "Identified security gaps requiring governed remediation or operator review.";
 
   if (kind === "activity") {
     return (
@@ -423,8 +494,8 @@ export function EvidencePage({ kind }: { kind: "evidence" | "activity" | "findin
         ) : (
           <div className="data-panel">
             <div className="data-head">
-              <strong>{items.length} events</strong>
-              <span className="status verified">Live data</span>
+              <strong>{items.length} Audit Events Recorded</strong>
+              <span className="status verified">Live Ledger</span>
             </div>
             {items.length === 0 ? (
               <div className="empty-state">
@@ -468,14 +539,14 @@ export function EvidencePage({ kind }: { kind: "evidence" | "activity" | "findin
       ) : (
         <div className="data-panel">
           <div className="data-head">
-            <strong>{items.length} records</strong>
+            <strong>{items.length} {kind} records</strong>
             <span className="status verified">Live data</span>
           </div>
           {items.length === 0 ? (
             <div className="empty-state">
               <Info size={28} />
-              <h2>No {kind} records yet</h2>
-              <p>Run an assurance review to inspect the target project and collect fresh {kind} data.</p>
+              <h2>No {kind} records currently flagged</h2>
+              <p>Run a posture scan to inspect the verified Google Cloud boundary.</p>
             </div>
           ) : (
             items.map((item, i) => {
@@ -490,10 +561,17 @@ export function EvidencePage({ kind }: { kind: "evidence" | "activity" | "findin
                     <strong>
                       {String(item.control_id || item.source || item.action || "TrustFix record")}
                     </strong>
-                    <p>{String(item.resource || item.resource_identifier || item.result || "")}</p>
+                    <p style={{ fontFamily: "var(--font-mono)", fontSize: "11px", color: "var(--tf-ink-muted)" }}>
+                      {String(item.resource || item.resource_identifier || item.result || "")}
+                    </p>
                   </div>
                   <p>{String(item.observation || item.proposed_change || item.result || "")}</p>
-                  <span>{ts ? relativeTime(ts) : ""}</span>
+                  <span style={{ fontSize: "11px", color: "var(--tf-ink-faint)" }}>{ts ? relativeTime(ts) : ""}</span>
+                  {isFinding && (
+                    <Link href="/app/reviews" className="button secondary" style={{ fontSize: "11px", padding: "4px 10px" }}>
+                      Review Fix <ArrowRight size={12} />
+                    </Link>
+                  )}
                 </div>
               );
             })
@@ -509,6 +587,7 @@ export function EvidencePage({ kind }: { kind: "evidence" | "activity" | "findin
 // ─────────────────────────────────────────────────────────────────────────────
 export function ControlsPage() {
   const [controls, setControls] = useState<Array<Json> | null>(null);
+  const [search, setSearch] = useState("");
   const [error, setError] = useState("");
 
   const load = useCallback(() =>
@@ -524,22 +603,50 @@ export function ControlsPage() {
   useEffect(() => { load(); }, [load]);
   useLiveRefresh(load);
 
+  const filtered = useMemo(() => {
+    if (!controls) return [];
+    return controls.filter((c) => {
+      if (!search) return true;
+      const s = search.toLowerCase();
+      return (
+        String(c.name || "").toLowerCase().includes(s) ||
+        String(c.id || "").toLowerCase().includes(s) ||
+        String(c.description || "").toLowerCase().includes(s) ||
+        String(c.service || "").toLowerCase().includes(s)
+      );
+    });
+  }, [controls, search]);
+
   const statusClass = (s: string) =>
-    s === "VERIFIED" ? "verified" : s === "FAILED" ? "failed" : "needs-review";
+    s === "VERIFIED" ? "verified" : s === "FAILED" ? "failed" : "neutral";
   const statusLabel = (s: string) =>
     s === "VERIFIED" ? "Verified" : s === "FAILED" ? "Failed" : "Not yet run";
 
   return (
     <main className="page section-page">
       <Heading
-        title="Control library"
-        description="Deterministic checks currently supported for Google Cloud."
+        title="Control Library"
+        description="Deterministic Google Cloud security controls supported for live inspection and assurance."
       />
+
+      <div style={{ marginBottom: "20px", display: "flex", alignItems: "center", gap: "10px" }}>
+        <div style={{ position: "relative", width: "100%", maxWidth: "420px" }}>
+          <MagnifyingGlass size={16} style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "var(--tf-ink-muted)" }} />
+          <input
+            type="text"
+            placeholder="Search controls, services, IDs…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            style={{ width: "100%", padding: "8px 12px 8px 36px", borderRadius: "8px", border: "1px solid var(--tf-line)", background: "var(--tf-surface)", color: "var(--tf-ink)", fontSize: "13px" }}
+          />
+        </div>
+      </div>
+
       {!controls ? (
         error ? <Failure message={error} retry={load} /> : <Loading />
       ) : (
         <div className="cards-list">
-          {controls.map((control) => (
+          {filtered.map((control) => (
             <article key={String(control.id)}>
               <span className="control-icon"><LockKey /></span>
               <div>
@@ -552,6 +659,13 @@ export function ControlsPage() {
               </span>
             </article>
           ))}
+          {filtered.length === 0 && (
+            <div className="empty-state">
+              <Warning size={28} />
+              <h2>No controls match &ldquo;{search}&rdquo;</h2>
+              <button className="button secondary" onClick={() => setSearch("")}>Clear search</button>
+            </div>
+          )}
         </div>
       )}
     </main>
@@ -577,9 +691,9 @@ export function PoliciesPage() {
   useEffect(() => { load(); }, [load]);
 
   const controlDefs = [
-    ["storage", "Public storage remediation", true, "Approved execution is enabled for explicitly named disposable TrustFix buckets."],
-    ["cloud_run", "Cloud Run access remediation", false, "Inspection is live; mutation remains manual until rollback acceptance is complete."],
-    ["firewall", "Firewall remediation", false, "Inspection is live; mutation remains manual until rollback acceptance is complete."],
+    ["storage", "Cloud Storage public access remediation", true, "Approved execution is enabled for explicitly verified customer storage buckets."],
+    ["cloud_run", "Cloud Run unauthenticated invoker remediation", false, "Inspection is live; mutation remains manual until acceptance tests pass."],
+    ["firewall", "VPC Firewall administrative port remediation", false, "Inspection is live; mutation remains manual until acceptance tests pass."],
   ] as const;
 
   async function save() {
@@ -595,7 +709,7 @@ export function PoliciesPage() {
       });
       const body = await response.json();
       if (!response.ok) throw new Error(body.detail || "Could not save policies");
-      setData(body); // Update with server response
+      setData(body);
       show("Policies saved successfully", "success");
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Could not save policies";
@@ -617,7 +731,7 @@ export function PoliciesPage() {
 
   return (
     <main className="page section-page">
-      <Heading title="Policies" description="Deterministic approval boundaries for infrastructure changes." />
+      <Heading title="Policies" description="Deterministic approval boundaries and human governance gates." />
       <div className="data-panel policy-list">
         {controlDefs.map(([key, label, executable, detail]) => (
           <div className="data-row" key={key}>
@@ -632,17 +746,17 @@ export function PoliciesPage() {
               aria-label={`${label} policy`}
               disabled={!executable}
             >
-              {executable && <option value="REQUIRE_APPROVAL">Require approval</option>}
-              <option value="MANUAL_ONLY">Manual only</option>
+              {executable && <option value="REQUIRE_APPROVAL">Require human approval</option>}
+              <option value="MANUAL_ONLY">Manual remediation only</option>
             </select>
           </div>
         ))}
       </div>
-      <div className="save-row">
+      <div className="save-row" style={{ marginTop: "18px" }}>
         <button className="button primary" onClick={save} disabled={saving}>
-          {saving ? "Saving…" : "Save policies"}
+          {saving ? "Saving…" : "Save governance policies"}
         </button>
-        {error && <span style={{ color: "var(--red)", fontSize: 11 }}>{error}</span>}
+        {error && <span style={{ color: "var(--tf-gap)", fontSize: "12px", marginLeft: "12px" }}>{error}</span>}
       </div>
     </main>
   );
